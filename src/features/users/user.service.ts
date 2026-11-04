@@ -17,8 +17,13 @@ export class UserService {
     return db.getProfileById(id);
   }
 
-  public getUsersByTenant(tenantId: string): Profile[] {
-    return Array.from(db.profiles.values()).filter((p) => p.tenantId === tenantId);
+  public getUsersByTenant(tenantId?: string): Profile[] {
+    if (!tenantId || tenantId === 'all' || tenantId === 'All') {
+      return Array.from(db.profiles.values());
+    }
+    return Array.from(db.profiles.values()).filter(
+      (p) => p.tenantId === tenantId || (p as any).organizationId === tenantId
+    );
   }
 
   public getUserEligibleModules(tenantId: string, userId: string): Module[] {

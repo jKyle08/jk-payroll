@@ -3836,8 +3836,11 @@
       loadLeaveRequests();
       renderLeaveTypes();
       loadTenantsFromDatabase();
-      renderTenantAccessView();
+      loadDepartmentsFromDatabase();
+      loadRolesFromDatabase();
+      loadUsersFromDatabase();
       loadUserRolesFromDatabase();
+      renderTenantAccessView();
       syncOrganizationFilterVisibility();
       lucide.createIcons();
     }
@@ -4494,35 +4497,153 @@
       lucide.createIcons();
     }
 
-    // Load Tenants Directly from Database API (/api/tenants)
+    // Load Organizations / Tenants Directly from Database API (/api/organizations or /api/tenants)
     async function loadTenantsFromDatabase() {
       try {
         const headers = {};
         if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-        const res = await fetch('/api/tenants', { headers });
-        if (res.ok) {
+
+        let res = await fetch('/api/organizations', { headers }).catch(() => null);
+        if (!res || !res.ok) {
+          res = await fetch('/api/tenants', { headers }).catch(() => null);
+        }
+
+        if (res && res.ok) {
           const data = await res.json();
-          const list = data.tenants || [];
-          sampleTenants = list.map(t => ({
-            id: t.id,
-            name: t.name,
-            code: t.code,
-            domain: t.domain || `${t.code.toLowerCase()}.com`,
-            industry: t.industry || 'Technology & Software',
-            adminName: t.adminName || 'Admin',
-            adminEmail: t.adminEmail || `admin@${t.code.toLowerCase()}.com`,
-            adminUsername: t.adminUsername || `${t.code.toLowerCase()}_admin`,
-            adminTitle: t.adminTitle || 'Organization Administrator',
-            status: t.status || (t.isActive ? 'Active' : 'Inactive'),
-            isActive: t.isActive !== undefined ? t.isActive : (t.status === 'Active'),
-            createdAt: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'Nov 01, 2026',
-            modules: t.modules && t.modules.length > 0 ? t.modules : ['TypeOfLeave', 'Department']
-          }));
+          const list = data.items || data.organizations || data.tenants || [];
+          if (Array.isArray(list) && list.length > 0) {
+            sampleTenants = list.map(t => ({
+              id: t.id,
+              name: t.name,
+              code: t.code,
+              domain: t.domain || `${t.code.toLowerCase()}.com`,
+              industry: t.industry || 'Technology & Software',
+              adminName: t.adminName || 'Admin',
+              adminEmail: t.adminEmail || `admin@${t.code.toLowerCase()}.com`,
+              adminUsername: t.adminUsername || `${t.code.toLowerCase()}_admin`,
+              adminTitle: t.adminTitle || 'Organization Administrator',
+              status: t.status || (t.isActive ? 'Active' : 'Inactive'),
+              isActive: t.isActive !== undefined ? t.isActive : (t.status === 'Active'),
+              createdAt: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'Nov 01, 2026',
+              modules: t.modules && t.modules.length > 0 ? t.modules : ['Department', 'UserRole']
+            }));
+          }
         }
       } catch (err) {
-        console.warn('Could not load tenants from database API:', err);
+        console.warn('Could not load organizations from database API:', err);
       }
+      populateOrganizationDropdowns();
+      updateTenantMetrics();
       renderTenants();
+    }
+    const loadOrganizationsFromDatabase = loadTenantsFromDatabase;
+
+    function populateOrganizationDropdowns() {
+      const orgs = sampleTenants || [];
+      if (orgs.length === 0) return;
+
+      // 1. Department filter org dropdown (#dept-filter-org)
+      const deptFilterOrg = document.getElementById('dept-filter-org');
+      if (deptFilterOrg) {
+        const currentVal = deptFilterOrg.value;
+        deptFilterOrg.innerHTML = '<option value="All">All Organizations</option>' +
+          orgs.map(o => `<option value="${o.id}">${o.name} (${o.code})</option>`).join('');
+        if (currentVal && (currentVal === 'All' || orgs.some(o => o.id === currentVal))) {
+          deptFilterOrg.value = currentVal;
+        }
+      }
+
+      // 2. Department form org select (#df-org-select)
+      const dfOrgSelect = document.getElementById('df-org-select');
+      if (dfOrgSelect) {
+        const currentVal = dfOrgSelect.value;
+        dfOrgSelect.innerHTML = orgs.map(o => `<option value="${o.id}">${o.name} (${o.code})</option>`).join('');
+        if (currentVal && orgs.some(o => o.id === currentVal)) {
+          dfOrgSelect.value = currentVal;
+        } else if (currentUser?.tenantId && orgs.some(o => o.id === currentUser.tenantId)) {
+          dfOrgSelect.value = currentUser.tenantId;
+        } else if (orgs[1]) {
+          dfOrgSelect.value = orgs[1].id;
+        } else if (orgs[0]) {
+          dfOrgSelect.value = orgs[0].id;
+        }
+      }
+
+      // 3. Role filter org dropdown (#role-filter-org)
+      const roleFilterOrg = document.getElementById('role-filter-org');
+      if (roleFilterOrg) {
+        const currentVal = roleFilterOrg.value;
+        roleFilterOrg.innerHTML = '<option value="ALL">All Organizations</option><option value="GLOBAL">System Roles (Global)</option>' +
+          orgs.map(o => `<option value="${o.id}">${o.name} (${o.code})</option>`).join('');
+        if (currentVal && (currentVal === 'ALL' || currentVal === 'GLOBAL' || orgs.some(o => o.id === currentVal))) {
+          roleFilterOrg.value = currentVal;
+        }
+      }
+
+      // 4. Role form org dropdown (#rf-org)
+      const rfOrgSelect = document.getElementById('rf-org');
+      if (rfOrgSelect) {
+        const currentVal = rfOrgSelect.value;
+        rfOrgSelect.innerHTML = orgs.map(o => `<option value="${o.id}">${o.name} (${o.code})</option>`).join('');
+        if (currentVal && orgs.some(o => o.id === currentVal)) {
+          rfOrgSelect.value = currentVal;
+        } else if (orgs[1]) {
+          rfOrgSelect.value = orgs[1].id;
+        }
+      }
+
+      // 5. User role filter org dropdown (#ur-filter-org)
+      const urFilterOrg = document.getElementById('ur-filter-org');
+      if (urFilterOrg) {
+        const currentVal = urFilterOrg.value;
+        urFilterOrg.innerHTML = '<option value="ALL">All Organizations</option>' +
+          orgs.map(o => `<option value="${o.id}">${o.name} (${o.code})</option>`).join('');
+        if (currentVal && (currentVal === 'ALL' || orgs.some(o => o.id === currentVal))) {
+          urFilterOrg.value = currentVal;
+        }
+      }
+
+      // 6. User role form org dropdown (#urf-org)
+      const urfOrgSelect = document.getElementById('urf-org');
+      if (urfOrgSelect) {
+        const currentVal = urfOrgSelect.value;
+        urfOrgSelect.innerHTML = orgs.map(o => `<option value="${o.id}">${o.name} (${o.code})</option>`).join('');
+        if (currentVal && orgs.some(o => o.id === currentVal)) {
+          urfOrgSelect.value = currentVal;
+        } else if (orgs[0]) {
+          urfOrgSelect.value = orgs[0].id;
+        }
+      }
+    }
+
+    async function loadUsersFromDatabase() {
+      try {
+        const token = authToken || localStorage.getItem('token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+        };
+        const res = await fetch('/api/users?all=true', { headers });
+        if (res.ok) {
+          const json = await res.json();
+          const list = json.data || json.users || [];
+          if (Array.isArray(list) && list.length > 0) {
+            sampleSystemUsers = list.map(u => ({
+              id: u.id,
+              name: u.fullName || u.name || 'User',
+              email: u.email || `${(u.username || 'user')}@paypulse.internal`,
+              username: u.username || (u.email ? u.email.split('@')[0] : 'user'),
+              title: u.title || (u.isSuperAdmin ? 'Super Administrator' : u.isOrganizationAdmin ? 'Organization Admin' : 'Staff Member'),
+              currentRole: u.role || (u.isSuperAdmin ? 'Super Admin' : u.isOrganizationAdmin ? 'Organization Admin' : 'Staff'),
+              dept: u.departmentName || u.departmentId || 'General',
+              organizationId: u.organizationId || u.tenantId
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn('API /api/users notice:', err.message);
+      }
+      populateUserRoleFormSelects();
     }
 
     // Tenant Search Handlers (Explicit Submit / Enter - No Automatic Query Flooding)
@@ -5829,18 +5950,10 @@
       document.getElementById('rf-mode').value = mode;
       document.getElementById('rf-id').value = id || '';
 
-      // Populate Org dropdown in role form
+      // Populate Org dropdown in role form dynamically from sampleTenants
       const orgSelect = document.getElementById('rf-org');
-      if (orgSelect) {
-        const defaultOptions = `
-          <option value="00000000-0000-0000-0000-000000000000">SuperAdmin Platform</option>
-          <option value="00000000-0000-0000-0000-000000000001" selected>Apex Health Systems (Admin)</option>
-        `;
-        const extraOptions = sampleTenants
-          .filter(t => t.id !== '00000000-0000-0000-0000-000000000000' && t.id !== '00000000-0000-0000-0000-000000000001')
-          .map(t => `<option value="${t.id}">${t.name} (${t.code})</option>`)
-          .join('');
-        orgSelect.innerHTML = defaultOptions + extraOptions;
+      if (orgSelect && sampleTenants.length > 0) {
+        orgSelect.innerHTML = sampleTenants.map(t => `<option value="${t.id}">${t.name} (${t.code})</option>`).join('');
       }
 
       const titleEl = document.getElementById('rf-form-title');
@@ -6418,16 +6531,8 @@
       renderUrfUsersList();
 
       const orgSelect = document.getElementById('urf-org');
-      if (orgSelect) {
-        const defaultOptions = `
-          <option value="00000000-0000-0000-0000-000000000000">SuperAdmin (System Root - 00000000-0000-0000-0000-000000000000)</option>
-          <option value="00000000-0000-0000-0000-000000000001">Admin (Apex Health Systems - 00000000-0000-0000-0000-000000000001)</option>
-        `;
-        const extraOptions = sampleTenants
-          .filter(t => t.id !== '00000000-0000-0000-0000-000000000000' && t.id !== '00000000-0000-0000-0000-000000000001')
-          .map(t => `<option value="${t.id}">${t.name} (${t.code})</option>`)
-          .join('');
-        orgSelect.innerHTML = defaultOptions + extraOptions;
+      if (orgSelect && sampleTenants.length > 0) {
+        orgSelect.innerHTML = sampleTenants.map(t => `<option value="${t.id}">${t.name} (${t.code})</option>`).join('');
       }
 
       const roleSelect = document.getElementById('urf-role');
@@ -7392,6 +7497,11 @@
       const headUserSelect = document.getElementById('df-head-user-select');
       const activeCheckbox = document.getElementById('df-is-active-checkbox');
 
+      // Populate organization options from live sampleTenants
+      if (orgSelect && sampleTenants.length > 0) {
+        orgSelect.innerHTML = sampleTenants.map(o => `<option value="${o.id}">${o.name} (${o.code})</option>`).join('');
+      }
+
       // Populate lead user options from sampleSystemUsers
       if (headUserSelect) {
         const usersList = (typeof sampleSystemUsers !== 'undefined' && Array.isArray(sampleSystemUsers)) ? sampleSystemUsers : [];
@@ -7610,6 +7720,13 @@
         closeDeleteUserRoleModal();
       }
     });
+
+    // Initial Dynamic Data Load from Database
+    loadTenantsFromDatabase();
+    loadDepartmentsFromDatabase();
+    loadRolesFromDatabase();
+    loadUsersFromDatabase();
+    loadUserRolesFromDatabase();
 
     lucide.createIcons();
   </script>

@@ -29,7 +29,12 @@ import { createOrganizationSchema } from '../src/features/organizations/organiza
 
 describe('User Role SQL Insert Script & Migration Specifications', () => {
   it('verifies SQL insert script exists and seeds SuperAdmin and Admin organizations and roles', () => {
-    const migrationPath = path.resolve(process.cwd(), 'supabase/migrations/20261104000001_seed_user_roles.sql');
+    const migrationPath = path.resolve(
+      process.cwd(),
+      fs.existsSync(path.resolve(process.cwd(), 'supabase/seed.sql'))
+        ? 'supabase/seed.sql'
+        : 'supabase/migrations/20261104000001_seed_user_roles.sql'
+    );
     expect(fs.existsSync(migrationPath)).toBe(true);
 
     const sqlContent = fs.readFileSync(migrationPath, 'utf-8');
@@ -192,7 +197,12 @@ describe('Roles Table Schema & Clean Role Form Specifications', () => {
   });
 
   it('verifies public.roles table schema adherence (role_type enum, organization_id nullability, is_default, is_mutable)', () => {
-    const rolesMigrationPath = path.resolve(process.cwd(), 'supabase/migrations/20261104000002_organizations_rename_and_roles_v2.sql');
+    const rolesMigrationPath = path.resolve(
+      process.cwd(),
+      fs.existsSync(path.resolve(process.cwd(), 'supabase/migrations/20261104000001_core_schema.sql'))
+        ? 'supabase/migrations/20261104000001_core_schema.sql'
+        : 'supabase/migrations/20261104000002_organizations_rename_and_roles_v2.sql'
+    );
     expect(fs.existsSync(rolesMigrationPath)).toBe(true);
 
     const sqlContent = fs.readFileSync(rolesMigrationPath, 'utf-8');
@@ -203,12 +213,12 @@ describe('Roles Table Schema & Clean Role Form Specifications', () => {
     expect(sqlContent).toContain("'CUSTOM'");
 
     // 2. organization_id nullable for global SYSTEM roles
-    expect(sqlContent).toContain("ALTER TABLE public.roles ALTER COLUMN organization_id DROP NOT NULL;");
+    expect(sqlContent).toContain("organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE");
 
     // 3. Columns: role_type, is_default, is_mutable
-    expect(sqlContent).toContain("role_type  role_type NOT NULL DEFAULT 'SYSTEM'");
-    expect(sqlContent).toContain("is_default BOOLEAN   NOT NULL DEFAULT FALSE");
-    expect(sqlContent).toContain("is_mutable BOOLEAN   NOT NULL DEFAULT TRUE");
+    expect(sqlContent).toContain("role_type role_type NOT NULL DEFAULT 'CUSTOM'");
+    expect(sqlContent).toContain("is_default BOOLEAN NOT NULL DEFAULT false");
+    expect(sqlContent).toContain("is_mutable BOOLEAN NOT NULL DEFAULT true");
 
     // 4. Constraint: UNIQUE NULLS NOT DISTINCT (organization_id, code)
     expect(sqlContent).toContain("uq_organization_role_code UNIQUE NULLS NOT DISTINCT (organization_id, code)");

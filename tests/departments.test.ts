@@ -32,7 +32,9 @@ describe('Department SQL Migration & Schema Adherence', () => {
   it('verifies SQL migration file exists with requested fields and constraints', () => {
     const migrationPath = path.resolve(
       process.cwd(),
-      'supabase/migrations/20261104000003_departments_hierarchy_v2.sql'
+      fs.existsSync(path.resolve(process.cwd(), 'supabase/migrations/20261104000001_core_schema.sql'))
+        ? 'supabase/migrations/20261104000001_core_schema.sql'
+        : 'supabase/migrations/20261104000003_departments_hierarchy_v2.sql'
     );
     expect(fs.existsSync(migrationPath)).toBe(true);
 
@@ -45,12 +47,14 @@ describe('Department SQL Migration & Schema Adherence', () => {
     expect(sqlContent).toContain('tree_path TEXT');
     expect(sqlContent).toContain('uq_departments_organization_code');
 
-    // Sample seeds:
-    expect(sqlContent).toContain("'OPG'");
-    expect(sqlContent).toContain("'Office of the Provincial Governor'");
-    expect(sqlContent).toContain("'OPG-ITD'");
-    expect(sqlContent).toContain("'IT Division'");
-    expect(sqlContent).toContain("'OPG-PIO'");
+    // Sample seeds in seed.sql or migration:
+    const seedPath = path.resolve(process.cwd(), 'supabase/seed.sql');
+    const seedContent = fs.existsSync(seedPath) ? fs.readFileSync(seedPath, 'utf-8') : sqlContent;
+    expect(seedContent).toContain("'OPG'");
+    expect(seedContent).toContain("'Office of the Provincial Governor'");
+    expect(seedContent).toContain("'OPG-ITD'");
+    expect(seedContent).toContain("'IT Division'");
+    expect(seedContent).toContain("'OPG-PIO'");
   });
 });
 

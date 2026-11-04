@@ -46,9 +46,11 @@ export class UserController {
 
   public async listUsers(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = req.user!.tenantId;
+      const isSuper = req.user?.isSuperAdmin;
+      const requestedOrgId = (req.query.organizationId as string) || (req.query.tenantId as string);
+      const tenantId = requestedOrgId || (isSuper ? undefined : req.user?.tenantId);
       const users = userService.getUsersByTenant(tenantId);
-      res.status(200).json({ tenantId, users });
+      res.status(200).json({ success: true, count: users.length, tenantId, users, data: users });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
