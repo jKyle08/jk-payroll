@@ -249,28 +249,31 @@ export class AuthService {
     let tenantName = 'Default Organization';
     let tenantCode = 'APEX-HLTH';
     if (profile.organization_id) {
-      const { data: tenant } = await adminClient
-        .from('organizations')
-        .select('id, name, code')
-        .eq('id', profile.organization_id)
-        .single();
-      if (tenant) {
-        tenantName = tenant.name;
-        tenantCode = tenant.code;
-      }
-
       // Organization Access & Expiration Enforcement:
       // SuperAdmin company dates are null (no expiration time bomb).
       // For tenant companies, if endDate is past, users under that company cannot log in.
-      if (!profile.is_super_admin) {
-        const tenantRecord = db.getTenantById(profile.organization_id);
-        if (tenantRecord?.endDate) {
-          const expirationTime = new Date(tenantRecord.endDate).getTime();
-          if (expirationTime < Date.now()) {
-            throw new Error(
-              'Organization subscription or access period has expired. Users under this company cannot log in.'
-            );
-          }
+      const tenantRecord = db.getTenantById(profile.organization_id);
+      if (!profile.is_super_admin && tenantRecord?.endDate) {
+        const expirationTime = new Date(tenantRecord.endDate).getTime();
+        if (expirationTime < Date.now()) {
+          throw new Error(
+            'Organization subscription or access period has expired. Users under this company cannot log in.'
+          );
+        }
+      }
+
+      if (tenantRecord) {
+        tenantName = tenantRecord.name;
+        tenantCode = tenantRecord.code;
+      } else {
+        const { data: tenant } = await adminClient
+          .from('organizations')
+          .select('id, name, code')
+          .eq('id', profile.organization_id)
+          .single();
+        if (tenant) {
+          tenantName = tenant.name;
+          tenantCode = tenant.code;
         }
       }
     }
@@ -278,19 +281,26 @@ export class AuthService {
     // 3. Fetch Department
     let departmentName = 'General Department';
     if (profile.department_id) {
-      const { data: dept } = await adminClient
-        .from('departments')
-        .select('id, name, code')
-        .eq('id', profile.department_id)
-        .single();
-      if (dept) {
-        departmentName = dept.name;
+      const localDept = db.getDepartmentById(profile.department_id);
+      if (localDept) {
+        departmentName = localDept.name;
+      } else {
+        const { data: dept } = await adminClient
+          .from('departments')
+          .select('id, name, code')
+          .eq('id', profile.department_id)
+          .single();
+        if (dept) {
+          departmentName = dept.name;
+        }
       }
     }
 
     // 4. Fetch Effective Permissions (with View expansion)
     let permissions: string[] = [];
-    if (profile.is_super_admin) {
+    if (localProfile) {
+      permissions = db.getUserEffectivePermissions(profile.organization_id, userId);
+    } else if (profile.is_super_admin) {
       const { data: allActions } = await adminClient
         .from('module_actions')
         .select('full_key');

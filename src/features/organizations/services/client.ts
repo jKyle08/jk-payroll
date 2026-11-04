@@ -10,6 +10,7 @@ import {
 } from '../types.js';
 import {
   CreateOrganizationInput,
+  CreateOrganizationFormInput,
   UpdateOrganizationInput,
 } from '../organization.schema.js';
 
@@ -106,7 +107,7 @@ export async function fetchOrganizationById(id: string): Promise<Organization> {
  * Provision / Create a new organization
  */
 export async function createOrganization(
-  data: CreateOrganizationInput
+  data: CreateOrganizationInput | CreateOrganizationFormInput
 ): Promise<Organization> {
   return apiRequest<Organization>(BASE_URL, {
     method: 'POST',

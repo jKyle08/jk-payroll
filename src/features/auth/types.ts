@@ -37,3 +37,6 @@ export interface AuthResponse {
   token: string;
   user: UserSessionData;
 }
+
+/** Authenticated user shape used by client hooks */
+export type AuthUser = UserSessionData;

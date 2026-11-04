@@ -17,21 +17,30 @@ import {
 } from './types.js';
 import {
   CreateOrganizationInput,
+  CreateOrganizationFormInput,
   UpdateOrganizationInput,
 } from './organization.schema.js';
 
-async function withSupabaseTimeout<T>(promise: Promise<T> | any, timeoutMs = 1200): Promise<T | null> {
-  let timer: any;
+interface SupabaseResult<T> {
+  data: T | null;
+  error: any;
+}
+
+async function withSupabaseTimeout<T = any>(
+  promise: PromiseLike<T> | Promise<T>,
+  timeoutMs = 1200
+): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<null>((resolve) => {
     timer = setTimeout(() => resolve(null), timeoutMs);
   });
   try {
-    const res = await Promise.race([promise, timeoutPromise]);
-    return res as T;
+    const res = await Promise.race([Promise.resolve(promise), timeoutPromise]);
+    return res as T | null;
   } catch {
     return null;
   } finally {
-    clearTimeout(timer);
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -123,30 +132,35 @@ export class OrganizationService {
     // 1. Sync from remote Supabase database if available
     try {
       const supabase = getSupabaseClient();
-      const res = await withSupabaseTimeout(
+      const res = await withSupabaseTimeout<SupabaseResult<any[]>>(
         supabase
           .from('organizations')
           .select('*')
           .order('created_at', { ascending: false })
       );
 
-      if (res && !res.error && res.data) {
+      if (res && !res.error && Array.isArray(res.data)) {
         for (const row of res.data) {
           if (!db.tenants.has(row.id)) {
             const code = row.code || 'ORG';
-            db.tenants.set(row.id, {
+            const tenantRecord: Tenant = {
               id: row.id,
               name: row.name,
               code: code,
               isActive: row.is_active !== undefined ? row.is_active : true,
               industry: row.industry,
               domain: row.domain || `${code.toLowerCase()}.com`,
-              planTier: row.plan_tier || 'Enterprise',
-              startDate: row.start_date || null,
-              endDate: row.end_date || null,
+              planTier: row.plan_tier || row.tier || 'Enterprise',
+              adminName: row.admin_name,
+              adminEmail: row.admin_email,
+              adminUsername: row.admin_username,
+              adminTitle: row.admin_title,
+              startDate: row.start_date ?? null,
+              endDate: row.end_date ?? null,
               createdAt: new Date(row.created_at || Date.now()),
               updatedAt: new Date(row.updated_at || Date.now()),
-            });
+            };
+            db.tenants.set(row.id, tenantRecord);
           }
         }
       }
@@ -177,8 +191,9 @@ export class OrganizationService {
         const matchesStatus =
           !filters.status || filters.status === 'All' || org.status === filters.status;
 
+        const activeTier = filters.tier !== undefined && filters.tier !== 'All' ? filters.tier : filters.planTier;
         const matchesTier =
-          !filters.tier || filters.tier === 'All' || org.planTier === filters.tier;
+          !activeTier || activeTier === 'All' || org.planTier === activeTier;
 
         return matchesSearch && matchesStatus && matchesTier;
       });
@@ -207,7 +222,7 @@ export class OrganizationService {
       // Query remote database
       try {
         const supabase = getSupabaseClient();
-        const res = await withSupabaseTimeout(
+        const res = await withSupabaseTimeout<SupabaseResult<any>>(
           supabase
             .from('organizations')
             .select('*')
@@ -224,7 +239,13 @@ export class OrganizationService {
             isActive: row.is_active !== undefined ? row.is_active : true,
             industry: row.industry,
             domain: row.domain,
-            planTier: row.plan_tier,
+            planTier: row.plan_tier || row.tier,
+            adminName: row.admin_name,
+            adminEmail: row.admin_email,
+            adminUsername: row.admin_username,
+            adminTitle: row.admin_title,
+            startDate: row.start_date ?? null,
+            endDate: row.end_date ?? null,
             createdAt: new Date(row.created_at || Date.now()),
             updatedAt: new Date(row.updated_at || Date.now()),
           };
@@ -245,9 +266,11 @@ export class OrganizationService {
   /**
    * Provisions a new organization and root administrator in the database
    */
-  public async createOrganization(data: CreateOrganizationInput): Promise<Organization> {
-    const slug = `org_${data.code.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+  public async createOrganization(
+    data: CreateOrganizationInput | CreateOrganizationFormInput
+  ): Promise<Organization> {
     const id = `t-${data.code.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+    const status = data.status || 'Active';
 
     // Enforce Core Module locking & Add-On dependency resolution
     const { resolvedModules } = resolveModuleDependencies(data.modules || []);
@@ -257,7 +280,7 @@ export class OrganizationService {
       id,
       name: data.name,
       code: data.code,
-      isActive: data.status === 'Active',
+      isActive: status === 'Active',
       industry: data.industry || 'Technology & Software',
       domain: data.domain || `${data.code.toLowerCase()}.com`,
       adminName: data.admin.fullName,
@@ -265,9 +288,9 @@ export class OrganizationService {
       adminUsername: data.admin.username || data.admin.email.split('@')[0],
       adminTitle: data.admin.title || 'Organization Administrator',
       modules: resolvedModules,
-      planTier: data.planTier,
-      startDate: data.startDate || null,
-      endDate: data.endDate || null,
+      planTier: data.planTier || 'Enterprise',
+      startDate: typeof data.startDate === 'string' && data.startDate ? data.startDate : null,
+      endDate: typeof data.endDate === 'string' && data.endDate ? data.endDate : null,
     });
 
     // 2. Provision Admin profile in database
@@ -302,7 +325,7 @@ export class OrganizationService {
           id: tenant.id,
           name: data.name,
           code: data.code,
-          is_active: data.status === 'Active',
+          is_active: status === 'Active',
         })
       );
     } catch (err) {
@@ -356,6 +379,19 @@ export class OrganizationService {
     });
 
     if (!updated) return undefined;
+
+    // Keep admin profile in db.profiles in sync
+    if (data.admin) {
+      const tenantProfiles = Array.from(db.profiles.values()).filter(
+        (p) => p.tenantId === id
+      );
+      const adminProfile = tenantProfiles.find((p) => p.isTenantAdmin || p.isSuperAdmin);
+      if (adminProfile) {
+        if (data.admin.fullName) adminProfile.fullName = data.admin.fullName;
+        if (data.admin.email) adminProfile.email = data.admin.email;
+        adminProfile.updatedAt = new Date();
+      }
+    }
 
     // Sync to Supabase
     try {
@@ -417,6 +453,12 @@ export class OrganizationService {
    */
   public async deleteOrganization(id: string): Promise<boolean> {
     const deleted = db.deleteTenant(id);
+    for (const [profId, profile] of db.profiles.entries()) {
+      if (profile.tenantId === id) db.profiles.delete(profId);
+    }
+    for (const [deptId, dept] of db.departments.entries()) {
+      if (dept.organizationId === id || dept.tenantId === id) db.departments.delete(deptId);
+    }
     try {
       const supabase = getSupabaseClient();
       await supabase.from('organizations').delete().eq('id', id);

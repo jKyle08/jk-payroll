@@ -5,7 +5,6 @@
 
 import { Router } from 'express';
 import { authRoutes } from '../features/auth/auth.routes.js';
-import { tenantRoutes } from '../features/tenants/tenant.routes.js';
 import { organizationRoutes } from '../features/organizations/organization.routes.js';
 import { departmentRoutes } from '../features/departments/department.routes.js';
 import { roleRoutes } from '../features/roles/role.routes.js';
@@ -14,12 +13,13 @@ import { userRoutes } from '../features/users/user.routes.js';
 import { leaveRoutes } from '../features/leave-management/leave.routes.js';
 import { payrollRoutes } from '../features/payroll/payroll.routes.js';
 import { accessControlRoutes } from '../features/access-control/access-control.routes.js';
+import { auditLogsRoutes } from '../features/audit-logs/audit-logs.routes.js';
 
 import { authMiddleware, requireSuperAdmin, requireTenantAdmin } from '../middleware/auth.middleware.js';
 import { requirePermission } from '../middleware/rbac.guard.js';
 import { departmentController } from '../features/departments/department.controller.js';
 import { userController } from '../features/users/user.controller.js';
-import { tenantController } from '../features/tenants/tenant.controller.js';
+import { organizationController } from '../features/organizations/organization.controller.js';
 import { leaveController } from '../features/leave-management/leave.controller.js';
 
 export const apiRouter = Router();
@@ -33,8 +33,8 @@ apiRouter.get('/health', (_req, res) => {
 // Domain / Feature-First Routes
 // ------------------------------------------------------------------------------
 apiRouter.use('/auth', authRoutes);
-apiRouter.use('/tenants', tenantRoutes);
 apiRouter.use('/organizations', organizationRoutes);
+apiRouter.use('/tenants', organizationRoutes); // Backward-compatibility alias pointing to organizationRoutes
 apiRouter.use('/departments', departmentRoutes);
 apiRouter.use('/roles', roleRoutes);
 apiRouter.use('/user-roles', userRoleRoutes);
@@ -42,6 +42,8 @@ apiRouter.use('/users', userRoutes);
 apiRouter.use('/leaves', leaveRoutes);
 apiRouter.use('/payroll', payrollRoutes);
 apiRouter.use('/access-control', accessControlRoutes);
+apiRouter.use('/audit-logs', auditLogsRoutes);
+apiRouter.use('/audits', auditLogsRoutes);
 
 // ------------------------------------------------------------------------------
 // Backward-Compatibility Aliases (for existing tests & integrations)
@@ -50,8 +52,8 @@ apiRouter.use('/access-control', accessControlRoutes);
 // 1. /api/super-admin
 const superAdminCompat = Router();
 superAdminCompat.use(authMiddleware, requireSuperAdmin);
-superAdminCompat.post('/tenants', (req, res) => tenantController.createTenant(req, res));
-superAdminCompat.put('/tenants/:id/modules', (req, res) => tenantController.setTenantModules(req, res));
+superAdminCompat.post('/tenants', (req, res) => organizationController.createOrganization(req, res));
+superAdminCompat.put('/tenants/:id/modules', (req, res) => organizationController.updateModules(req, res));
 apiRouter.use('/super-admin', superAdminCompat);
 
 // 2. /api/tenant

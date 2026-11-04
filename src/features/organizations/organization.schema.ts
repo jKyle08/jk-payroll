@@ -10,6 +10,18 @@ export const organizationPlanEnum = z.enum(['Enterprise', 'Standard', 'Starter']
 export const organizationStatusEnum = z.enum(['Active', 'Onboarding', 'Suspended']);
 
 /**
+ * Date helpers: blank strings become null; an omitted value stays undefined on update
+ */
+const normalizeDate = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() !== '' ? value : null;
+
+const createDateField = z.preprocess(normalizeDate, z.string().nullable());
+const updateDateField = z.preprocess(
+  (value: unknown) => (value === undefined ? undefined : normalizeDate(value)),
+  z.string().nullable().optional()
+);
+
+/**
  * Validation schema for provisioning a new organization with root admin
  */
 export const createOrganizationSchema = z.object({
@@ -43,17 +55,9 @@ export const createOrganizationSchema = z.object({
     existingUserId: z.string().optional(),
   }),
   // Initial allocated module codes
-  modules: z.array(z.string()).default(['Department', 'EmployeeProfile', 'UserRole']),
-  startDate: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((val) => (val && val.trim() !== '' ? val : null)),
-  endDate: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((val) => (val && val.trim() !== '' ? val : null)),
+  modules: z.array(z.string()).default(['Department', 'EmployeeProfile', 'RolePermission']),
+  startDate: createDateField,
+  endDate: createDateField,
 });
 
 export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;
@@ -68,16 +72,8 @@ export const updateOrganizationSchema = z.object({
   industry: z.string().max(80).optional(),
   planTier: organizationPlanEnum.optional(),
   status: organizationStatusEnum.optional(),
-  startDate: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((val) => (val && val.trim() !== '' ? val : null)),
-  endDate: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((val) => (val && val.trim() !== '' ? val : null)),
+  startDate: updateDateField,
+  endDate: updateDateField,
   admin: z
     .object({
       fullName: z.string().min(2).max(100).optional(),

@@ -532,9 +532,9 @@
             <span class="sidebar-label truncate text-left flex-1">User Overrides</span>
           </button>
           <button
-            onclick="switchModule('permissions')"
+            onclick="switchModule('audit-logs')"
             id="nav-audit-logs"
-            class="nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-[#475569] hover:text-[#111827] hover:bg-[#F1F5F9]/70 transition-all relative"
+            class="nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-[#475569] hover:text-[#111827] hover:bg-[#F1F5F9]/70 transition-all relative cursor-pointer"
           >
             <i data-lucide="file-check-2" class="w-4 h-4 text-[#6B7280] flex-shrink-0"></i>
             <span class="sidebar-label truncate text-left flex-1">Audit Logs</span>
@@ -3031,6 +3031,298 @@
           <!-- Dynamically populated -->
         </div>
       </div>
+
+      <!-- ================================================================== -->
+      <!-- VIEW 6: AUDIT LOGS (Ultra-Low-Latency Zero-Join Point-in-Time)    -->
+      <!-- ================================================================== -->
+      <div id="view-audit-logs" class="module-view hidden space-y-6 pb-12">
+        <!-- Top Breadcrumb & Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-slate-800">
+          <div>
+            <div class="flex items-center space-x-2 mb-1.5 text-xs text-[#6B7280]">
+              <span>Security & Governance</span>
+              <span class="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
+              <span class="font-semibold text-[#111827] dark:text-slate-200">Audit Logs</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <h1 class="text-2xl font-bold text-[#111827] dark:text-white flex items-center gap-2.5 tracking-tight">
+                <i data-lucide="file-check-2" class="w-6 h-6 text-[#0F172A] dark:text-white"></i>
+                Audit Trail & Governance Logs
+              </h1>
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Zero-Join In-Memory Snapshots
+              </span>
+            </div>
+            <p class="text-xs text-[#6B7280] dark:text-slate-400 mt-1 max-w-2xl">
+              Point-in-time immutable audit records capturing the human-readable state of actors, assigned roles, department trees, and granular field-level diffs at the millisecond of mutation.
+            </p>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex items-center gap-2.5">
+            <button
+              type="button"
+              onclick="loadAuditLogsFromDatabase()"
+              class="h-9 px-3.5 rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-700 text-xs font-semibold text-[#475569] dark:text-slate-200 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              title="Refresh Audit Logs"
+            >
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#6B7280]"></i>
+              <span>Refresh</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="exportAuditLogsCSV()"
+              class="h-9 px-3.5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              title="Export filtered logs to CSV"
+            >
+              <i data-lucide="download" class="w-3.5 h-3.5 text-white"></i>
+              <span>Export CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Metric Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between text-xs text-[#6B7280] font-medium mb-1">
+              <span>Total Audit Events</span>
+              <i data-lucide="database" class="w-4 h-4 text-[#0F172A]"></i>
+            </div>
+            <div class="text-2xl font-bold text-[#111827] dark:text-white font-mono tabular-nums" id="audit-stat-total">
+              0
+            </div>
+            <p class="text-[10px] text-[#94A3B8] mt-0.5">Unified single append-only table</p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between text-xs text-emerald-600 font-medium mb-1">
+              <span>Record Creations</span>
+              <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i>
+            </div>
+            <div class="text-2xl font-bold text-[#111827] dark:text-white font-mono tabular-nums" id="audit-stat-creates">
+              0
+            </div>
+            <p class="text-[10px] text-[#94A3B8] mt-0.5">New entity provisions</p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between text-xs text-blue-600 font-medium mb-1">
+              <span>Mutations & Updates</span>
+              <i data-lucide="edit-3" class="w-4 h-4 text-blue-600"></i>
+            </div>
+            <div class="text-2xl font-bold text-[#111827] dark:text-white font-mono tabular-nums" id="audit-stat-updates">
+              0
+            </div>
+            <p class="text-[10px] text-[#94A3B8] mt-0.5">Field-level state modifications</p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between text-xs text-rose-600 font-medium mb-1">
+              <span>Deletions & Revocations</span>
+              <i data-lucide="trash-2" class="w-4 h-4 text-rose-600"></i>
+            </div>
+            <div class="text-2xl font-bold text-[#111827] dark:text-white font-mono tabular-nums" id="audit-stat-deletes">
+              0
+            </div>
+            <p class="text-[10px] text-[#94A3B8] mt-0.5">Purged or revoked resources</p>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-sm space-y-3">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <!-- Left Search Bar -->
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input
+                type="text"
+                id="audit-search-input"
+                oninput="handleAuditSearchChange()"
+                placeholder="Search actor name, email, role, entity type or ID..."
+                class="w-full h-10 pl-9 pr-4 rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-[#FBFBFC] dark:bg-slate-800/60 text-xs text-[#111827] dark:text-slate-100 placeholder-[#94A3B8] focus:outline-none focus:ring-1 focus:ring-[#0F172A] focus:border-[#0F172A]"
+              />
+            </div>
+
+            <!-- Organization Filter -->
+            <div class="w-full sm:w-56" id="audit-org-filter-group">
+              <select
+                id="audit-filter-org"
+                onchange="loadAuditLogsFromDatabase()"
+                class="w-full h-10 px-3 rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-[#FBFBFC] dark:bg-slate-800/60 text-xs font-medium text-[#111827] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#0F172A]"
+              >
+                <option value="All">All Organizations</option>
+              </select>
+            </div>
+
+            <!-- Module Filter -->
+            <div class="w-full sm:w-44">
+              <select
+                id="audit-filter-module"
+                onchange="loadAuditLogsFromDatabase()"
+                class="w-full h-10 px-3 rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-[#FBFBFC] dark:bg-slate-800/60 text-xs font-medium text-[#111827] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#0F172A]"
+              >
+                <option value="All">All Modules</option>
+                <option value="ORGANIZATION">Organization</option>
+                <option value="DEPARTMENTS">Departments</option>
+                <option value="RBAC">RBAC & Roles</option>
+                <option value="USER_ROLES">User Roles</option>
+                <option value="PROFILES">Profiles</option>
+              </select>
+            </div>
+
+            <!-- Action Filter -->
+            <div class="w-full sm:w-36">
+              <select
+                id="audit-filter-action"
+                onchange="loadAuditLogsFromDatabase()"
+                class="w-full h-10 px-3 rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-[#FBFBFC] dark:bg-slate-800/60 text-xs font-medium text-[#111827] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#0F172A]"
+              >
+                <option value="All">All Actions</option>
+                <option value="CREATE">CREATE</option>
+                <option value="UPDATE">UPDATE</option>
+                <option value="DELETE">DELETE</option>
+                <option value="RESTORE">RESTORE</option>
+                <option value="LOGIN">LOGIN</option>
+                <option value="EXPORT">EXPORT</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Table Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#F8FAFC] dark:bg-slate-800/80 border-b border-[#E5E7EB] dark:border-slate-800 text-[11px] font-bold text-[#6B7280] dark:text-slate-400 select-none uppercase tracking-wider font-mono">
+                <tr>
+                  <th class="py-3.5 pl-5 pr-3">Timestamp / Network</th>
+                  <th class="py-3.5 px-3">Actor Snapshot</th>
+                  <th class="py-3.5 px-3">Role & Department Context</th>
+                  <th class="py-3.5 px-3">Module & Entity Target</th>
+                  <th class="py-3.5 px-3">Action</th>
+                  <th class="py-3.5 pl-3 pr-5 text-right">Point-in-Time Data</th>
+                </tr>
+              </thead>
+              <tbody id="audit-table-body" class="divide-y divide-[#E5E7EB] dark:divide-slate-800 text-[#111827] dark:text-slate-200">
+                <!-- Dynamically populated via renderAuditLogs() -->
+                <tr>
+                  <td colspan="6" class="py-12 text-center text-[#94A3B8]">
+                    <div class="flex flex-col items-center justify-center gap-2">
+                      <i data-lucide="loader" class="w-5 h-5 animate-spin text-[#0F172A]"></i>
+                      <span class="text-xs font-medium">Loading point-in-time audit snapshots...</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Table Footer Pagination & Status -->
+          <div class="px-5 py-3.5 border-t border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-900/60 flex items-center justify-between text-xs text-[#6B7280]">
+            <div class="flex items-center gap-2">
+              <span id="audit-pagination-info">Showing 0 of 0 entries</span>
+              <span class="text-[#CBD5E1]">•</span>
+              <span class="text-[11px] text-emerald-600 flex items-center gap-1 font-mono">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                Tamper-evident append-only guarantee
+              </span>
+            </div>
+            <div class="flex items-center gap-2" id="audit-pagination-controls">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- MODAL: POINT-IN-TIME SNAPSHOT & JSON DIFF VIEWER                  -->
+      <!-- ================================================================== -->
+      <div id="audit-detail-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl shadow-2xl border border-[#E5E7EB] dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+          <!-- Modal Header -->
+          <div class="p-4 sm:p-5 border-b border-[#E5E7EB] dark:border-slate-800 flex items-center justify-between bg-[#FBFBFC] dark:bg-slate-800/50">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-[#0F172A] text-white flex items-center justify-center">
+                <i data-lucide="file-json" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-[#111827] dark:text-white flex items-center gap-2">
+                  <span>Point-in-Time Snapshot Inspection</span>
+                  <span id="modal-audit-action-badge"></span>
+                </h3>
+                <p class="text-[11px] text-[#6B7280]" id="modal-audit-subtitle">Audit Record</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onclick="closeAuditLogDetailModal()"
+              class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-[#6B7280] hover:text-[#111827] flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Modal Body with Scrollable Snapshot Inspector -->
+          <div class="p-5 overflow-y-auto space-y-4 text-xs custom-scrollbar">
+            <!-- Actor Snapshot Bar -->
+            <div class="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800/60 border border-[#E5E7EB] dark:border-slate-700/60 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
+              <div>
+                <span class="text-[#94A3B8] block text-[10px] uppercase font-mono">Actor Name</span>
+                <span class="font-semibold text-[#111827] dark:text-white" id="modal-actor-name">-</span>
+              </div>
+              <div>
+                <span class="text-[#94A3B8] block text-[10px] uppercase font-mono">Actor Email</span>
+                <span class="font-mono text-[#475569] dark:text-slate-300 truncate block" id="modal-actor-email">-</span>
+              </div>
+              <div>
+                <span class="text-[#94A3B8] block text-[10px] uppercase font-mono">Role at Mutation</span>
+                <span class="font-medium text-[#111827] dark:text-white" id="modal-actor-role">-</span>
+              </div>
+              <div>
+                <span class="text-[#94A3B8] block text-[10px] uppercase font-mono">Department Context</span>
+                <span class="font-medium text-[#111827] dark:text-white" id="modal-actor-dept">-</span>
+              </div>
+            </div>
+
+            <!-- Network & Client Context -->
+            <div class="flex items-center gap-3 text-[11px] text-[#6B7280]">
+              <span class="flex items-center gap-1 font-mono">
+                <i data-lucide="globe" class="w-3.5 h-3.5 text-[#94A3B8]"></i>
+                <span id="modal-ip-address">127.0.0.1</span>
+              </span>
+              <span class="text-[#D1D5DB]">•</span>
+              <span class="truncate max-w-md font-mono text-[10px]" id="modal-user-agent">-</span>
+            </div>
+
+            <!-- Changes View (Side by side for UPDATE, single for CREATE/DELETE) -->
+            <div id="modal-diff-container" class="space-y-3">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="p-4 border-t border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/50 flex items-center justify-between">
+            <button
+              type="button"
+              onclick="copyModalJSONToClipboard()"
+              class="h-9 px-3.5 rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-[#F8FAFC] text-xs font-semibold text-[#475569] dark:text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <i data-lucide="copy" class="w-3.5 h-3.5 text-[#6B7280]"></i>
+              <span id="modal-copy-btn-text">Copy Raw JSON</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="closeAuditLogDetailModal()"
+              class="h-9 px-5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-all cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
       </div><!-- End module-views-container -->
 
       <!-- APPLICATION FOOTER (jko.tech & PayPulse) -->
@@ -3102,6 +3394,17 @@
 
   <!-- Client Script for Interactive Logic -->
   <script>
+    // Universal HTML entity encoder to prevent XSS and ReferenceErrors
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     let currentUser = null;
     let authToken = null;
     let currentModule = 'dashboard';
@@ -3131,32 +3434,97 @@
       { id: 'usr-7', name: 'Sophia Al-Mansoor', email: 'sophia.m@enterprise.net', username: 'smansoor', title: 'Corporate Compliance Officer', currentRole: 'Legal & Risk Lead', dept: 'Legal & Compliance' }
     ];
 
-    // Seed Roles Store (Matching public.roles Schema v2)
+    // Seed Roles Store (Matching public.roles Canonical System Roles)
     let sampleRoles = [
       {
-        id: 'c0000000-0000-0000-0000-000000000001',
+        id: 'f0000000-0000-0000-0000-000000000001',
         organizationId: null,
         organizationName: 'Global Platform',
         code: 'SUPER_ADMIN',
-        name: 'Super Administrator',
-        description: 'Full unrestricted platform-wide administrative control across all organizations and modules.',
+        name: 'Platform Super Administrator',
+        description: 'Full platform-level infrastructure control. Manages system roles, global permission definitions, and tenant provisioning. No access to sensitive tenant payroll data.',
         roleType: 'SYSTEM',
-        isDefault: false,
+        isDefault: true,
         isMutable: false,
         assignedUsers: 1,
         createdAt: '2026-11-01'
       },
       {
-        id: 'c0000000-0000-0000-0000-000000000002',
+        id: 'f0000000-0000-0000-0000-000000000002',
         organizationId: null,
         organizationName: 'Global Platform',
-        code: 'ADMIN',
-        name: 'Administrator',
-        description: 'Organization-level administrator with full departmental and policy configuration control.',
+        code: 'TENANT_ADMIN',
+        name: 'Organization Administrator',
+        description: 'Administrative authority within the organization. Configures departments, cost centers, positions, shifts, and manages tenant user invitations and role assignments.',
         roleType: 'SYSTEM',
-        isDefault: false,
+        isDefault: true,
         isMutable: false,
         assignedUsers: 1,
+        createdAt: '2026-11-01'
+      },
+      {
+        id: 'f0000000-0000-0000-0000-000000000008',
+        organizationId: null,
+        organizationName: 'Global Platform',
+        code: 'TIMEKEEPER',
+        name: 'HR / Timekeeper',
+        description: 'Manages time and attendance operations, biometric punch sync, DTR corrections, shift assignments, and cutoff timesheet locks. Restricted from viewing compensation rates.',
+        roleType: 'SYSTEM',
+        isDefault: true,
+        isMutable: false,
+        assignedUsers: 1,
+        createdAt: '2026-11-01'
+      },
+      {
+        id: 'f0000000-0000-0000-0000-000000000009',
+        organizationId: null,
+        organizationName: 'Global Platform',
+        code: 'PAYROLL_OFFICER',
+        name: 'Payroll Specialist',
+        description: 'Prepares and executes payroll calculations. Manages earnings, recurring allowances, loan ledgers, statutory contributions, and generates draft payroll registers.',
+        roleType: 'SYSTEM',
+        isDefault: true,
+        isMutable: false,
+        assignedUsers: 0,
+        createdAt: '2026-11-01'
+      },
+      {
+        id: 'f0000000-0000-0000-0000-00000000000a',
+        organizationId: null,
+        organizationName: 'Global Platform',
+        code: 'PAYROLL_APPROVER',
+        name: 'Certifying Officer / Approver',
+        description: 'Reviews computed payroll registers, variance audits, and statutory summaries. Authorizes or rejects payroll runs. Cannot compute runs or generate payout files.',
+        roleType: 'SYSTEM',
+        isDefault: true,
+        isMutable: false,
+        assignedUsers: 0,
+        createdAt: '2026-11-01'
+      },
+      {
+        id: 'f0000000-0000-0000-0000-00000000000b',
+        organizationId: null,
+        organizationName: 'Global Platform',
+        code: 'DISBURSING_OFFICER',
+        name: 'Disbursing Officer / Cashier',
+        description: 'Handles payout realization for approved payroll runs. Generates bank electronic advice files (e.g., LandBank, DBP, BDO Network Bank), e-wallet batches, and cash vouchers.',
+        roleType: 'SYSTEM',
+        isDefault: true,
+        isMutable: false,
+        assignedUsers: 0,
+        createdAt: '2026-11-01'
+      },
+      {
+        id: 'f0000000-0000-0000-0000-000000000003',
+        organizationId: null,
+        organizationName: 'Global Platform',
+        code: 'EMPLOYEE',
+        name: 'Employee (Self-Service)',
+        description: 'Standard self-service access. Restricted strictly to personal records: viewing and downloading payslips, BIR Form 2316, personal DTR logs, and filing leave requests.',
+        roleType: 'SYSTEM',
+        isDefault: true,
+        isMutable: false,
+        assignedUsers: 5,
         createdAt: '2026-11-01'
       },
       {
@@ -3562,6 +3930,7 @@
       const navId = (moduleId === 'tenants' || moduleId === 'tenant-access' || moduleId === 'tenant-form') ? 'nav-tenants'
                   : (moduleId === 'user-roles' || moduleId === 'user-role-form' || moduleId === 'role-form') ? 'nav-user-roles'
                   : (moduleId === 'departments' || moduleId === 'department-form') ? 'nav-departments'
+                  : (moduleId === 'audit-logs') ? 'nav-audit-logs'
                   : 'nav-' + moduleId;
       const activeNav = document.getElementById(navId);
       if (activeNav) {
@@ -3603,6 +3972,11 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (moduleId === 'department-form') {
         document.getElementById('view-department-form')?.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (moduleId === 'audit-logs') {
+        document.getElementById('view-audit-logs')?.classList.remove('hidden');
+        populateAuditLogOrgDropdown();
+        loadAuditLogsFromDatabase();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         const activeView = document.getElementById('view-' + moduleId);
@@ -3771,6 +4145,10 @@
 
         authToken = data.token;
         currentUser = data.user;
+        try {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
+        } catch (_) {}
         showDashboard(data.user);
       } catch (err) {
         errBox.innerText = err.message;
@@ -3841,6 +4219,7 @@
       loadUsersFromDatabase();
       loadUserRolesFromDatabase();
       renderTenantAccessView();
+      populateAuditLogOrgDropdown();
       syncOrganizationFilterVisibility();
       lucide.createIcons();
     }
@@ -3848,6 +4227,10 @@
     function handleSignOut() {
       authToken = null;
       currentUser = null;
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser');
+      } catch (_) {}
       syncOrganizationFilterVisibility();
 
       // Close popovers if open
@@ -4499,9 +4882,14 @@
 
     // Load Organizations / Tenants Directly from Database API (/api/organizations or /api/tenants)
     async function loadTenantsFromDatabase() {
+      const token = authToken || localStorage.getItem('token');
+      if (!token) {
+        populateOrganizationDropdowns();
+        return;
+      }
+
       try {
-        const headers = {};
-        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+        const headers = { 'Authorization': `Bearer ${token}` };
 
         let res = await fetch('/api/organizations', { headers }).catch(() => null);
         if (!res || !res.ok) {
@@ -4541,6 +4929,9 @@
     function populateOrganizationDropdowns() {
       const orgs = sampleTenants || [];
       if (orgs.length === 0) return;
+
+      // Populate Audit Logs Organization Dropdown
+      populateAuditLogOrgDropdown();
 
       // 1. Department filter org dropdown (#dept-filter-org)
       const deptFilterOrg = document.getElementById('dept-filter-org');
@@ -4617,11 +5008,16 @@
     }
 
     async function loadUsersFromDatabase() {
+      const token = authToken || localStorage.getItem('token');
+      if (!token) {
+        populateUserRoleFormSelects();
+        return;
+      }
+
       try {
-        const token = authToken || localStorage.getItem('token');
         const headers = {
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+          'Authorization': 'Bearer ' + token
         };
         const res = await fetch('/api/users?all=true', { headers });
         if (res.ok) {
@@ -5611,10 +6007,18 @@
     // 1. ROLES CATALOG CRUD
     // -------------------------------------------------------------------------
     async function loadRolesFromDatabase() {
+      const token = authToken || localStorage.getItem('token');
+      if (!token) {
+        updateRoleMetrics();
+        renderRoles();
+        populateUserRoleFormSelects();
+        return;
+      }
+
       try {
         const res = await fetch('/api/roles', {
           headers: {
-            ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {})
+            'Authorization': 'Bearer ' + token
           }
         });
         if (res.ok) {
@@ -5689,13 +6093,16 @@
       const isSuper = isActorSuperAdmin();
       const roleOrgGroup = document.getElementById('role-filter-org-group');
       const urOrgGroup = document.getElementById('ur-filter-org-group');
+      const auditOrgGroup = document.getElementById('audit-org-filter-group');
+      const myTenantId = currentUser?.tenantId || currentUser?.organization_id || '00000000-0000-0000-0000-000000000001';
+
       if (roleOrgGroup) {
         if (isSuper) {
           roleOrgGroup.classList.remove('hidden');
         } else {
           roleOrgGroup.classList.add('hidden');
           const roleFilterOrg = document.getElementById('role-filter-org');
-          if (roleFilterOrg) roleFilterOrg.value = currentUser?.tenantId || '00000000-0000-0000-0000-000000000001';
+          if (roleFilterOrg) roleFilterOrg.value = myTenantId;
         }
       }
       if (urOrgGroup) {
@@ -5704,7 +6111,20 @@
         } else {
           urOrgGroup.classList.add('hidden');
           const urFilterOrg = document.getElementById('ur-filter-org');
-          if (urFilterOrg) urFilterOrg.value = currentUser?.tenantId || '00000000-0000-0000-0000-000000000001';
+          if (urFilterOrg) urFilterOrg.value = myTenantId;
+        }
+      }
+      if (auditOrgGroup) {
+        const auditFilterOrg = document.getElementById('audit-filter-org');
+        if (isSuper) {
+          auditOrgGroup.classList.remove('hidden');
+          if (auditFilterOrg) auditFilterOrg.disabled = false;
+        } else {
+          auditOrgGroup.classList.add('hidden');
+          if (auditFilterOrg) {
+            auditFilterOrg.value = myTenantId;
+            auditFilterOrg.disabled = true;
+          }
         }
       }
     }
@@ -6205,10 +6625,17 @@
     // 2. USER ROLE ASSIGNMENTS CRUD
     // -------------------------------------------------------------------------
     async function loadUserRolesFromDatabase() {
+      const token = authToken || localStorage.getItem('token');
+      if (!token) {
+        updateUserRoleMetrics();
+        renderUserRoles();
+        return;
+      }
+
       try {
         const res = await fetch('/api/user-roles', {
           headers: {
-            ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {})
+            'Authorization': 'Bearer ' + token
           }
         });
         if (res.ok) {
@@ -7008,11 +7435,20 @@
     let deptPageSize = 10;
 
     async function loadDepartmentsFromDatabase() {
+      const token = authToken || localStorage.getItem('token');
+      if (!token) {
+        if (!departmentTreeData || departmentTreeData.length === 0) {
+          departmentTreeData = buildTreeFromFlat(sampleDepartments);
+        }
+        updateDepartmentMetrics();
+        renderDepartments();
+        return;
+      }
+
       try {
-        const token = authToken || localStorage.getItem('token');
         const headers = {
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+          'Authorization': 'Bearer ' + token
         };
 
         const [listRes, treeRes] = await Promise.all([
@@ -7711,6 +8147,447 @@
       }
     }
 
+    // =========================================================================
+    // AUDIT LOGS CLIENT LOGIC (Ultra-Low-Latency Zero-Join Snapshots)
+    // =========================================================================
+    let rawAuditLogs = [];
+    let auditLogStats = { total: 0, creates: 0, updates: 0, deletes: 0 };
+    let activeAuditLogDetail = null;
+    let auditCurrentPage = 1;
+    let auditPageSize = 15;
+    let auditSearchDebounceTimer = null;
+
+    function populateAuditLogOrgDropdown() {
+      const select = document.getElementById('audit-filter-org');
+      if (!select) return;
+      const orgs = sampleTenants || [];
+      const isSuper = isActorSuperAdmin();
+      const myTenantId = currentUser?.tenantId || currentUser?.organization_id;
+
+      // Non-superadmin: strictly locked to their own organization
+      if (!isSuper && myTenantId) {
+        const myOrg = orgs.find(o => o.id === myTenantId) || {
+          id: myTenantId,
+          name: currentUser?.tenantName || 'Current Organization',
+          code: currentUser?.tenantCode || 'ORG'
+        };
+        select.innerHTML = `<option value="${escapeHtml(myOrg.id)}">${escapeHtml(myOrg.name)} (${escapeHtml(myOrg.code)})</option>`;
+        select.value = myOrg.id;
+        select.disabled = true;
+        const group = document.getElementById('audit-org-filter-group');
+        if (group) group.classList.add('hidden');
+        return;
+      }
+
+      // Superadmin: full multi-tenant visibility
+      select.disabled = false;
+      const group = document.getElementById('audit-org-filter-group');
+      if (group) group.classList.remove('hidden');
+
+      const currentVal = select.value;
+      let html = '<option value="All">All Organizations (Superadmin)</option>';
+      orgs.forEach(o => {
+        html += `<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)} (${escapeHtml(o.code)})</option>`;
+      });
+      select.innerHTML = html;
+      if (currentVal && (currentVal === 'All' || orgs.some(opt => opt.id === currentVal))) {
+        select.value = currentVal;
+      } else {
+        select.value = 'All';
+      }
+    }
+
+    async function loadAuditLogsFromDatabase() {
+      const tbody = document.getElementById('audit-table-body');
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-12 text-center text-[#94A3B8]">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i data-lucide="loader" class="w-5 h-5 animate-spin text-[#0F172A]"></i>
+                <span class="text-xs font-medium">Fetching zero-join point-in-time snapshots...</span>
+              </div>
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+      }
+
+      try {
+        const token = authToken || localStorage.getItem('token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+        };
+
+        const isSuper = isActorSuperAdmin();
+        const myTenantId = currentUser?.tenantId || currentUser?.organization_id;
+
+        let orgVal = document.getElementById('audit-filter-org')?.value || 'All';
+        // For non-superadmin actors, strictly lock orgVal to their own organization
+        if (!isSuper && myTenantId) {
+          orgVal = myTenantId;
+        }
+
+        const modVal = document.getElementById('audit-filter-module')?.value || 'All';
+        const actVal = document.getElementById('audit-filter-action')?.value || 'All';
+        const searchVal = document.getElementById('audit-search-input')?.value?.trim() || '';
+
+        const params = new URLSearchParams();
+        if (orgVal && orgVal !== 'All') params.append('organizationId', orgVal);
+        if (modVal && modVal !== 'All') params.append('moduleId', modVal);
+        if (actVal && actVal !== 'All') params.append('action', actVal);
+        if (searchVal) params.append('search', searchVal);
+        params.append('limit', '100');
+
+        const res = await fetch('/api/audit-logs?' + params.toString(), { headers });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: Failed to fetch audit logs`);
+        }
+
+        const json = await res.json();
+        rawAuditLogs = json.data || [];
+        if (json.meta && json.meta.stats) {
+          auditLogStats = json.meta.stats;
+        } else {
+          auditLogStats = {
+            total: rawAuditLogs.length,
+            creates: rawAuditLogs.filter(l => l.action === 'CREATE').length,
+            updates: rawAuditLogs.filter(l => l.action === 'UPDATE').length,
+            deletes: rawAuditLogs.filter(l => l.action === 'DELETE').length,
+          };
+        }
+
+        // Update stats counters
+        document.getElementById('audit-stat-total').innerText = auditLogStats.total.toLocaleString();
+        document.getElementById('audit-stat-creates').innerText = auditLogStats.creates.toLocaleString();
+        document.getElementById('audit-stat-updates').innerText = auditLogStats.updates.toLocaleString();
+        document.getElementById('audit-stat-deletes').innerText = auditLogStats.deletes.toLocaleString();
+
+        auditCurrentPage = 1;
+        renderAuditLogs();
+      } catch (err) {
+        console.error('Audit logs error:', err);
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="py-10 text-center text-rose-500">
+                <div class="flex flex-col items-center justify-center gap-1.5">
+                  <i data-lucide="alert-triangle" class="w-6 h-6 text-rose-500"></i>
+                  <span class="text-xs font-semibold">Failed to load audit logs</span>
+                  <span class="text-[11px] text-[#6B7280]">${escapeHtml(err.message)}</span>
+                </div>
+              </td>
+            </tr>
+          `;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    function handleAuditSearchChange() {
+      clearTimeout(auditSearchDebounceTimer);
+      auditSearchDebounceTimer = setTimeout(() => {
+        loadAuditLogsFromDatabase();
+      }, 300);
+    }
+
+    function renderAuditLogs() {
+      const tbody = document.getElementById('audit-table-body');
+      if (!tbody) return;
+
+      if (!rawAuditLogs || rawAuditLogs.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-12 text-center text-[#94A3B8]">
+              <div class="flex flex-col items-center justify-center gap-1.5">
+                <i data-lucide="inbox" class="w-6 h-6 text-[#94A3B8]"></i>
+                <span class="text-xs font-semibold text-[#475569]">No audit log entries found</span>
+                <span class="text-[11px] text-[#94A3B8]">Try selecting a different filter or performing a database mutation.</span>
+              </div>
+            </td>
+          </tr>
+        `;
+        document.getElementById('audit-pagination-info').innerText = 'Showing 0 entries';
+        document.getElementById('audit-pagination-controls').innerHTML = '';
+        lucide.createIcons();
+        return;
+      }
+
+      // Pagination slice
+      const startIdx = (auditCurrentPage - 1) * auditPageSize;
+      const endIdx = startIdx + auditPageSize;
+      const pageLogs = rawAuditLogs.slice(startIdx, endIdx);
+
+      tbody.innerHTML = pageLogs.map(log => {
+        const actionBadge = getAuditActionBadge(log.action);
+        const relativeTime = formatRelativeTime(log.created_at);
+        const isoTime = new Date(log.created_at).toLocaleString();
+        const actorName = log.actor_name || 'System / Automated';
+        const actorEmail = log.actor_email || 'automated@system.internal';
+        const actorRole = log.actor_role_name || 'System Actor';
+        const actorDept = log.actor_department_name || 'Platform Core';
+        const initials = actorName.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'SYS';
+
+        return `
+          <tr class="hover:bg-[#F8FAFC] dark:hover:bg-slate-800/40 transition-colors">
+            <!-- Timestamp & Network -->
+            <td class="py-3.5 pl-5 pr-3 align-top">
+              <div class="space-y-0.5">
+                <span class="font-medium text-[#111827] dark:text-white block text-xs">${relativeTime}</span>
+                <span class="text-[10px] text-[#94A3B8] font-mono block" title="${isoTime}">${isoTime}</span>
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-slate-100 dark:bg-slate-800 text-[#6B7280]">
+                  <i data-lucide="globe" class="w-2.5 h-2.5"></i>
+                  ${escapeHtml(log.ip_address || '127.0.0.1')}
+                </span>
+              </div>
+            </td>
+
+            <!-- Actor Snapshot -->
+            <td class="py-3.5 px-3 align-top">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                  ${initials}
+                </div>
+                <div class="min-w-0">
+                  <div class="font-semibold text-xs text-[#111827] dark:text-white truncate">${escapeHtml(actorName)}</div>
+                  <div class="text-[11px] text-[#6B7280] font-mono truncate max-w-[170px]">${escapeHtml(actorEmail)}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Role & Department Context -->
+            <td class="py-3.5 px-3 align-top">
+              <div class="space-y-1">
+                <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-[#0F172A] dark:text-slate-200 border border-[#E2E8F0] dark:border-slate-700">
+                  ${escapeHtml(actorRole)}
+                </span>
+                <span class="block text-[11px] text-[#6B7280] dark:text-slate-400 truncate max-w-[160px]">
+                  <i data-lucide="building-2" class="w-3 h-3 inline mr-0.5 text-[#94A3B8]"></i>
+                  ${escapeHtml(actorDept)}
+                </span>
+              </div>
+            </td>
+
+            <!-- Module & Entity Target -->
+            <td class="py-3.5 px-3 align-top">
+              <div class="space-y-0.5">
+                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+                  ${escapeHtml(log.module_id || log.entity_type)}
+                </span>
+                <div class="text-[11px] text-[#475569] dark:text-slate-300 font-mono">
+                  ${escapeHtml(log.entity_type)}: <span class="text-[#94A3B8]" title="${escapeHtml(log.entity_id)}">${escapeHtml(log.entity_id.length > 12 ? log.entity_id.slice(0, 10) + '...' : log.entity_id)}</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Action Badge -->
+            <td class="py-3.5 px-3 align-top">
+              ${actionBadge}
+            </td>
+
+            <!-- Details Action -->
+            <td class="py-3.5 pl-3 pr-5 text-right align-top">
+              <button
+                type="button"
+                onclick="openAuditLogDetailModal('${log.id}')"
+                class="h-7 px-2.5 rounded-lg border border-[#E5E7EB] dark:border-slate-700 hover:bg-[#0F172A] hover:text-white dark:hover:bg-slate-700 text-[11px] font-semibold text-[#475569] dark:text-slate-300 inline-flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
+              >
+                <i data-lucide="eye" class="w-3 h-3"></i>
+                <span>Snapshot</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Update Pagination
+      const totalCount = rawAuditLogs.length;
+      document.getElementById('audit-pagination-info').innerText = `Showing ${startIdx + 1} to ${Math.min(endIdx, totalCount)} of ${totalCount} entries`;
+
+      const totalPages = Math.ceil(totalCount / auditPageSize);
+      let pageHtml = '';
+      if (totalPages > 1) {
+        pageHtml = `
+          <button
+            type="button"
+            ${auditCurrentPage === 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : 'onclick="changeAuditPage(' + (auditCurrentPage - 1) + ')" class="hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"'}
+            class="h-7 w-7 rounded-lg border border-[#E5E7EB] dark:border-slate-700 flex items-center justify-center text-xs"
+          >
+            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+          </button>
+          <span class="text-xs font-mono px-1">Page ${auditCurrentPage} of ${totalPages}</span>
+          <button
+            type="button"
+            ${auditCurrentPage === totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : 'onclick="changeAuditPage(' + (auditCurrentPage + 1) + ')" class="hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"'}
+            class="h-7 w-7 rounded-lg border border-[#E5E7EB] dark:border-slate-700 flex items-center justify-center text-xs"
+          >
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </button>
+        `;
+      }
+      document.getElementById('audit-pagination-controls').innerHTML = pageHtml;
+
+      lucide.createIcons();
+    }
+
+    function changeAuditPage(newPage) {
+      auditCurrentPage = newPage;
+      renderAuditLogs();
+      document.getElementById('view-audit-logs')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function getAuditActionBadge(action) {
+      switch (action) {
+        case 'CREATE':
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>CREATE</span>`;
+        case 'UPDATE':
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800/60"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>UPDATE</span>`;
+        case 'DELETE':
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>DELETE</span>`;
+        case 'RESTORE':
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>RESTORE</span>`;
+        case 'LOGIN':
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-950/60 dark:text-violet-300 dark:border-violet-800/60"><span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span>LOGIN</span>`;
+        default:
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">${action}</span>`;
+      }
+    }
+
+    function formatRelativeTime(dateStr) {
+      if (!dateStr) return 'Recently';
+      const d = new Date(dateStr);
+      const diffMs = Date.now() - d.getTime();
+      const diffSecs = Math.floor(diffMs / 1000);
+      if (diffSecs < 60) return `${diffSecs}s ago`;
+      const diffMins = Math.floor(diffSecs / 60);
+      if (diffMins < 60) return `${diffMins}m ago`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays}d ago`;
+    }
+
+    function openAuditLogDetailModal(id) {
+      const log = rawAuditLogs.find(l => l.id === id);
+      if (!log) return;
+      activeAuditLogDetail = log;
+
+      document.getElementById('modal-audit-action-badge').innerHTML = getAuditActionBadge(log.action);
+      document.getElementById('modal-audit-subtitle').innerText = `${log.module_id || log.entity_type} • ID: ${log.entity_id} • ${new Date(log.created_at).toUTCString()}`;
+
+      document.getElementById('modal-actor-name').innerText = log.actor_name || 'System / Automated';
+      document.getElementById('modal-actor-email').innerText = log.actor_email || 'automated@system.internal';
+      document.getElementById('modal-actor-role').innerText = log.actor_role_name || 'System Actor';
+      document.getElementById('modal-actor-dept').innerText = log.actor_department_name || 'Platform Core';
+      document.getElementById('modal-ip-address').innerText = log.ip_address || '127.0.0.1';
+      document.getElementById('modal-user-agent').innerText = log.user_agent || navigator.userAgent;
+
+      const diffContainer = document.getElementById('modal-diff-container');
+      if (log.action === 'UPDATE') {
+        const oldJson = log.old_values || {};
+        const newJson = log.new_values || {};
+        const changedKeys = Array.from(new Set([...Object.keys(oldJson), ...Object.keys(newJson)]));
+
+        let rowsHtml = '';
+        changedKeys.forEach(k => {
+          rowsHtml += `
+            <tr class="divide-x divide-[#E5E7EB] dark:divide-slate-700/60 font-mono text-[11px]">
+              <td class="p-2 font-bold text-[#111827] dark:text-slate-200 bg-slate-50 dark:bg-slate-800/40 w-1/3">${escapeHtml(k)}</td>
+              <td class="p-2 text-rose-600 bg-rose-50/40 dark:bg-rose-950/20 w-1/3">${escapeHtml(JSON.stringify(oldJson[k], null, 1) || 'undefined')}</td>
+              <td class="p-2 text-emerald-600 bg-emerald-50/40 dark:bg-emerald-950/20 w-1/3">${escapeHtml(JSON.stringify(newJson[k], null, 1) || 'undefined')}</td>
+            </tr>
+          `;
+        });
+
+        diffContainer.innerHTML = `
+          <div class="space-y-1.5">
+            <span class="text-xs font-semibold text-[#111827] dark:text-white block">Field-Level Changes:</span>
+            <div class="rounded-xl border border-[#E5E7EB] dark:border-slate-700/60 overflow-hidden shadow-2xs">
+              <table class="w-full text-left">
+                <thead class="bg-[#F8FAFC] dark:bg-slate-800 text-[10px] font-bold text-[#6B7280] uppercase tracking-wider font-mono border-b border-[#E5E7EB] dark:border-slate-700">
+                  <tr class="divide-x divide-[#E5E7EB] dark:divide-slate-700">
+                    <th class="p-2 w-1/3">Column</th>
+                    <th class="p-2 w-1/3 text-rose-600">Old Value (Before)</th>
+                    <th class="p-2 w-1/3 text-emerald-600">New Value (After)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#E5E7EB] dark:divide-slate-700/60">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      } else if (log.action === 'CREATE') {
+        diffContainer.innerHTML = `
+          <div class="space-y-1.5">
+            <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 block flex items-center gap-1.5">
+              <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+              Created Record Snapshot (new_values):
+            </span>
+            <pre class="p-3.5 rounded-xl bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto max-h-64 leading-relaxed">${escapeHtml(JSON.stringify(log.new_values || {}, null, 2))}</pre>
+          </div>
+        `;
+      } else if (log.action === 'DELETE') {
+        diffContainer.innerHTML = `
+          <div class="space-y-1.5">
+            <span class="text-xs font-semibold text-rose-700 dark:text-rose-300 block flex items-center gap-1.5">
+              <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i>
+              Purged Record Pre-Deletion Snapshot (old_values):
+            </span>
+            <pre class="p-3.5 rounded-xl bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto max-h-64 leading-relaxed">${escapeHtml(JSON.stringify(log.old_values || {}, null, 2))}</pre>
+          </div>
+        `;
+      }
+
+      document.getElementById('audit-detail-modal')?.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAuditLogDetailModal() {
+      document.getElementById('audit-detail-modal')?.classList.add('hidden');
+      activeAuditLogDetail = null;
+    }
+
+    function copyModalJSONToClipboard() {
+      if (!activeAuditLogDetail) return;
+      navigator.clipboard.writeText(JSON.stringify(activeAuditLogDetail, null, 2)).then(() => {
+        const btnText = document.getElementById('modal-copy-btn-text');
+        if (btnText) {
+          const original = btnText.innerText;
+          btnText.innerText = 'Copied to Clipboard!';
+          setTimeout(() => { btnText.innerText = original; }, 2000);
+        }
+      });
+    }
+
+    function exportAuditLogsCSV() {
+      if (!rawAuditLogs || rawAuditLogs.length === 0) {
+        alert('No audit logs available to export.');
+        return;
+      }
+
+      const headers = ['id', 'created_at', 'actor_name', 'actor_email', 'actor_role_name', 'actor_department_name', 'module_id', 'entity_type', 'entity_id', 'action', 'ip_address'];
+      const csvRows = [headers.join(',')];
+
+      rawAuditLogs.forEach(row => {
+        const values = headers.map(h => {
+          const val = row[h] ?? '';
+          return `"${String(val).replace(/"/g, '""')}"`;
+        });
+        csvRows.push(values.join(','));
+      });
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PayPulse_AuditLogs_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeOrgDrawers();
@@ -7718,17 +8595,32 @@
         closeDepartmentActionMenu();
         closeDeleteRoleModal();
         closeDeleteUserRoleModal();
+        closeAuditLogDetailModal();
       }
     });
 
-    // Initial Dynamic Data Load from Database
-    loadTenantsFromDatabase();
-    loadDepartmentsFromDatabase();
-    loadRolesFromDatabase();
-    loadUsersFromDatabase();
-    loadUserRolesFromDatabase();
-
-    lucide.createIcons();
+    // Initial Session Check
+    const savedToken = localStorage.getItem('token');
+    const savedUserJson = localStorage.getItem('currentUser');
+    if (savedToken && savedUserJson) {
+      try {
+        authToken = savedToken;
+        currentUser = JSON.parse(savedUserJson);
+        showDashboard(currentUser);
+      } catch (e) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser');
+        authToken = null;
+        currentUser = null;
+        lucide.createIcons();
+      }
+    } else {
+      // User is on the login page: initialize seed selects without blasting protected endpoints with unauthenticated requests
+      populateOrganizationDropdowns();
+      populateUserRoleFormSelects();
+      populateAuditLogOrgDropdown();
+      lucide.createIcons();
+    }
   </script>
 </body>
 </html>

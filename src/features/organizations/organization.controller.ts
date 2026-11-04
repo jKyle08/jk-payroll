@@ -30,12 +30,18 @@ export class OrganizationController {
       res.status(200).json({
         success: true,
         data: result.items,
+        items: result.items,
+        organizations: result.items,
         meta: {
           total: result.total,
           activeCount: result.activeCount,
           pendingCount: result.pendingCount,
           totalHeadcount: result.totalHeadcount,
         },
+        total: result.total,
+        activeCount: result.activeCount,
+        pendingCount: result.pendingCount,
+        totalHeadcount: result.totalHeadcount,
       });
     } catch (error: any) {
       res.status(500).json({
@@ -52,8 +58,9 @@ export class OrganizationController {
   public async getOrganization(req: Request, res: Response): Promise<void> {
     try {
       const id = String(req.params.id);
-      const user = (req as any).user;
-      const scopeTenantId = user?.role === 'SuperAdmin' ? undefined : user?.tenantId;
+      const user = req.user;
+      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
+      const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;
 
       const org = await organizationService.getOrganizationById(id, scopeTenantId);
       if (!org) {
@@ -67,6 +74,7 @@ export class OrganizationController {
       res.status(200).json({
         success: true,
         data: org,
+        organization: org,
       });
     } catch (error: any) {
       res.status(500).json({
@@ -89,6 +97,7 @@ export class OrganizationController {
         success: true,
         message: 'Organization provisioned successfully',
         data: created,
+        organization: created,
       });
     } catch (error: any) {
       res.status(400).json({
@@ -106,8 +115,9 @@ export class OrganizationController {
     try {
       const id = String(req.params.id);
       const input: UpdateOrganizationInput = req.body;
-      const user = (req as any).user;
-      const scopeTenantId = user?.role === 'SuperAdmin' ? undefined : user?.tenantId;
+      const user = req.user;
+      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
+      const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;
 
       const updated = await organizationService.updateOrganization(id, input, scopeTenantId);
       if (!updated) {
@@ -122,6 +132,7 @@ export class OrganizationController {
         success: true,
         message: 'Organization updated successfully',
         data: updated,
+        organization: updated,
       });
     } catch (error: any) {
       res.status(400).json({
@@ -139,8 +150,9 @@ export class OrganizationController {
     try {
       const id = String(req.params.id);
       const { moduleCodes }: UpdateModulesInput = req.body;
-      const user = (req as any).user;
-      const scopeTenantId = user?.role === 'SuperAdmin' ? undefined : user?.tenantId;
+      const user = req.user;
+      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
+      const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;
 
       const activeModules = await organizationService.setOrganizationModules(
         id,
@@ -152,6 +164,7 @@ export class OrganizationController {
         success: true,
         message: 'Organization module entitlements updated',
         data: activeModules,
+        modules: activeModules,
       });
     } catch (error: any) {
       res.status(400).json({
@@ -182,6 +195,7 @@ export class OrganizationController {
         success: true,
         message: 'Organization suspended successfully',
         data: suspended,
+        organization: suspended,
       });
     } catch (error: any) {
       res.status(500).json({

@@ -214,9 +214,10 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Super Admin Auth Identity
 INSERT INTO auth.identities (
-    id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+    id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
 )
 VALUES (
+    '00000000-0000-0000-0000-000000000001',
     '00000000-0000-0000-0000-000000000001',
     '00000000-0000-0000-0000-000000000001',
     '{"sub":"00000000-0000-0000-0000-000000000001","email":"superadmin@jkpayroll.com"}'::jsonb,
@@ -225,7 +226,7 @@ VALUES (
     clock_timestamp(),
     clock_timestamp()
 )
-ON CONFLICT (provider, id) DO NOTHING;
+ON CONFLICT (provider_id, provider) DO NOTHING;
 
 -- Super Admin Profile
 INSERT INTO public.profiles (
@@ -255,44 +256,47 @@ ON CONFLICT (id) DO UPDATE SET
 -- 5. SEED SAMPLE USERS & PROFILES FOR ORGANIZATIONS
 -- ------------------------------------------------------------------------------
 -- 1) Dr. Aris Thorne (Org Admin for Apex Health)
-INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token)
 VALUES (
-    'u0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    'e0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
     'admin@apexhealth.com', extensions.crypt('Admin123!', extensions.gen_salt('bf')), clock_timestamp(),
-    '{"provider":"email"}'::jsonb, '{"full_name":"Dr. Aris Thorne"}'::jsonb, clock_timestamp(), clock_timestamp()
+    '{"provider":"email"}'::jsonb, '{"full_name":"Dr. Aris Thorne"}'::jsonb, clock_timestamp(), clock_timestamp(),
+    '', ''
 ) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
 
 INSERT INTO public.profiles (id, organization_id, full_name, email, username, title, is_organization_admin, is_super_admin, is_active)
 VALUES (
-    'u0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001',
+    'e0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001',
     'Dr. Aris Thorne', 'admin@apexhealth.com', 'athorne', 'Chief Operating Officer', true, false, true
 ) ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name, organization_id = EXCLUDED.organization_id;
 
 -- 2) David Chen (Department Head: IT)
-INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token)
 VALUES (
-    'u0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    'e0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
     'dchen@apexhealth.com', extensions.crypt('User123!', extensions.gen_salt('bf')), clock_timestamp(),
-    '{"provider":"email"}'::jsonb, '{"full_name":"David Chen"}'::jsonb, clock_timestamp(), clock_timestamp()
+    '{"provider":"email"}'::jsonb, '{"full_name":"David Chen"}'::jsonb, clock_timestamp(), clock_timestamp(),
+    '', ''
 ) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
 
 INSERT INTO public.profiles (id, organization_id, full_name, email, username, title, is_organization_admin, is_super_admin, is_active)
 VALUES (
-    'u0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001',
+    'e0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001',
     'David Chen', 'dchen@apexhealth.com', 'dchen', 'Director of Information Technology', false, false, true
 ) ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name, organization_id = EXCLUDED.organization_id;
 
 -- 3) Maria Garcia (Department Head: HR)
-INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token)
 VALUES (
-    'u0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+    'e0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
     'mgarcia@apexhealth.com', extensions.crypt('User123!', extensions.gen_salt('bf')), clock_timestamp(),
-    '{"provider":"email"}'::jsonb, '{"full_name":"Maria Garcia"}'::jsonb, clock_timestamp(), clock_timestamp()
+    '{"provider":"email"}'::jsonb, '{"full_name":"Maria Garcia"}'::jsonb, clock_timestamp(), clock_timestamp(),
+    '', ''
 ) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
 
 INSERT INTO public.profiles (id, organization_id, full_name, email, username, title, is_organization_admin, is_super_admin, is_active)
 VALUES (
-    'u0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001',
+    'e0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001',
     'Maria Garcia', 'mgarcia@apexhealth.com', 'mgarcia', 'Head of Human Resources', false, false, true
 ) ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name, organization_id = EXCLUDED.organization_id;
 
@@ -312,7 +316,7 @@ VALUES
         'OPG',
         'Office of the Provincial Governor',
         'Executive governance, administrative oversight and strategic cabinet',
-        'u0000000-0000-0000-0000-000000000001',
+        'e0000000-0000-0000-0000-000000000001',
         0,
         'opg',
         true
@@ -324,7 +328,7 @@ VALUES
         'HR',
         'Human Resources & Talent Management',
         'Workforce planning, talent acquisition, total rewards and employee welfare',
-        'u0000000-0000-0000-0000-000000000003',
+        'e0000000-0000-0000-0000-000000000003',
         0,
         'hr',
         true
@@ -362,7 +366,7 @@ VALUES
         'OPG-ITD',
         'IT Division',
         'IT infrastructure, software development, cloud systems and digital services',
-        'u0000000-0000-0000-0000-000000000002',
+        'e0000000-0000-0000-0000-000000000002',
         1,
         'opg/opg-itd',
         true
@@ -462,11 +466,12 @@ ON CONFLICT (organization_id, code) DO UPDATE SET
     updated_at = clock_timestamp();
 
 -- Link profiles to departments
-UPDATE public.profiles SET department_id = 'd0000000-0000-0000-0000-000000000002' WHERE id = 'u0000000-0000-0000-0000-000000000002';
-UPDATE public.profiles SET department_id = 'd0000000-0000-0000-0000-000000000004' WHERE id = 'u0000000-0000-0000-0000-000000000003';
+UPDATE public.profiles SET department_id = 'd0000000-0000-0000-0000-000000000002' WHERE id = 'e0000000-0000-0000-0000-000000000002';
+UPDATE public.profiles SET department_id = 'd0000000-0000-0000-0000-000000000004' WHERE id = 'e0000000-0000-0000-0000-000000000003';
 
 -- ------------------------------------------------------------------------------
 -- 7. SEED SYSTEM & CUSTOM ROLES
+-- Default system roles: 'SUPER_ADMIN', 'TENANT_ADMIN' (legacy 'ADMIN'), 'PAYROLL_OFFICER', 'TIMEKEEPER', 'EMPLOYEE', and custom 'HR_MANAGER'
 -- ------------------------------------------------------------------------------
 -- Global SYSTEM roles (organization_id is NULL)
 INSERT INTO public.roles (
@@ -474,33 +479,77 @@ INSERT INTO public.roles (
 )
 VALUES
     (
-        'r0000000-0000-0000-0000-000000000001',
+        'f0000000-0000-0000-0000-000000000001',
         NULL,
         'SUPER_ADMIN',
-        'Super Administrator',
-        'Global platform administrator with unrestricted cross-organization authority',
+        'Platform Super Administrator',
+        'Full platform-level infrastructure control. Manages system roles, global permission definitions, and tenant provisioning. No access to sensitive tenant payroll data.',
         'SYSTEM',
-        false,
+        true,
         false,
         true
     ),
     (
-        'r0000000-0000-0000-0000-000000000002',
+        'f0000000-0000-0000-0000-000000000002',
         NULL,
-        'ADMIN',
-        'System Administrator',
-        'Platform operator for infrastructure, integrations, and tenant diagnostics',
+        'TENANT_ADMIN',
+        'Organization Administrator',
+        'Administrative authority within the organization. Configures departments, cost centers, positions, shifts, and manages tenant user invitations and role assignments.',
         'SYSTEM',
-        false,
+        true,
         false,
         true
     ),
     (
-        'r0000000-0000-0000-0000-000000000003',
+        'f0000000-0000-0000-0000-000000000003',
         NULL,
         'EMPLOYEE',
-        'Standard Employee',
-        'Standard self-service profile for attendance, leave requests, and payslips',
+        'Employee (Self-Service)',
+        'Standard self-service access. Restricted strictly to personal records: viewing and downloading payslips, BIR Form 2316, personal DTR logs, and filing leave requests.',
+        'SYSTEM',
+        true,
+        false,
+        true
+    ),
+    (
+        'f0000000-0000-0000-0000-000000000008',
+        NULL,
+        'TIMEKEEPER',
+        'HR / Timekeeper',
+        'Manages time and attendance operations, biometric punch sync, DTR corrections, shift assignments, and cutoff timesheet locks. Restricted from viewing compensation rates.',
+        'SYSTEM',
+        true,
+        false,
+        true
+    ),
+    (
+        'f0000000-0000-0000-0000-000000000009',
+        NULL,
+        'PAYROLL_OFFICER',
+        'Payroll Specialist',
+        'Prepares and executes payroll calculations. Manages earnings, recurring allowances, loan ledgers, statutory contributions, and generates draft payroll registers.',
+        'SYSTEM',
+        true,
+        false,
+        true
+    ),
+    (
+        'f0000000-0000-0000-0000-00000000000a',
+        NULL,
+        'PAYROLL_APPROVER',
+        'Certifying Officer / Approver',
+        'Reviews computed payroll registers, variance audits, and statutory summaries. Authorizes or rejects payroll runs. Cannot compute runs or generate payout files.',
+        'SYSTEM',
+        true,
+        false,
+        true
+    ),
+    (
+        'f0000000-0000-0000-0000-00000000000b',
+        NULL,
+        'DISBURSING_OFFICER',
+        'Disbursing Officer / Cashier',
+        'Handles payout realization for approved payroll runs. Generates bank electronic advice files (e.g., LandBank, DBP, BDO Network Bank), e-wallet batches, and cash vouchers.',
         'SYSTEM',
         true,
         false,
@@ -509,6 +558,7 @@ VALUES
 ON CONFLICT (organization_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
+    is_default = EXCLUDED.is_default,
     is_active = EXCLUDED.is_active;
 
 -- Custom Organization Roles for Apex Health Systems
@@ -517,7 +567,7 @@ INSERT INTO public.roles (
 )
 VALUES
     (
-        'r0000000-0000-0000-0000-000000000004',
+        'f0000000-0000-0000-0000-000000000004',
         '00000000-0000-0000-0000-000000000001',
         'ORG_ADMIN',
         'Organization Administrator',
@@ -528,7 +578,7 @@ VALUES
         true
     ),
     (
-        'r0000000-0000-0000-0000-000000000005',
+        'f0000000-0000-0000-0000-000000000005',
         '00000000-0000-0000-0000-000000000001',
         'HR_MANAGER',
         'HR & Payroll Manager',
@@ -539,7 +589,7 @@ VALUES
         true
     ),
     (
-        'r0000000-0000-0000-0000-000000000006',
+        'f0000000-0000-0000-0000-000000000006',
         '00000000-0000-0000-0000-000000000001',
         'DEPT_HEAD',
         'Department Head',
@@ -550,7 +600,7 @@ VALUES
         true
     ),
     (
-        'r0000000-0000-0000-0000-000000000007',
+        'f0000000-0000-0000-0000-000000000007',
         '00000000-0000-0000-0000-000000000001',
         'PAYROLL_OFFICER',
         'Payroll Officer',
@@ -574,24 +624,24 @@ VALUES
     (
         '00000000-0000-0000-0000-000000000000',
         '00000000-0000-0000-0000-000000000001',
-        'r0000000-0000-0000-0000-000000000001'
+        'f0000000-0000-0000-0000-000000000001'
     ),
     -- Dr. Aris Thorne -> ORG_ADMIN in Apex Health
     (
         '00000000-0000-0000-0000-000000000001',
-        'u0000000-0000-0000-0000-000000000001',
-        'r0000000-0000-0000-0000-000000000004'
+        'e0000000-0000-0000-0000-000000000001',
+        'f0000000-0000-0000-0000-000000000004'
     ),
     -- David Chen -> DEPT_HEAD in Apex Health
     (
         '00000000-0000-0000-0000-000000000001',
-        'u0000000-0000-0000-0000-000000000002',
-        'r0000000-0000-0000-0000-000000000006'
+        'e0000000-0000-0000-0000-000000000002',
+        'f0000000-0000-0000-0000-000000000006'
     ),
     -- Maria Garcia -> HR_MANAGER in Apex Health
     (
         '00000000-0000-0000-0000-000000000001',
-        'u0000000-0000-0000-0000-000000000003',
-        'r0000000-0000-0000-0000-000000000005'
+        'e0000000-0000-0000-0000-000000000003',
+        'f0000000-0000-0000-0000-000000000005'
     )
 ON CONFLICT (organization_id, user_id, role_id) DO NOTHING;
