@@ -24,10 +24,15 @@ export interface Tenant {
 
 export interface Department {
   id: string;
-  tenantId: string;
+  organizationId: string;
+  tenantId?: string; // Backward compatibility alias
   parentDepartmentId: string | null;
   code: string;
   name: string;
+  description?: string;
+  headUserId?: string | null;
+  depth: number;
+  treePath?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -35,7 +40,6 @@ export interface Department {
 
 export interface DepartmentNode extends Department {
   children: DepartmentNode[];
-  depth?: number;
   path?: string[];
 }
 

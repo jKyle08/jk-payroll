@@ -482,6 +482,113 @@ export class DatabaseRepository {
         updatedAt: new Date(),
       });
     }
+
+    // 5. Seed Hierarchical Departments (OPG, OPG-ITD, OPG-PIO, HR, HR-PAYROLL, FIN)
+    const deptOpgId = 'd0000000-0000-0000-0000-000000000001';
+    const deptItdId = 'd0000000-0000-0000-0000-000000000002';
+    const deptPioId = 'd0000000-0000-0000-0000-000000000003';
+    const deptHrId = 'd0000000-0000-0000-0000-000000000004';
+    const deptPayrollId = 'd0000000-0000-0000-0000-000000000005';
+    const deptFinId = 'd0000000-0000-0000-0000-000000000006';
+
+    const defaultDepts: Department[] = [
+      {
+        id: deptOpgId,
+        organizationId: apexTenantId,
+        tenantId: apexTenantId,
+        parentDepartmentId: null,
+        code: 'OPG',
+        name: 'Office of the Provincial Governor',
+        description: 'Executive leadership and strategic administrative office',
+        headUserId: adminUserId,
+        depth: 0,
+        treePath: 'opg',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: deptItdId,
+        organizationId: apexTenantId,
+        tenantId: apexTenantId,
+        parentDepartmentId: deptOpgId,
+        code: 'OPG-ITD',
+        name: 'IT Division',
+        description: 'Systems administration, digital payroll infrastructure, and security',
+        headUserId: adminUserId,
+        depth: 1,
+        treePath: 'opg/opg-itd',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: deptPioId,
+        organizationId: apexTenantId,
+        tenantId: apexTenantId,
+        parentDepartmentId: deptOpgId,
+        code: 'OPG-PIO',
+        name: 'Public Information Office',
+        description: 'Civic communication, media affairs, and transparency reporting',
+        headUserId: null,
+        depth: 1,
+        treePath: 'opg/opg-pio',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: deptHrId,
+        organizationId: apexTenantId,
+        tenantId: apexTenantId,
+        parentDepartmentId: null,
+        code: 'HR',
+        name: 'Human Resources Management',
+        description: 'Personnel management, employee benefits, and organizational compliance',
+        headUserId: null,
+        depth: 0,
+        treePath: 'hr',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: deptPayrollId,
+        organizationId: apexTenantId,
+        tenantId: apexTenantId,
+        parentDepartmentId: deptHrId,
+        code: 'HR-PAYROLL',
+        name: 'Payroll Operations Unit',
+        description: 'Compensation disbursement, statutory contributions, and payroll computation',
+        headUserId: null,
+        depth: 1,
+        treePath: 'hr/hr-payroll',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: deptFinId,
+        organizationId: apexTenantId,
+        tenantId: apexTenantId,
+        parentDepartmentId: null,
+        code: 'FIN',
+        name: 'Finance & Accounts',
+        description: 'Financial auditing, treasury management, and expenditure controls',
+        headUserId: null,
+        depth: 0,
+        treePath: 'fin',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    for (const d of defaultDepts) {
+      if (!this.departments.has(d.id)) {
+        this.departments.set(d.id, d);
+      }
+    }
   }
 
   // ----------------------------------------------------------------------------
@@ -565,40 +672,61 @@ export class DatabaseRepository {
   // DEPARTMENT OPERATIONS (Recursive Hierarchy)
   // ----------------------------------------------------------------------------
   public createDepartment(data: {
-    tenantId: string;
+    organizationId?: string;
+    tenantId?: string;
     parentDepartmentId?: string | null;
     code: string;
     name: string;
+    description?: string;
+    headUserId?: string | null;
     isActive?: boolean;
   }): Department {
-    // Validate tenant exists
-    const tenant = this.getTenantById(data.tenantId);
-    if (!tenant) {
-      throw new Error(`Tenant with ID ${data.tenantId} not found`);
+    const orgId = data.organizationId || data.tenantId;
+    if (!orgId) {
+      throw new Error('Organization ID is required to create a department');
     }
 
-    // Validate parent department belongs to the same tenant
+    // Validate organization/tenant exists
+    const org = this.getTenantById(orgId);
+    if (!org) {
+      throw new Error(`Organization with ID ${orgId} not found`);
+    }
+
+    const code = data.code.trim().toUpperCase();
+    let depth = 0;
+    let treePath = code.toLowerCase();
+
+    // Validate parent department belongs to the same organization
     if (data.parentDepartmentId) {
       const parent = this.departments.get(data.parentDepartmentId);
-      if (!parent || parent.tenantId !== data.tenantId) {
-        throw new Error(`Parent department ${data.parentDepartmentId} does not belong to tenant ${data.tenantId}`);
+      const parentOrgId = parent?.organizationId || parent?.tenantId;
+      if (!parent || parentOrgId !== orgId) {
+        throw new Error(`Parent department ${data.parentDepartmentId} does not belong to organization ${orgId}`);
       }
+      depth = (parent.depth ?? 0) + 1;
+      const parentPath = parent.treePath || parent.code.toLowerCase();
+      treePath = `${parentPath}/${code.toLowerCase()}`;
     }
 
-    // Validate unique (tenant_id, code)
+    // Validate unique (organizationId, code)
     const existing = Array.from(this.departments.values()).find(
-      (d) => d.tenantId === data.tenantId && d.code.toUpperCase() === data.code.toUpperCase()
+      (d) => (d.organizationId === orgId || d.tenantId === orgId) && d.code.toUpperCase() === code
     );
     if (existing) {
-      throw new Error(`Department code '${data.code}' already exists in tenant`);
+      throw new Error(`Department code '${code}' already exists in organization`);
     }
 
     const dept: Department = {
       id: randomUUID(),
-      tenantId: data.tenantId,
+      organizationId: orgId,
+      tenantId: orgId,
       parentDepartmentId: data.parentDepartmentId || null,
-      code: data.code.toUpperCase(),
-      name: data.name,
+      code,
+      name: data.name.trim(),
+      description: data.description?.trim(),
+      headUserId: data.headUserId || null,
+      depth,
+      treePath,
       isActive: data.isActive !== undefined ? data.isActive : true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -608,12 +736,166 @@ export class DatabaseRepository {
     return dept;
   }
 
+  public updateDepartment(
+    id: string,
+    data: {
+      organizationId?: string;
+      parentDepartmentId?: string | null;
+      code?: string;
+      name?: string;
+      description?: string;
+      headUserId?: string | null;
+      isActive?: boolean;
+    }
+  ): Department {
+    const dept = this.departments.get(id);
+    if (!dept) {
+      throw new Error(`Department with ID '${id}' not found`);
+    }
+
+    const orgId = data.organizationId || dept.organizationId || dept.tenantId || '';
+    const newCode = data.code !== undefined ? data.code.trim().toUpperCase() : dept.code;
+
+    // Check code uniqueness if changing code
+    if (data.code && newCode !== dept.code) {
+      const conflict = Array.from(this.departments.values()).find(
+        (d) => d.id !== id && (d.organizationId === orgId || d.tenantId === orgId) && d.code.toUpperCase() === newCode
+      );
+      if (conflict) {
+        throw new Error(`Department code '${newCode}' already exists in organization`);
+      }
+    }
+
+    // Parent department update and cycle prevention
+    let newParentId = dept.parentDepartmentId;
+    let depth = dept.depth ?? 0;
+    let treePath = dept.treePath ?? dept.code.toLowerCase();
+    const parentChanged = data.parentDepartmentId !== undefined && data.parentDepartmentId !== dept.parentDepartmentId;
+    const codeChanged = data.code !== undefined && newCode !== dept.code;
+
+    if (data.parentDepartmentId !== undefined) {
+      if (data.parentDepartmentId === id) {
+        throw new Error('A department cannot be its own parent');
+      }
+
+      if (data.parentDepartmentId) {
+        // Prevent assigning a descendant as the parent (cycle detection)
+        const descendants = this.getDepartmentSubTree(orgId, id);
+        if (descendants.some((desc) => desc.id === data.parentDepartmentId)) {
+          throw new Error('Cannot set a descendant department as the parent (hierarchical cycle detected)');
+        }
+
+        const parent = this.departments.get(data.parentDepartmentId);
+        const parentOrgId = parent?.organizationId || parent?.tenantId;
+        if (!parent || parentOrgId !== orgId) {
+          throw new Error(`Parent department ${data.parentDepartmentId} does not belong to organization ${orgId}`);
+        }
+        newParentId = data.parentDepartmentId;
+        depth = (parent.depth ?? 0) + 1;
+        const parentPath = parent.treePath || parent.code.toLowerCase();
+        treePath = `${parentPath}/${newCode.toLowerCase()}`;
+      } else {
+        newParentId = null;
+        depth = 0;
+        treePath = newCode.toLowerCase();
+      }
+    } else if (codeChanged) {
+      if (newParentId) {
+        const parent = this.departments.get(newParentId);
+        const parentPath = parent?.treePath || parent?.code.toLowerCase() || '';
+        treePath = `${parentPath}/${newCode.toLowerCase()}`;
+      } else {
+        treePath = newCode.toLowerCase();
+      }
+    }
+
+    const updated: Department = {
+      ...dept,
+      organizationId: orgId,
+      tenantId: orgId,
+      parentDepartmentId: newParentId,
+      code: newCode,
+      name: data.name !== undefined ? data.name.trim() : dept.name,
+      description: data.description !== undefined ? data.description.trim() : dept.description,
+      headUserId: data.headUserId !== undefined ? data.headUserId : dept.headUserId,
+      depth,
+      treePath,
+      isActive: data.isActive !== undefined ? data.isActive : dept.isActive,
+      updatedAt: new Date(),
+    };
+
+    this.departments.set(id, updated);
+
+    // If depth, treePath, or parent changed, cascade to all descendants recursively
+    if (parentChanged || codeChanged) {
+      this.cascadeDepartmentHierarchyUpdates(id, orgId);
+    }
+
+    return updated;
+  }
+
+  /**
+   * Recursively cascades depth and treePath recalculation to all descendants of a department
+   */
+  private cascadeDepartmentHierarchyUpdates(parentId: string, orgId: string): void {
+    const parent = this.departments.get(parentId);
+    if (!parent) return;
+
+    const children = Array.from(this.departments.values()).filter(
+      (d) => (d.organizationId === orgId || d.tenantId === orgId) && d.parentDepartmentId === parentId
+    );
+
+    for (const child of children) {
+      const childDepth = (parent.depth ?? 0) + 1;
+      const childPath = `${parent.treePath || parent.code.toLowerCase()}/${child.code.toLowerCase()}`;
+      const updatedChild: Department = {
+        ...child,
+        depth: childDepth,
+        treePath: childPath,
+        updatedAt: new Date(),
+      };
+      this.departments.set(child.id, updatedChild);
+      this.cascadeDepartmentHierarchyUpdates(child.id, orgId);
+    }
+  }
+
+  /**
+   * ON DELETE RESTRICT: Prevents deleting a department if it has child sub-departments
+   */
+  public deleteDepartment(id: string): boolean {
+    const dept = this.departments.get(id);
+    if (!dept) return false;
+
+    // Check if any child department references this department
+    const hasChildren = Array.from(this.departments.values()).some((d) => d.parentDepartmentId === id);
+    if (hasChildren) {
+      throw new Error(
+        `Cannot delete department '${dept.name}' (${dept.code}) because it has active sub-departments. Please reassign or delete its sub-departments first.`
+      );
+    }
+
+    // Unassign profiles linked to this department
+    for (const [profId, profile] of this.profiles.entries()) {
+      if (profile.departmentId === id) {
+        this.profiles.set(profId, { ...profile, departmentId: null, updatedAt: new Date() });
+      }
+    }
+
+    return this.departments.delete(id);
+  }
+
   public getDepartmentById(id: string): Department | undefined {
     return this.departments.get(id);
   }
 
+  public getDepartmentsByOrganization(organizationId: string): Department[] {
+    return Array.from(this.departments.values()).filter(
+      (d) => (d.organizationId === organizationId || d.tenantId === organizationId) && d.isActive
+    );
+  }
+
   public getDepartmentsByTenant(tenantId: string): Department[] {
-    return Array.from(this.departments.values()).filter((d) => d.tenantId === tenantId && d.isActive);
+    return this.getDepartmentsByOrganization(tenantId);
   }
 
   /**
@@ -622,10 +904,11 @@ export class DatabaseRepository {
    */
   public getDepartmentSubTree(tenantId: string, deptId: string): Department[] {
     const root = this.departments.get(deptId);
-    if (!root || root.tenantId !== tenantId || !root.isActive) {
+    if (!root) {
       return [];
     }
 
+    const orgId = root.organizationId || root.tenantId;
     const result: Department[] = [root];
     const queue: string[] = [deptId];
     const visited = new Set<string>([deptId]);
@@ -633,7 +916,9 @@ export class DatabaseRepository {
     while (queue.length > 0) {
       const currentId = queue.shift()!;
       const children = Array.from(this.departments.values()).filter(
-        (d) => d.tenantId === tenantId && d.parentDepartmentId === currentId && d.isActive
+        (d) =>
+          (d.organizationId === orgId || d.tenantId === orgId || d.organizationId === tenantId || d.tenantId === tenantId) &&
+          d.parentDepartmentId === currentId
       );
 
       for (const child of children) {
@@ -657,7 +942,7 @@ export class DatabaseRepository {
     let current = this.departments.get(deptId);
 
     const visited = new Set<string>();
-    while (current && current.tenantId === tenantId && current.isActive) {
+    while (current) {
       if (visited.has(current.id)) break; // cycle protection
       visited.add(current.id);
       ancestors.push(current);
@@ -672,7 +957,9 @@ export class DatabaseRepository {
    * Full hierarchical tree for Tenant Admin UI/API
    */
   public getDepartmentTree(tenantId: string): DepartmentNode[] {
-    const allDepts = this.getDepartmentsByTenant(tenantId);
+    const allDepts = Array.from(this.departments.values()).filter(
+      (d) => (d.organizationId === tenantId || d.tenantId === tenantId) && d.isActive
+    );
     const map = new Map<string, DepartmentNode>();
 
     allDepts.forEach((d) => {

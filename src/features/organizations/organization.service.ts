@@ -20,6 +20,21 @@ import {
   UpdateOrganizationInput,
 } from './organization.schema.js';
 
+async function withSupabaseTimeout<T>(promise: Promise<T> | any, timeoutMs = 1200): Promise<T | null> {
+  let timer: any;
+  const timeoutPromise = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), timeoutMs);
+  });
+  try {
+    const res = await Promise.race([promise, timeoutPromise]);
+    return res as T;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export class OrganizationService {
   /**
    * Helper to map a database Tenant record to the Organization presentation model.
@@ -108,13 +123,15 @@ export class OrganizationService {
     // 1. Sync from remote Supabase database if available
     try {
       const supabase = getSupabaseClient();
-      const { data: dbRows, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const res = await withSupabaseTimeout(
+        supabase
+          .from('organizations')
+          .select('*')
+          .order('created_at', { ascending: false })
+      );
 
-      if (!error && dbRows) {
-        for (const row of dbRows) {
+      if (res && !res.error && res.data) {
+        for (const row of res.data) {
           if (!db.tenants.has(row.id)) {
             const code = row.code || 'ORG';
             db.tenants.set(row.id, {
@@ -190,13 +207,16 @@ export class OrganizationService {
       // Query remote database
       try {
         const supabase = getSupabaseClient();
-        const { data: row, error } = await supabase
-          .from('organizations')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle();
+        const res = await withSupabaseTimeout(
+          supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle()
+        );
 
-        if (!error && row) {
+        if (res && !res.error && res.data) {
+          const row = res.data;
           tenant = {
             id: row.id,
             name: row.name,
@@ -277,12 +297,14 @@ export class OrganizationService {
     // 4. Mirror to Supabase
     try {
       const supabase = getSupabaseClient();
-      await supabase.from('organizations').insert({
-        id: tenant.id,
-        name: data.name,
-        code: data.code,
-        is_active: data.status === 'Active',
-      });
+      await withSupabaseTimeout(
+        supabase.from('organizations').insert({
+          id: tenant.id,
+          name: data.name,
+          code: data.code,
+          is_active: data.status === 'Active',
+        })
+      );
     } catch (err) {
       console.warn('Supabase organization sync warning:', err);
     }
@@ -338,13 +360,15 @@ export class OrganizationService {
     // Sync to Supabase
     try {
       const supabase = getSupabaseClient();
-      await supabase
-        .from('organizations')
-        .update({
-          name: updated.name,
-          is_active: updated.isActive,
-        })
-        .eq('id', id);
+      await withSupabaseTimeout(
+        supabase
+          .from('organizations')
+          .update({
+            name: updated.name,
+            is_active: updated.isActive,
+          })
+          .eq('id', id)
+      );
     } catch (err) {
       console.warn('Supabase organization update warning:', err);
     }

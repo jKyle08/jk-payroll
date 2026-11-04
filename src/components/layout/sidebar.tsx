@@ -124,7 +124,7 @@ export const FLATTENED_NAV_SECTIONS: NavSection[] = [
       },
       {
         id: 'departments',
-        label: 'Department Hierarchy',
+        label: 'Departments',
         path: '/admin/departments',
         requiredPermission: PERMISSIONS.DEPARTMENT.VIEW,
         icon: Building,
