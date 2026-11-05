@@ -4,6 +4,7 @@
 // File: src/features/departments/components/DepartmentFormPage.tsx
 // ==============================================================================
 
+import { SearchableSelect } from '../../../components/ui/SearchableSelect.js';
 import React, { useState, useEffect } from 'react';
 import {
   Building2,
@@ -163,21 +164,22 @@ export const DepartmentFormPage: React.FC<DepartmentFormPageProps> = ({
               <label className="block text-xs font-semibold text-[#475569] dark:text-slate-300 mb-1.5">
                 Organization Scope <span className="text-rose-500">*</span>
               </label>
-              <select
+              <SearchableSelect
                 value={organizationId}
-                onChange={(e) => {
-                  setOrganizationId(e.target.value);
+                onChange={(v) => {
+                  setOrganizationId(v);
                   setParentDepartmentId(null);
                 }}
                 disabled={!isSuperAdmin}
-                className="w-full h-10 px-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 font-medium cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
-              >
-                {organizations.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name} ({org.code})
-                  </option>
-                ))}
-              </select>
+                searchPlaceholder="Search organizations..."
+                options={organizations.map((org: any) => ({
+                  value: org.id,
+                  label: org.name,
+                  sublabel: org.code,
+                  avatarText: String(org.name || '?').slice(0, 2).toUpperCase(),
+                  avatarColor: 'bg-purple-600',
+                }))}
+              />
             </div>
 
             {/* Parent Department */}

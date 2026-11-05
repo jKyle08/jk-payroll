@@ -15,6 +15,8 @@ export interface OrganizationTableProps {
   onEdit?: (id: string) => void;
   onDelete?: (org: Organization) => void;
   onAddNew?: () => void;
+  startIndex?: number;
+  pagination?: React.ReactNode;
 }
 
 export const OrganizationTable: React.FC<OrganizationTableProps> = ({
@@ -22,6 +24,8 @@ export const OrganizationTable: React.FC<OrganizationTableProps> = ({
   onEdit,
   onDelete,
   onAddNew,
+  startIndex = 0,
+  pagination,
 }) => {
   if (organizations.length === 0) {
     return (
@@ -67,7 +71,7 @@ export const OrganizationTable: React.FC<OrganizationTableProps> = ({
               <OrganizationTableRow
                 key={org.id}
                 organization={org}
-                index={idx}
+                index={startIndex + idx}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />
@@ -76,15 +80,13 @@ export const OrganizationTable: React.FC<OrganizationTableProps> = ({
         </table>
       </div>
 
-      {/* Table Footer Summary */}
-      <div className="px-6 py-3 border-t border-[#E5E7EB] bg-[#FBFBFC] flex items-center justify-between text-xs text-[#6B7280]">
-        <span>
-          Showing <span className="font-semibold text-[#111827] font-mono tabular-nums">{organizations.length}</span> {organizations.length === 1 ? 'organization' : 'organizations'}
-        </span>
-        <span className="text-[11px]">
-          Multi-tenant isolation enforced & active
-        </span>
-      </div>
+      {/* Table Footer: Pagination */}
+      {pagination ?? (
+        <div className="px-6 py-3 border-t border-[#E5E7EB] bg-[#FBFBFC] text-xs text-[#6B7280]">
+          Showing <span className="font-semibold text-[#111827] font-mono tabular-nums">{organizations.length}</span>{' '}
+          {organizations.length === 1 ? 'organization' : 'organizations'}
+        </div>
+      )}
     </div>
   );
 };

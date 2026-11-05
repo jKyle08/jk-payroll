@@ -16,6 +16,8 @@ export interface UserRoleTableProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onAddNew: () => void;
+  startIndex?: number;
+  pagination?: React.ReactNode;
 }
 
 export const UserRoleTable: React.FC<UserRoleTableProps> = ({
@@ -24,6 +26,8 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
   onEdit,
   onDelete,
   onAddNew,
+  startIndex = 0,
+  pagination,
 }) => {
   if (isLoading) {
     return (
@@ -75,7 +79,7 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
               <UserRoleTableRow
                 key={item.id}
                 item={item}
-                index={idx}
+                index={startIndex + idx}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />
@@ -84,13 +88,15 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
         </table>
       </div>
 
-      {/* Table Footer Summary */}
-      <div className="px-4 py-3 border-t border-[#E5E7EB] bg-[#FAFAFB] flex items-center justify-between text-xs text-[#6B7280]">
-        <span>
-          Showing <span className="font-semibold text-[#111827]">{userRoles.length}</span> user roles
-        </span>
-        <span className="font-mono text-[11px]">PayPulse RBAC v2</span>
-      </div>
+      {/* Table Footer: Pagination */}
+      {pagination ?? (
+        <div className="px-4 py-3 border-t border-[#E5E7EB] bg-[#FAFAFB] flex items-center justify-between text-xs text-[#6B7280]">
+          <span>
+            Showing <span className="font-semibold text-[#111827]">{userRoles.length}</span> user roles
+          </span>
+          <span className="font-mono text-[11px]">PayPulse RBAC v2</span>
+        </div>
+      )}
     </div>
   );
 };

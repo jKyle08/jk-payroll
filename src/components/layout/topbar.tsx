@@ -177,15 +177,20 @@ export const Topbar: React.FC<TopbarProps> = ({
         {/* ==================================================================== */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 relative flex-shrink-0">
           
-          {/* Optional Theme Toggle */}
+          {/* Theme Toggle */}
           {onToggleTheme && (
             <button
               type="button"
               onClick={() => onToggleTheme(currentTheme === 'dark' ? 'light' : 'dark')}
               title={`Switch to ${currentTheme === 'dark' ? 'Light' : 'Dark'} mode`}
-              className="p-2 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F1F5F9] transition-colors hidden sm:inline-flex"
+              aria-label={`Switch to ${currentTheme === 'dark' ? 'Light' : 'Dark'} mode`}
+              className="w-9 h-9 rounded-full bg-[#F1F5F9] dark:bg-slate-800 text-[#475569] dark:text-slate-300 hover:bg-[#E2E8F0] dark:hover:bg-slate-700 hover:text-[#111827] dark:hover:text-white transition-colors inline-flex items-center justify-center cursor-pointer"
             >
-              {currentTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {currentTheme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
             </button>
           )}
 

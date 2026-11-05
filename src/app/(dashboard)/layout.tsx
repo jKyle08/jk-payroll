@@ -4,6 +4,7 @@
 // ==============================================================================
 
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Topbar, TopbarProps } from '../../components/layout/topbar.js';
 import { Sidebar } from '../../components/layout/sidebar.js';
 import { Footer } from '../../components/layout/footer.js';
@@ -87,28 +88,75 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [notifications, setNotifications] = useState<NotificationItem[]>(DEFAULT_NOTIFICATIONS);
   const [activePath, setActivePath] = useState<string>(initialPath);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('paypulse_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      if (document.documentElement.classList.contains('dark')) return 'dark';
+    }
+    return 'light';
+  });
 
-  // Handle theme changes on HTML document element
-  const handleToggleTheme = (newTheme: 'light' | 'dark') => {
-    setTheme(newTheme);
+  useEffect(() => {
     if (typeof document !== 'undefined') {
-      if (newTheme === 'dark') {
+      if (theme === 'dark') {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.remove('dark');
       }
     }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paypulse_theme', theme);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (initialUser) setCurrentUser(initialUser);
+  }, [initialUser]);
+
+  useEffect(() => {
+    if (initialPermissions) setUserPermissions(initialPermissions);
+  }, [initialPermissions]);
+
+  useEffect(() => {
+    if (initialTenantCode) setTenantCode(initialTenantCode);
+  }, [initialTenantCode]);
+
+  // React Router integration with fallback for isolated test environments
+  let locationPath: string | undefined;
+  let routerNavigate: ((to: string) => void) | undefined;
+  try {
+    const loc = useLocation();
+    locationPath = loc.pathname;
+    routerNavigate = useNavigate();
+  } catch {
+    // Rendered outside router context
+  }
+
+  const effectivePath = locationPath || activePath;
+
+  // Handle theme changes on HTML document element
+  const handleToggleTheme = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
   };
 
   const handleSignOut = () => {
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentUser');
+    }
+    if (routerNavigate) {
+      routerNavigate('/login');
+    } else if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
   };
 
   const handleNavigate = (path: string) => {
     setActivePath(path);
+    if (routerNavigate) {
+      routerNavigate(path);
+    }
   };
 
   const handleNotificationClick = (item: NotificationItem) => {
@@ -133,6 +181,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         onNotificationClick={handleNotificationClick}
         onMarkAllAsRead={handleMarkAllNotificationsAsRead}
         onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
+        isSidebarCollapsed={sidebarCollapsed}
         onProfileClick={() => setActivePath('/profile')}
         onSwitchDepartment={() => console.log('Open Department Switcher Modal')}
         onToggleTheme={handleToggleTheme}
@@ -144,16 +193,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Left Navigation Drawer */}
         <Sidebar
           userPermissions={userPermissions}
-          activePath={activePath}
+          activePath={effectivePath}
           onNavigate={handleNavigate}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
           tenantCode={tenantCode}
           roleName={currentUser.role || 'Administrator'}
+          isSuperAdmin={Boolean(currentUser?.role?.toLowerCase().includes('super'))}
         />
 
         {/* Dynamic Main Workspace Canvas with Natural Sticky Footer */}
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950/60 custom-scrollbar flex flex-col justify-between min-h-full">
+        <main className={`flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950/60 custom-scrollbar flex flex-col justify-between min-h-full transition-all duration-200 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
           <div className="max-w-7xl mx-auto space-y-6 flex-1 w-full">
             {children}
           </div>

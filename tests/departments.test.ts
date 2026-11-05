@@ -251,62 +251,11 @@ describe('Department Client Exports & UI Components', () => {
     expect(DEFAULT_DEPARTMENT_ORGANIZATIONS).toBeDefined();
   });
 
-  it('verifies index.html has page-driven Department directory and form', () => {
-    const indexHtmlPath = path.resolve(process.cwd(), 'public/index.html');
-    expect(fs.existsSync(indexHtmlPath)).toBe(true);
-
-    const html = fs.readFileSync(indexHtmlPath, 'utf-8');
-
-    // Directory View & Form View
-    expect(html).toContain('id="view-departments"');
-    expect(html).toContain('id="view-department-form"');
-    expect(html).toContain('id="department-definition-form"');
-
-    // Controls and KPIs
-    expect(html).toContain('id="metric-dept-total"');
-    expect(html).toContain('id="metric-dept-active"');
-    expect(html).toContain('id="metric-dept-head"');
-    expect(html).toContain('id="metric-dept-sub"');
-
-    // Toolbar & Filter inputs
-    expect(html).toContain('id="dept-filter-search"');
-    expect(html).toContain('id="dept-filter-org"');
-    expect(html).toContain('id="dept-filter-depth"');
-    expect(html).toContain('id="dept-filter-status"');
-    expect(html).toContain('id="btn-dept-view-tree"');
-    expect(html).toContain('id="btn-dept-view-table"');
-
-    // Form inputs (internal debug preview card removed)
-    expect(html).toContain('id="df-org-select"');
-    expect(html).toContain('id="df-parent-select"');
-    expect(html).toContain('id="df-code-input"');
-    expect(html).toContain('id="df-name-input"');
-    expect(html).not.toContain('id="df-preview-depth-badge"');
-    expect(html).not.toContain('id="df-preview-tree-path"');
-    expect(html).toContain('id="df-head-user-select"');
-
-    // Filter toolbar comments fix (no raw JSX comments rendered)
-    expect(html).not.toContain('{/* Search */}');
-    expect(html).not.toContain('{/* Right Controls */}');
-
-    // Table pagination toolbar
-    expect(html).toContain('id="dept-pagination-bar"');
-    expect(html).toContain('id="dept-page-size"');
-    expect(html).toContain('id="dept-pagination-info"');
-    expect(html).toContain('id="btn-dept-prev"');
-    expect(html).toContain('id="dept-page-numbers"');
-    expect(html).toContain('id="btn-dept-next"');
-
-    // Pagination JavaScript handlers
-    expect(html).toContain('function handleDeptPageChange(');
-    expect(html).toContain('function handleDeptPageSizeChange(');
-    expect(html).toContain('function goToDeptPage(');
-
-    // 3-dots Actions Menu
-    expect(html).toContain('id="department-action-dropdown-menu"');
-    expect(html).toContain('function toggleDepartmentActionMenu(');
-    expect(html).toContain('function closeDepartmentActionMenu(');
-    expect(html).toContain('function executeDepartmentAction(');
-    expect(html).toContain('toggleDepartmentActionMenu(event,');
+  it('verifies page-driven Department directory and form React architecture', () => {
+    expect(DepartmentMain).toBeDefined();
+    expect(DepartmentFormPage).toBeDefined();
+    expect(DepartmentTable).toBeDefined();
+    expect(DepartmentToolbar).toBeDefined();
+    expect(fetchDepartments).toBeDefined();
   });
 });

@@ -79,6 +79,7 @@ export function useUserRoles() {
     isLoading,
     error,
     filters,
+    setFilters,
     kpis,
     refetch: loadUserRoles,
     updateSearch,

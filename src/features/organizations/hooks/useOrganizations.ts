@@ -70,10 +70,15 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
       const matchesStatus =
         filters.status === 'All' || org.status === filters.status;
 
-      const activeTier = filters.tier !== 'All' ? filters.tier : filters.planTier;
-      const matchesTier = activeTier === 'All' || org.planTier === activeTier;
+      const activeTier = filters.tier && filters.tier !== 'All' ? filters.tier : filters.planTier;
+      const matchesTier = !activeTier || activeTier === 'All' || org.planTier === activeTier;
 
-      return matchesSearch && matchesStatus && matchesTier;
+      const matchesFrequency =
+        !filters.payFrequency ||
+        filters.payFrequency === 'All' ||
+        org.defaultPayFrequency === filters.payFrequency;
+
+      return matchesSearch && matchesStatus && matchesTier && matchesFrequency;
     });
   }, [organizations, filters]);
 

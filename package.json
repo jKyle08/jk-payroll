@@ -9,7 +9,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "client": "vite",
+    "build:client": "vite build"
   },
   "keywords": [
     "payroll",

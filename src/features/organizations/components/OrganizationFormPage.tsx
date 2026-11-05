@@ -304,7 +304,7 @@ export const OrganizationFormPage: React.FC<OrganizationFormPageProps> = ({
 
   if (isEditMode && isLoadingOrg) {
     return (
-      <div className="min-h-screen bg-[#FBFBFC] p-8 flex items-center justify-center">
+      <div className="p-12 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-slate-500">
           <Loader2 className="w-6 h-6 animate-spin text-[#0F172A]" />
           <span className="text-xs font-medium">Loading organization metadata...</span>
@@ -315,7 +315,7 @@ export const OrganizationFormPage: React.FC<OrganizationFormPageProps> = ({
 
   if (isEditMode && loadError) {
     return (
-      <div className="min-h-screen bg-[#FBFBFC] p-8 flex items-center justify-center">
+      <div className="p-12 flex items-center justify-center">
         <div className="max-w-md w-full bg-white rounded-2xl border border-rose-200 p-6 text-center shadow-xs">
           <AlertCircle className="w-8 h-8 text-rose-600 mx-auto mb-2" />
           <h3 className="text-sm font-semibold text-[#111827]">Organization Not Found</h3>
@@ -334,33 +334,34 @@ export const OrganizationFormPage: React.FC<OrganizationFormPageProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#FBFBFC] text-[#111827] pb-16 font-sans">
-      {/* Top Header / Sticky Bar */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-[#E5E7EB] px-6 lg:px-8 py-4">
-        <div className="w-full flex items-center justify-between">
-          <div>
-            <div className="flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={handleBack}
-                className="text-xs font-semibold text-[#6B7280] hover:underline"
-              >
-                Organizations
-              </button>
-              <span className="text-xs text-[#E5E7EB]">/</span>
-              <span className="text-xs font-semibold text-[#111827]">
-                Organization Form
-              </span>
-            </div>
-            <h1 className="text-lg font-bold tracking-tight text-[#111827]">
-              {isEditMode ? 'Edit Organization Settings' : 'Provision New Organization'}
-            </h1>
+    <div className="space-y-6 pb-12 text-[#111827] dark:text-white font-sans">
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-slate-800">
+        <div>
+          <div className="flex items-center space-x-2 mb-1.5">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="text-xs font-semibold text-[#6B7280] hover:underline cursor-pointer"
+            >
+              Organizations
+            </button>
+            <span className="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
+            <span className="text-xs font-semibold text-[#111827] dark:text-slate-200">
+              Organization Form
+            </span>
           </div>
+          <h1 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-white">
+            {isEditMode ? 'Edit Organization Settings' : 'Provision New Organization'}
+          </h1>
+          <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
+            Configure organization profile, root administrator credentials, and enterprise module entitlements.
+          </p>
         </div>
-      </header>
+      </div>
 
       {/* Main Content Area */}
-      <main className="w-full px-6 lg:px-8 py-8">
+      <div className="w-full">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Notification Banners */}
           {formSuccessMessage && (
@@ -788,7 +789,7 @@ export const OrganizationFormPage: React.FC<OrganizationFormPageProps> = ({
             </button>
           </div>
         </form>
-      </main>
+      </div>
     </div>
   );
 };

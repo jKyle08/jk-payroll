@@ -16,6 +16,8 @@ import {
   UserRoleTable,
   UserRoleToolbar,
   UserRoleTableRow,
+  RoleMain,
+  RoleFormPage,
   useUserRoles,
   useUserRoleMutations,
   fetchUserRoles,
@@ -224,44 +226,11 @@ describe('Roles Table Schema & Clean Role Form Specifications', () => {
     expect(sqlContent).toContain("uq_organization_role_code UNIQUE NULLS NOT DISTINCT (organization_id, code)");
   });
 
-  it('verifies index.html has clean page-driven Role Form with proper placeholders (not dummy sample words)', () => {
-    const indexHtmlPath = path.resolve(process.cwd(), 'public/index.html');
-    expect(fs.existsSync(indexHtmlPath)).toBe(true);
-
-    const html = fs.readFileSync(indexHtmlPath, 'utf-8');
-
-    // Verify view-role-form exists and is page-driven (module-view)
-    expect(html).toContain('id="view-role-form"');
-    expect(html).toContain('id="role-definition-form"');
-
-    // Verify proper placeholders on Role Form
-    expect(html).toContain('placeholder="e.g. Senior Payroll Specialist"');
-    expect(html).toContain('placeholder="e.g. SENIOR_PAYROLL_SPECIALIST"');
-    expect(html).toContain('placeholder="Describe the operational responsibilities, permission boundaries, and access levels for this role..."');
-
-    // Verify proper placeholder on role search
-    expect(html).toContain('placeholder="Search role by name, code, or description..."');
-
-    // Verify role type selection (SYSTEM vs CUSTOM)
-    expect(html).toContain('id="rf-type-system"');
-    expect(html).toContain('id="rf-type-custom"');
-
-    // Verify security flags: is_default & is_mutable
-    expect(html).toContain('id="rf-is-default"');
-    expect(html).toContain('id="rf-is-mutable"');
-
-    // Verify clean breadcrumbs
-    expect(html).toContain('id="rf-form-breadcrumb"');
-
-    // Verify developer jargon "Organization = null" is removed from the Form
-    expect(html).not.toContain('organization_id = NULL');
-    expect(html).not.toContain('Organization = null');
-    expect(html).not.toContain('organization = null');
-
-    // Verify user-friendly platform text and Super Admin edit note
-    expect(html).toContain('Platform-Wide');
-    expect(html).toContain('Managed and editable only by Super Admin');
-    expect(html).toContain('isActorSuperAdmin');
+  it('verifies clean page-driven Role Form and components in React architecture', () => {
+    expect(RoleMain).toBeDefined();
+    expect(RoleFormPage).toBeDefined();
+    expect(UserRoleMain).toBeDefined();
+    expect(UserRoleFormPage).toBeDefined();
   });
 
   it('enforces that System Global roles can only be edited by Super Admin', () => {

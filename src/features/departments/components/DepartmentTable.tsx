@@ -15,6 +15,8 @@ export interface DepartmentTableProps {
   onEdit: (dept: DepartmentItem) => void;
   onDelete: (dept: DepartmentItem) => void;
   onAddSubDepartment: (parentDept: DepartmentItem) => void;
+  startIndex?: number;
+  pagination?: React.ReactNode;
 }
 
 export const DepartmentTable: React.FC<DepartmentTableProps> = ({
@@ -23,6 +25,8 @@ export const DepartmentTable: React.FC<DepartmentTableProps> = ({
   onEdit,
   onDelete,
   onAddSubDepartment,
+  startIndex = 0,
+  pagination,
 }) => {
   if (isLoading) {
     return (
@@ -68,7 +72,7 @@ export const DepartmentTable: React.FC<DepartmentTableProps> = ({
               <DepartmentTableRow
                 key={dept.id}
                 department={dept}
-                index={index}
+                index={startIndex + index}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onAddSubDepartment={onAddSubDepartment}
@@ -77,6 +81,14 @@ export const DepartmentTable: React.FC<DepartmentTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Table Footer: Pagination */}
+      {pagination ?? (
+        <div className="px-6 py-3 border-t border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-900/60 text-xs text-[#6B7280]">
+          Showing <span className="font-semibold text-[#111827] dark:text-white font-mono tabular-nums">{departments.length}</span>{' '}
+          {departments.length === 1 ? 'department' : 'departments'}
+        </div>
+      )}
     </div>
   );
 };

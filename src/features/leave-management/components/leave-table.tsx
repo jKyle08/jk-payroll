@@ -17,6 +17,7 @@ import {
   User,
 } from 'lucide-react';
 import { LeaveRequest, LeaveStatus } from '../types.js';
+import { Pagination, usePagination } from '../../../components/ui/Pagination.js';
 
 export interface LeaveTableProps {
   records: LeaveRequest[];
@@ -43,6 +44,8 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
       r.typeOfLeaveId.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
+
+  const pagination = usePagination(filteredRecords, 10);
 
   const getStatusBadge = (status: LeaveStatus) => {
     switch (status) {
@@ -117,6 +120,7 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <th className="py-3.5 px-3 text-center w-12 font-mono">#</th>
               <th className="py-3.5 px-4">Applicant / Employee</th>
               <th className="py-3.5 px-4">Duration</th>
               <th className="py-3.5 px-4">Dates</th>
@@ -128,7 +132,7 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
             {filteredRecords.length === 0 ? (
               <tr>
-                <td colSpan={canApprove ? 6 : 5} className="py-12 text-center text-slate-400">
+                <td colSpan={canApprove ? 7 : 6} className="py-12 text-center text-slate-400">
                   <CalendarDays className="w-10 h-10 mx-auto mb-2 opacity-50 stroke-[1.5]" />
                   <p className="font-semibold text-slate-600 dark:text-slate-300">
                     No leave requests found
@@ -139,11 +143,14 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
                 </td>
               </tr>
             ) : (
-              filteredRecords.map((item) => (
+              pagination.pageItems.map((item, idx) => (
                 <tr
                   key={item.id}
                   className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
                 >
+                  <td className="py-3.5 px-3 text-center font-mono text-[11px] text-slate-400 font-medium">
+                    {pagination.startIndex + idx + 1}
+                  </td>
                   <td className="py-3.5 px-4">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs ring-1 ring-blue-500/20">
@@ -211,11 +218,15 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
         </table>
       </div>
 
-      {/* Table Footer */}
-      <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 text-xs text-slate-400 flex items-center justify-between">
-        <span>Showing {filteredRecords.length} records</span>
-        <span>Scoped to Departmental Hierarchy</span>
-      </div>
+      {/* Table Footer: Pagination */}
+      <Pagination
+        page={pagination.page}
+        pageSize={pagination.pageSize}
+        total={pagination.total}
+        onPageChange={pagination.setPage}
+        onPageSizeChange={pagination.setPageSize}
+        itemLabel="leave requests"
+      />
     </div>
   );
 };

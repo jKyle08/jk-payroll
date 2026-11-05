@@ -16,6 +16,8 @@ export interface ConfirmDialogProps {
   description: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
+  confirmText?: string;
+  cancelText?: string;
   isDestructive?: boolean;
   isLoading?: boolean;
 }
@@ -26,11 +28,15 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
+  confirmText,
+  cancelText,
   isDestructive = false,
   isLoading = false,
 }) => {
+  const resolvedConfirmLabel = confirmLabel || confirmText || 'Confirm';
+  const resolvedCancelLabel = cancelLabel || cancelText || 'Cancel';
   // Close on Escape key press
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -124,7 +130,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClick={onClose}
             className="h-9 px-4 rounded-lg border border-[#E5E7EB] bg-white text-xs font-semibold text-[#475569] hover:text-[#111827] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
 
           <button
@@ -138,7 +144,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             }`}
           >
             {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            <span>{confirmLabel}</span>
+            <span>{resolvedConfirmLabel}</span>
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: ORGANIZATION MAIN HUB COMPONENT
-// Root page (/organizations): Header + KPI Cards + Toolbar + Table + ConfirmDialog
+// Root page (/organizations): Header + KPI Cards + Toolbar (Search/Filter/View) + Table/Grid + Pagination + ConfirmDialog
 // Design System: "Midnight & Champagne Steel"
 // File: src/features/organizations/components/OrganizationMain.tsx
 // ==============================================================================
@@ -13,15 +13,22 @@ import {
   Users,
   AlertCircle,
   RefreshCw,
+  Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Organization } from '../types.js';
 import { useOrganizations } from '../hooks/useOrganizations.js';
 import { useOrganizationMutations } from '../hooks/useOrganizationMutations.js';
-import { OrganizationToolbar } from './OrganizationToolbar.js';
+import {
+  OrganizationToolbar,
+  OrganizationViewMode,
+} from './OrganizationToolbar.js';
 import { OrganizationTable } from './OrganizationTable.js';
+import { OrganizationCardGrid } from './OrganizationCardGrid.js';
 import { OrganizationTableSkeleton } from './OrganizationTableSkeleton.js';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.js';
+import { KpiCard } from '../../../components/ui/KpiCard.js';
+import { Pagination, usePagination } from '../../../components/ui/Pagination.js';
 
 export interface OrganizationMainProps {
   onNavigateToCreate?: () => void;
@@ -56,6 +63,9 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
     }
   };
 
+  // Default view mode is 'table' (List Table View)
+  const [viewMode, setViewMode] = useState<OrganizationViewMode>('table');
+
   const {
     filteredOrganizations,
     kpis,
@@ -68,6 +78,8 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
   } = useOrganizations();
 
   const { deleteOrg, isSubmitting: isDeleting } = useOrganizationMutations();
+
+  const pagination = usePagination(filteredOrganizations, 10);
 
   // State for universal ConfirmDialog
   const [targetOrgToDelete, setTargetOrgToDelete] = useState<Organization | null>(null);
@@ -89,105 +101,92 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
     }
   };
 
+  const paginationNode = (
+    <Pagination
+      page={pagination.page}
+      pageSize={pagination.pageSize}
+      total={pagination.total}
+      onPageChange={pagination.setPage}
+      onPageSizeChange={pagination.setPageSize}
+      itemLabel="organizations"
+    />
+  );
+
   return (
-    <div className="min-h-screen bg-[#FBFBFC] text-[#111827] p-6 lg:p-8 space-y-8 font-sans">
-      {/* 1. Page Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
+    <div className="space-y-6 pb-12 text-[#111827] dark:text-white font-sans">
+      {/* 1. Top Header Bar: Midnight & Champagne Steel Aesthetic */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-slate-800">
         <div>
-          <div className="flex items-center space-x-2 mb-1">
+          <div className="flex items-center space-x-2 mb-1.5">
             <span className="text-xs font-semibold text-[#6B7280]">
               Organizations
             </span>
-            <span className="text-xs text-[#E5E7EB]">/</span>
-            <span className="text-xs font-semibold text-[#111827]">
+            <span className="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
+            <span className="text-xs font-semibold text-[#111827] dark:text-slate-200">
               Organization Directory
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
+          <h1 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-white">
             Organizations
           </h1>
-          <p className="text-xs text-[#6B7280] mt-0.5">
-            Manage client enterprise workspaces, multi-tenant isolation domains, and subscription tiers.
+          <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
+            Manage client organizations, billing entities, isolation domains, and subscription tiers.
           </p>
         </div>
+
+        {/* Header CTA */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleAddNew}
+            className="h-10 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-semibold flex items-center justify-center gap-2 border border-[#0F172A] dark:border-slate-100 transition-all cursor-pointer"
+            title="Create New Organization"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Organization</span>
+          </button>
+        </div>
       </div>
 
-      {/* 2. KPI Summary Cards (Midnight & Champagne Steel) */}
+      {/* 2. KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Organizations */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#6B7280]">Total Organizations</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#111827] font-mono tabular-nums">
-                {kpis.total}
-              </span>
-              <span className="text-[11px] text-[#6B7280]">tenants</span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center text-[#0F172A]">
-            <Building2 className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Active Organizations */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#6B7280]">Active Organizations</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#111827] font-mono tabular-nums">
-                {kpis.active}
-              </span>
-              <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded">
-                Live
-              </span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Pending Setup */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#6B7280]">Pending Setup</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#111827] font-mono tabular-nums">
-                {kpis.pending}
-              </span>
-              <span className="text-[11px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded">
-                Onboarding
-              </span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-            <Clock className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Managed Headcount */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#6B7280]">Managed Employees</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#111827] font-mono tabular-nums">
-                {kpis.totalHeadcount}
-              </span>
-              <span className="text-[11px] text-[#6B7280]">personnel</span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
-            <Users className="w-5 h-5" />
-          </div>
-        </div>
+        <KpiCard
+          label="Total Organizations"
+          value={kpis.total}
+          suffix="tenants"
+          tone="slate"
+          icon={<Building2 className="w-5 h-5" />}
+        />
+        <KpiCard
+          label="Active Organizations"
+          value={kpis.active}
+          suffix="Live"
+          tone="emerald"
+          icon={<CheckCircle2 className="w-5 h-5" />}
+        />
+        <KpiCard
+          label="Pending Setup"
+          value={kpis.pending}
+          suffix="Onboarding"
+          tone="amber"
+          icon={<Clock className="w-5 h-5" />}
+        />
+        <KpiCard
+          label="Managed Employees"
+          value={kpis.totalHeadcount}
+          suffix="headcount"
+          tone="purple"
+          icon={<Users className="w-5 h-5" />}
+        />
       </div>
 
-      {/* 3. Search & Filter Toolbar */}
+      {/* 3. Action Bar Panel (Search Box + Search Button + View Toggle + Filter Button) & Collapsible Filter Panel */}
       <OrganizationToolbar
         filters={filters}
         onFilterChange={setFilters}
         onAddNew={handleAddNew}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {/* 4. Error Display */}
@@ -200,7 +199,7 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
           <button
             type="button"
             onClick={() => refetch()}
-            className="flex items-center gap-1.5 font-semibold text-rose-800 hover:underline"
+            className="flex items-center gap-1.5 font-semibold text-rose-800 hover:underline cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Retry</span>
@@ -208,12 +207,23 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
         </div>
       )}
 
-      {/* 5. Organization Table or Skeleton */}
+      {/* 5. Organization Directory Data View: List Table (default) or Grid Cards, with Pagination */}
       {isLoading ? (
         <OrganizationTableSkeleton rows={4} />
+      ) : viewMode === 'cards' ? (
+        <OrganizationCardGrid
+          organizations={pagination.pageItems}
+          startIndex={pagination.startIndex}
+          pagination={paginationNode}
+          onEdit={handleEdit}
+          onDelete={handleDeletePrompt}
+          onAddNew={handleAddNew}
+        />
       ) : (
         <OrganizationTable
-          organizations={filteredOrganizations}
+          organizations={pagination.pageItems}
+          startIndex={pagination.startIndex}
+          pagination={paginationNode}
           onEdit={handleEdit}
           onDelete={handleDeletePrompt}
           onAddNew={handleAddNew}

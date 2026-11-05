@@ -11,3 +11,4 @@ export type { UserSessionData, AuthResponse, AuthUser } from './types.js';
 export { loginSchema, registerSchema } from './auth.schema.js';
 export type { LoginInput, RegisterInput } from './auth.schema.js';
 export { useAuth, default as useAuthDefault } from './hooks/use-auth.js';
+export { LoginPage } from './components/LoginPage.js';

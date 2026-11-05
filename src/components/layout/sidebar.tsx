@@ -84,6 +84,7 @@ export interface SidebarProps {
   moduleSearchQuery?: string;
   onModuleSearch?: (query: string) => void;
   roleName?: string;
+  isSuperAdmin?: boolean;
 }
 
 const DEFAULT_ORGANIZATION: OrganizationContext = {
@@ -138,7 +139,7 @@ export const FLATTENED_NAV_SECTIONS: NavSection[] = [
       },
       {
         id: 'employee-roles',
-        label: 'Role Assignments',
+        label: 'User Role',
         path: '/admin/roles',
         requiredPermission: PERMISSIONS.USER_ROLE.VIEW,
         icon: Briefcase,
@@ -358,6 +359,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onScopeChange,
   moduleSearchQuery,
   onModuleSearch,
+  roleName,
+  isSuperAdmin = false,
 }) => {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
@@ -391,12 +394,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onModuleSearch?.(query);
   };
 
+  // Super admin can see all modules without individual permission grants
+  const isSuper = Boolean(
+    isSuperAdmin ||
+    roleName?.toLowerCase().includes('super') ||
+    userPermissions?.includes('*') ||
+    userPermissions?.includes('SUPER_ADMIN')
+  );
+
   // Filter flattened sections by user permissions and module search query
   const visibleSections = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return FLATTENED_NAV_SECTIONS.map((section) => {
       const filteredItems = section.items.filter((item) => {
-        const hasPerm = !item.requiredPermission || hasPermission(item.requiredPermission);
+        const hasPerm = isSuper || !item.requiredPermission || hasPermission(item.requiredPermission);
         if (!hasPerm) return false;
         if (!q) return true;
         return item.label.toLowerCase().includes(q);
@@ -406,7 +417,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         items: filteredItems,
       };
     }).filter((section) => section.items.length > 0);
-  }, [userPermissions, hasPermission, searchQuery]);
+  }, [userPermissions, hasPermission, searchQuery, isSuper]);
 
   return (
     <>
@@ -532,17 +543,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         type="button"
                         onClick={() => handleLinkClick(item.path)}
                         title={isCollapsed ? item.label : undefined}
-                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-all group relative ${
+                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-all group relative cursor-pointer ${
                           isActive
-                            ? 'bg-[#0F172A]/5 text-[#0F172A] font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#0F172A] before:rounded-r'
-                            : 'text-[#475569] hover:text-[#111827] hover:bg-[#F1F5F9]/70 font-medium'
+                            ? 'bg-[#0F172A]/5 dark:bg-blue-500/15 text-[#0F172A] dark:text-blue-400 font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#0F172A] dark:before:bg-blue-500 before:rounded-r'
+                            : 'text-[#475569] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F1F5F9]/70 dark:hover:bg-slate-800/70 font-medium'
                         }`}
                       >
                         <Icon
                           className={`w-4 h-4 flex-shrink-0 transition-colors ${
                             isActive
-                              ? 'text-[#0F172A]'
-                              : 'text-[#6B7280] group-hover:text-[#111827]'
+                              ? 'text-[#0F172A] dark:text-blue-400'
+                              : 'text-[#6B7280] dark:text-slate-400 group-hover:text-[#111827] dark:group-hover:text-white'
                           }`}
                         />
 

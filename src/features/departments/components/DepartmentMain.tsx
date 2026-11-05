@@ -19,6 +19,8 @@ import { DepartmentToolbar } from './DepartmentToolbar.js';
 import { DepartmentTable } from './DepartmentTable.js';
 import { DepartmentTree } from './department-tree.js';
 import { DepartmentFormPage } from './DepartmentFormPage.js';
+import { KpiCard } from '../../../components/ui/KpiCard.js';
+import { Pagination, usePagination } from '../../../components/ui/Pagination.js';
 
 export interface DepartmentMainProps {
   isSuperAdmin?: boolean;
@@ -43,6 +45,8 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
   const [activeEditingDept, setActiveEditingDept] = useState<DepartmentItem | null>(null);
   const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
+
+  const pagination = usePagination(departments, 10);
 
   const handleOpenCreate = (parentDeptId?: string | null) => {
     setActiveEditingDept(null);
@@ -140,61 +144,34 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
 
       {/* Metric Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Departments */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-[#E5E7EB] dark:border-slate-800 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#6B7280] dark:text-slate-400">Total Departments</span>
-            <div className="w-8 h-8 rounded-lg bg-[#F8FAFC] dark:bg-slate-800 text-[#475569] dark:text-slate-300 flex items-center justify-center border border-[#E5E7EB] dark:border-slate-700">
-              <Building2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-[#111827] dark:text-white tabular-nums">{meta.total}</span>
-            <span className="text-[11px] font-medium text-[#6B7280]">units</span>
-          </div>
-        </div>
-
-        {/* Active Departments */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-[#E5E7EB] dark:border-slate-800 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#6B7280] dark:text-slate-400">Active Departments</span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-[#047857] bg-[#ECFDF5] border border-[#A7F3D0]">
-              Operational
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-[#047857] dark:text-emerald-400 tabular-nums">{meta.activeCount}</span>
-            <span className="text-[11px] font-medium text-[#6B7280]">live</span>
-          </div>
-        </div>
-
-        {/* Head Departments (Depth 0) */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-[#E5E7EB] dark:border-slate-800 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#6B7280] dark:text-slate-400">Head Departments</span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200">
-              Depth 0
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-indigo-700 dark:text-indigo-400 tabular-nums">{meta.rootCount}</span>
-            <span className="text-[11px] font-medium text-[#6B7280]">executive</span>
-          </div>
-        </div>
-
-        {/* Sub-departments & Units */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-[#E5E7EB] dark:border-slate-800 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#6B7280] dark:text-slate-400">Sub-Departments</span>
-            <div className="w-8 h-8 rounded-lg bg-[#F8FAFC] dark:bg-slate-800 text-[#475569] dark:text-slate-300 flex items-center justify-center border border-[#E5E7EB] dark:border-slate-700">
-              <GitBranch className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-[#111827] dark:text-white tabular-nums">{meta.subCount}</span>
-            <span className="text-[11px] font-medium text-[#6B7280]">sub-branches</span>
-          </div>
-        </div>
+        <KpiCard
+          label="Total Departments"
+          value={meta.total}
+          suffix="units"
+          tone="slate"
+          icon={<Building2 className="w-4 h-4" />}
+        />
+        <KpiCard
+          label="Active Departments"
+          value={meta.activeCount}
+          suffix="Operational"
+          tone="emerald"
+          icon={<CheckCircle2 className="w-4 h-4" />}
+        />
+        <KpiCard
+          label="Head Departments"
+          value={meta.rootCount}
+          suffix="Depth 0"
+          tone="blue"
+          icon={<Building2 className="w-4 h-4" />}
+        />
+        <KpiCard
+          label="Sub-Departments"
+          value={meta.subCount}
+          suffix="sub-branches"
+          tone="purple"
+          icon={<GitBranch className="w-4 h-4" />}
+        />
       </div>
 
       {/* Toolbar */}
@@ -206,6 +183,7 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
         onOrganizationChange={(organizationId) => setFilters({ ...filters, organizationId })}
         onDepthChange={(depth) => setFilters({ ...filters, depth })}
         onStatusChange={(status) => setFilters({ ...filters, status })}
+        onApplyFilters={(nextFilters) => setFilters(nextFilters)}
         onViewModeChange={setViewMode}
         onReset={() => setFilters({})}
         onAddNew={() => handleOpenCreate()}
@@ -241,7 +219,18 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
         </div>
       ) : (
         <DepartmentTable
-          departments={departments}
+          departments={pagination.pageItems}
+          startIndex={pagination.startIndex}
+          pagination={
+            <Pagination
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              total={pagination.total}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              itemLabel="departments"
+            />
+          }
           isLoading={isLoading}
           onEdit={handleOpenEdit}
           onDelete={handleDelete}

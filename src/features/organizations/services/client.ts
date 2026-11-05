@@ -33,6 +33,14 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
     headers.set('Content-Type', 'application/json');
   }
 
+  // Attach JWT Bearer token from localStorage
+  if (typeof window !== 'undefined' && !headers.has('Authorization')) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  }
+
   const response = await fetch(url, {
     ...options,
     headers,
@@ -43,6 +51,13 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
   const data = isJson ? await response.json() : null;
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentUser');
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/401') {
+        window.location.href = '/401';
+      }
+    }
     const errorMessage =
       data?.error || data?.message || `Request failed with status ${response.status}`;
     throw new Error(errorMessage);

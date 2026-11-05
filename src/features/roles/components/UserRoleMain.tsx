@@ -19,6 +19,8 @@ import { useUserRoleMutations } from '../hooks/useUserRoleMutations.js';
 import { UserRoleToolbar } from './UserRoleToolbar.js';
 import { UserRoleTable } from './UserRoleTable.js';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.js';
+import { KpiCard } from '../../../components/ui/KpiCard.js';
+import { Pagination, usePagination } from '../../../components/ui/Pagination.js';
 
 export interface UserRoleMainProps {
   onNavigateToCreate?: () => void;
@@ -42,7 +44,7 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
     if (onNavigateToCreate) {
       onNavigateToCreate();
     } else if (navigate) {
-      navigate('/roles/new');
+      navigate('/admin/permissions/new');
     }
   };
 
@@ -50,7 +52,7 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
     if (onNavigateToAddRole) {
       onNavigateToAddRole();
     } else if (navigate) {
-      navigate('/roles/definitions/new');
+      navigate('/admin/roles/new');
     }
   };
 
@@ -58,7 +60,7 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
     if (onNavigateToEdit) {
       onNavigateToEdit(id);
     } else if (navigate) {
-      navigate(`/roles/${id}/edit`);
+      navigate(`/admin/permissions/${id}/edit`);
     }
   };
 
@@ -67,6 +69,7 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
     isLoading,
     error,
     filters,
+    setFilters,
     kpis,
     refetch,
     updateSearch,
@@ -77,6 +80,8 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
   } = useUserRoles();
 
   const { removeRole } = useUserRoleMutations();
+
+  const pagination = usePagination(userRoles, 10);
 
   // Confirmation dialog state for deletion
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -122,71 +127,34 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
 
       {/* 2. KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Role Assignments */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#6B7280]">Total User Roles</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#111827] font-mono tabular-nums">
-                {kpis.total}
-              </span>
-              <span className="text-[11px] text-[#6B7280]">user roles</span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center text-[#0F172A]">
-            <Users className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Active Assignments */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#6B7280]">Active User Roles</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#111827] font-mono tabular-nums">
-                {kpis.active}
-              </span>
-              <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded">
-                Live
-              </span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Organizations Covered */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#6B7280]">Organizations Covered</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#111827] font-mono tabular-nums">
-                {kpis.uniqueTenants}
-              </span>
-              <span className="text-[11px] text-[#6B7280]">tenants</span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center text-[#0F172A]">
-            <Building2 className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Distinct Security Roles */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-medium text-[#6B7280]">Distinct Roles</span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#111827] font-mono tabular-nums">
-                {kpis.uniqueRoles}
-              </span>
-              <span className="text-[11px] text-[#6B7280]">roles</span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center text-[#0F172A]">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-        </div>
+        <KpiCard
+          label="Total User Roles"
+          value={kpis.total}
+          suffix="user roles"
+          tone="slate"
+          icon={<Users className="w-5 h-5" />}
+        />
+        <KpiCard
+          label="Active User Roles"
+          value={kpis.active}
+          suffix="Live"
+          tone="emerald"
+          icon={<CheckCircle2 className="w-5 h-5" />}
+        />
+        <KpiCard
+          label="Organizations Covered"
+          value={kpis.uniqueTenants}
+          suffix="tenants"
+          tone="slate"
+          icon={<Building2 className="w-5 h-5" />}
+        />
+        <KpiCard
+          label="Distinct Roles"
+          value={kpis.uniqueRoles}
+          suffix="roles"
+          tone="purple"
+          icon={<ShieldCheck className="w-5 h-5" />}
+        />
       </div>
 
       {/* Error banner if query fails */}
@@ -204,6 +172,7 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
         onTenantChange={updateTenantFilter}
         onRoleChange={updateRoleFilter}
         onStatusChange={updateStatusFilter}
+        onApplyFilters={(nextFilters) => setFilters(nextFilters)}
         onReset={resetFilters}
         onAddNew={handleAddNew}
         onAddRole={handleAddRole}
@@ -211,7 +180,18 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
 
       {/* 4. Table */}
       <UserRoleTable
-        userRoles={userRoles}
+        userRoles={pagination.pageItems}
+        startIndex={pagination.startIndex}
+        pagination={
+          <Pagination
+            page={pagination.page}
+            pageSize={pagination.pageSize}
+            total={pagination.total}
+            onPageChange={pagination.setPage}
+            onPageSizeChange={pagination.setPageSize}
+            itemLabel="user roles"
+          />
+        }
         isLoading={isLoading}
         onEdit={handleEdit}
         onDelete={(id) => setDeleteId(id)}

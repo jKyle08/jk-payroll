@@ -1,0 +1,111 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+
+  html.dark {
+    color-scheme: dark;
+    background-color: #020617;
+    color: #f8fafc;
+  }
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.tabular-nums, .tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* ============================================================================
+   GLOBAL DARK MODE ADAPTATION FOR "MIDNIGHT & CHAMPAGNE STEEL" TOKENS
+   Ensures all surfaces, tables, toolbars, modals, and badges adapt seamlessly
+   when html.dark or .dark is active.
+   ============================================================================ */
+.dark .bg-white {
+  background-color: #0f172a;
+}
+
+.dark .bg-\[\#FBFBFC\],
+.dark .bg-\[\#FAFAFB\],
+.dark .bg-\[\#F8FAFC\],
+.dark .bg-\[\#F8FAFC\]\/60 {
+  background-color: #1e293b;
+}
+
+.dark .bg-\[\#F1F5F9\] {
+  background-color: #1e293b;
+}
+
+.dark .hover\:bg-\[\#FBFBFC\]:hover,
+.dark .hover\:bg-\[\#F8FAFC\]:hover,
+.dark .hover\:bg-\[\#F1F5F9\]:hover,
+.dark .hover\:bg-\[\#F1F5F9\]\/70:hover,
+.dark .hover\:bg-white:hover {
+  background-color: #1e293b;
+}
+
+.dark .border-\[\#E5E7EB\],
+.dark .border-\[\#E2E8F0\],
+.dark .border-\[\#CBD5E1\] {
+  border-color: #1e293b;
+}
+
+.dark .divide-\[\#E5E7EB\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b;
+}
+
+.dark .text-\[\#111827\],
+.dark .text-\[\#0F172A\] {
+  color: #f8fafc;
+}
+
+.dark .text-\[\#374151\],
+.dark .text-\[\#475569\] {
+  color: #cbd5e1;
+}
+
+.dark .text-\[\#6B7280\],
+.dark .text-\[\#64748B\] {
+  color: #94a3b8;
+}
+
+.dark .hover\:text-\[\#111827\]:hover,
+.dark .hover\:text-\[\#0F172A\]:hover,
+.dark .group:hover .group-hover\:text-\[\#111827\],
+.dark .group:hover .group-hover\:text-\[\#0F172A\] {
+  color: #ffffff;
+}
+
+/* Primary action buttons and active badges in dark mode */
+.dark button.bg-\[\#0F172A\],
+.dark a.bg-\[\#0F172A\] {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.dark button.bg-\[\#0F172A\]:hover,
+.dark a.bg-\[\#0F172A\]:hover {
+  background-color: #2563eb;
+}

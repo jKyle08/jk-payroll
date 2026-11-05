@@ -25,6 +25,10 @@ export interface CustomSelectProps {
   disabled?: boolean;
   error?: string;
   className?: string;
+  /** Open the menu above the trigger (useful at the bottom of clipped containers) */
+  dropUp?: boolean;
+  /** Compact size ('sm' = h-8) or standard size ('md' = h-10) */
+  size?: 'sm' | 'md';
 }
 
 export const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -38,6 +42,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   disabled = false,
   error,
   className = '',
+  dropUp = false,
+  size = 'md',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -96,7 +102,9 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           onClick={() => !disabled && setIsOpen(!isOpen)}
           aria-haspopup="listbox"
           aria-expanded={isOpen}
-          className={`h-10 w-full px-3 text-xs rounded-xl border bg-white dark:bg-slate-800 text-[#111827] dark:text-white flex items-center justify-between transition-all cursor-pointer shadow-2xs ${
+          className={`${
+            size === 'sm' ? 'h-8 px-2.5 rounded-lg' : 'h-10 px-3 rounded-xl'
+          } w-full text-xs border bg-white dark:bg-slate-800 text-[#111827] dark:text-white flex items-center justify-between transition-all cursor-pointer shadow-2xs ${
             error
               ? 'border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10'
               : isOpen
@@ -126,7 +134,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         {isOpen && (
           <div
             role="listbox"
-            className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-slate-900 border border-[#E5E7EB] dark:border-slate-700 rounded-xl shadow-lg p-1.5 space-y-0.5 max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100"
+            className={`absolute left-0 right-0 ${dropUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-50 bg-white dark:bg-slate-900 border border-[#E5E7EB] dark:border-slate-700 rounded-xl shadow-lg p-1.5 space-y-0.5 max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100`}
           >
             {options.map((option) => {
               const isSelected = option.value === value;
