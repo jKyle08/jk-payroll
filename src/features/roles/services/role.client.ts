@@ -32,11 +32,15 @@ export async function fetchRoles(params?: {
   search?: string;
   organizationId?: string;
   roleType?: string;
+  page?: number;
+  limit?: number;
 }): Promise<RoleListResponse> {
   const query = new URLSearchParams();
   if (params?.search) query.append('search', params.search);
   if (params?.organizationId && params.organizationId !== 'All') query.append('organizationId', params.organizationId);
   if (params?.roleType && params.roleType !== 'All') query.append('roleType', params.roleType);
+  if (params?.page) query.append('page', String(params.page));
+  if (params?.limit) query.append('limit', String(params.limit));
 
   const json = await unwrap<any>(await fetch(`/api/roles?${query.toString()}`, { headers: authHeaders() }), 'Failed to fetch roles');
   return {

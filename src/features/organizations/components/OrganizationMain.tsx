@@ -69,6 +69,11 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
   const {
     filteredOrganizations,
     kpis,
+    totalCount,
+    page: serverPage,
+    setPage: setServerPage,
+    pageSize: serverPageSize,
+    setPageSize: setServerPageSize,
     filters,
     setFilters,
     isLoading,
@@ -79,7 +84,17 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
 
   const { deleteOrg, isSubmitting: isDeleting } = useOrganizationMutations();
 
-  const pagination = usePagination(filteredOrganizations, 10);
+  const pagination = usePagination(filteredOrganizations, serverPageSize, totalCount);
+
+  const handlePageChange = (nextPage: number) => {
+    pagination.setPage(nextPage);
+    setServerPage(nextPage);
+  };
+
+  const handlePageSizeChange = (nextSize: number) => {
+    pagination.setPageSize(nextSize);
+    setServerPageSize(nextSize);
+  };
 
   // State for universal ConfirmDialog
   const [targetOrgToDelete, setTargetOrgToDelete] = useState<Organization | null>(null);
@@ -103,11 +118,11 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
 
   const paginationNode = (
     <Pagination
-      page={pagination.page}
-      pageSize={pagination.pageSize}
-      total={pagination.total}
-      onPageChange={pagination.setPage}
-      onPageSizeChange={pagination.setPageSize}
+      page={serverPage}
+      pageSize={serverPageSize}
+      total={totalCount}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
       itemLabel="organizations"
     />
   );
@@ -208,12 +223,11 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
       )}
 
       {/* 5. Organization Directory Data View: List Table (default) or Grid Cards, with Pagination */}
-      {isLoading ? (
-        <OrganizationTableSkeleton rows={4} />
-      ) : viewMode === 'cards' ? (
+      {viewMode === 'cards' ? (
         <OrganizationCardGrid
           organizations={pagination.pageItems}
-          startIndex={pagination.startIndex}
+          isLoading={isLoading || pagination.isPaging}
+          startIndex={(serverPage - 1) * serverPageSize}
           pagination={paginationNode}
           onEdit={handleEdit}
           onDelete={handleDeletePrompt}
@@ -222,7 +236,8 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
       ) : (
         <OrganizationTable
           organizations={pagination.pageItems}
-          startIndex={pagination.startIndex}
+          isLoading={isLoading || pagination.isPaging}
+          startIndex={(serverPage - 1) * serverPageSize}
           pagination={paginationNode}
           onEdit={handleEdit}
           onDelete={handleDeletePrompt}

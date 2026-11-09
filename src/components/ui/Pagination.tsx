@@ -10,40 +10,61 @@ import { CustomSelect } from './CustomSelect.js';
 
 export const DEFAULT_PAGE_SIZES = [10, 25, 50, 100];
 
-/** Client-side pagination state. Resets to a valid page when data shrinks. */
-export function usePagination<T>(items: T[] = [], initialPageSize = 10) {
+/** Client + Server pagination state. Resets to a valid page when data shrinks and exposes `isPaging` for table loading indicators. */
+export function usePagination<T>(items: T[] = [], initialPageSize = 10, serverTotalCount?: number) {
   const safeItems = Array.isArray(items) ? items : [];
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [page, setPageState] = useState(1);
+  const [pageSize, setPageSizeState] = useState(initialPageSize);
+  const [isPaging, setIsPaging] = useState(false);
 
-  const totalPages = Math.max(1, Math.ceil(safeItems.length / pageSize));
+  const effectiveTotal = serverTotalCount !== undefined ? serverTotalCount : safeItems.length;
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
 
   useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
+    if (page > totalPages) setPageState(totalPages);
   }, [page, totalPages]);
 
-  const pageItems = useMemo(
-    () => safeItems.slice((page - 1) * pageSize, page * pageSize),
-    [safeItems, page, pageSize]
-  );
+  const triggerPagingIndicator = () => {
+    setIsPaging(true);
+    setTimeout(() => {
+      setIsPaging(false);
+    }, 350);
+  };
+
+  const setPage = (nextPage: number) => {
+    triggerPagingIndicator();
+    setPageState(nextPage);
+  };
+
+  const setPageSize = (size: number) => {
+    triggerPagingIndicator();
+    setPageSizeState(size);
+    setPageState(1);
+  };
+
+  const pageItems = useMemo(() => {
+    // If serverTotalCount is provided and the array is already a server-sliced page, return safeItems directly
+    if (serverTotalCount !== undefined && safeItems.length <= pageSize) {
+      return safeItems;
+    }
+    return safeItems.slice((page - 1) * pageSize, page * pageSize);
+  }, [safeItems, page, pageSize, serverTotalCount]);
 
   return {
     page,
     currentPage: page,
     pageSize,
     totalPages,
-    total: safeItems.length,
-    totalItems: safeItems.length,
+    total: effectiveTotal,
+    totalItems: effectiveTotal,
     startIndex: (page - 1) * pageSize,
     pageItems,
     paginatedItems: pageItems,
+    isPaging,
     setPage,
     setCurrentPage: setPage,
-    setPageSize: (size: number) => {
-      setPageSize(size);
-      setPage(1);
-    },
-    resetPage: () => setPage(1),
+    setPageSize,
+    resetPage: () => setPageState(1),
   };
 }
 
@@ -86,7 +107,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div
-      className={`px-5 py-3 border-t border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400 ${className}`}
+      className={`px-5 py-3 rounded-b-2xl border-t border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400 ${className}`}
     >
       {/* Left: "Show [10] items per page | Showing 1 to 10 of 12 items" */}
       <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">

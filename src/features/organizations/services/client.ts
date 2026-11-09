@@ -89,7 +89,16 @@ export async function fetchOrganizations(
   const queryString = queryParams.toString();
   const url = queryString ? `${BASE_URL}?${queryString}` : BASE_URL;
 
-  const res = await apiRequest<any>(url);
+  const headers: Record<string, string> = {};
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+  const response = await fetch(url, { headers });
+  const res = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(res?.error || `Request failed with status ${response.status}`);
+  }
 
   if (Array.isArray(res)) {
     return {
@@ -101,12 +110,13 @@ export async function fetchOrganizations(
     };
   }
 
+  const items: Organization[] = res.data || res.items || [];
   return {
-    items: res.items || [],
-    total: res.total || 0,
-    activeCount: res.activeCount || 0,
-    pendingCount: res.pendingCount || 0,
-    totalHeadcount: res.totalHeadcount || 0,
+    items,
+    total: res.meta?.total ?? res.total ?? items.length,
+    activeCount: res.meta?.activeCount ?? res.activeCount ?? 0,
+    pendingCount: res.meta?.pendingCount ?? res.pendingCount ?? 0,
+    totalHeadcount: res.meta?.totalHeadcount ?? res.totalHeadcount ?? 0,
   };
 }
 

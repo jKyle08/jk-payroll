@@ -12,6 +12,7 @@ import { OrganizationTableRow } from './OrganizationTableRow.js';
 
 export interface OrganizationTableProps {
   organizations: Organization[];
+  isLoading?: boolean;
   onEdit?: (id: string) => void;
   onDelete?: (org: Organization) => void;
   onAddNew?: () => void;
@@ -21,13 +22,14 @@ export interface OrganizationTableProps {
 
 export const OrganizationTable: React.FC<OrganizationTableProps> = ({
   organizations,
+  isLoading = false,
   onEdit,
   onDelete,
   onAddNew,
   startIndex = 0,
   pagination,
 }) => {
-  if (organizations.length === 0) {
+  if (!isLoading && organizations.length === 0) {
     return (
       <div className="w-full bg-white rounded-2xl border border-[#E5E7EB] p-12 text-center shadow-xs">
         <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] border border-[#E5E7EB] text-[#6B7280] flex items-center justify-center mx-auto mb-3">
@@ -52,8 +54,8 @@ export const OrganizationTable: React.FC<OrganizationTableProps> = ({
   }
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-[#E5E7EB] shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="w-full bg-white rounded-2xl border border-[#E5E7EB] shadow-xs">
+      <div className="overflow-x-auto rounded-t-2xl">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-[#E5E7EB] bg-[#F8FAFC]/60 text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">
@@ -67,15 +69,26 @@ export const OrganizationTable: React.FC<OrganizationTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E5E7EB]">
-            {organizations.map((org, idx) => (
-              <OrganizationTableRow
-                key={org.id}
-                organization={org}
-                index={startIndex + idx}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            ))}
+            {isLoading ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center">
+                  <div className="inline-block animate-spin rounded-full h-7 w-7 border-b-2 border-[#0F172A] dark:border-blue-400 mb-2.5"></div>
+                  <p className="text-xs text-[#6B7280] dark:text-slate-400">
+                    Loading organizations...
+                  </p>
+                </td>
+              </tr>
+            ) : (
+              organizations.map((org, idx) => (
+                <OrganizationTableRow
+                  key={org.id}
+                  organization={org}
+                  index={startIndex + idx}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))
+            )}
           </tbody>
         </table>
       </div>

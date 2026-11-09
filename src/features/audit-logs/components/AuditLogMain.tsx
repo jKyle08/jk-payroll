@@ -243,6 +243,12 @@ export const AuditLogMain: React.FC = () => {
 
   // Raw logs + organizations map
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+  const [serverMeta, setServerMeta] = useState<{
+    total: number;
+    stats?: { total: number; creates: number; updates: number; deletes: number };
+  } | null>(null);
+  const [serverPage, setServerPage] = useState<number>(1);
+  const [serverPageSize, setServerPageSize] = useState<number>(10);
   const [organizations, setOrganizations] = useState<OrganizationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
@@ -289,15 +295,17 @@ export const AuditLogMain: React.FC = () => {
     };
   }, [token]);
 
-  // Fetch audit logs from API
+  // Fetch audit logs from API with server-side page & limit parameters
   const fetchAuditLogs = useCallback(async () => {
     setLoading(true);
+    const startTime = Date.now();
     try {
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const params = new URLSearchParams();
-      params.set('limit', '200');
+      params.set('page', String(serverPage));
+      params.set('limit', String(serverPageSize));
       if (selectedOrgId !== 'All') params.set('organizationId', selectedOrgId);
       if (selectedModule !== 'All') params.set('moduleId', selectedModule);
       if (selectedAction !== 'All') params.set('action', selectedAction);
@@ -306,6 +314,10 @@ export const AuditLogMain: React.FC = () => {
       const res = await fetch(`/api/audit-logs?${params.toString()}`, {
         headers,
       });
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 300) {
+        await new Promise((r) => setTimeout(r, 300 - elapsed));
+      }
 
       if (res.ok) {
         const json = await res.json();
@@ -314,20 +326,27 @@ export const AuditLogMain: React.FC = () => {
           : Array.isArray(json)
           ? json
           : [];
-        if (apiLogs.length > 0) {
+        if (apiLogs.length > 0 || (json.meta && typeof json.meta.total === 'number' && json.meta.total > 0)) {
           setLogs(apiLogs);
+          setServerMeta({
+            total: json.meta?.total ?? apiLogs.length,
+            stats: json.meta?.stats,
+          });
         } else {
           setLogs(FALLBACK_AUDIT_LOGS);
+          setServerMeta(null);
         }
       } else {
         setLogs(FALLBACK_AUDIT_LOGS);
+        setServerMeta(null);
       }
     } catch {
       setLogs(FALLBACK_AUDIT_LOGS);
+      setServerMeta(null);
     } finally {
       setLoading(false);
     }
-  }, [token, selectedOrgId, selectedModule, selectedAction, searchQuery]);
+  }, [token, serverPage, serverPageSize, selectedOrgId, selectedModule, selectedAction, searchQuery]);
 
   useEffect(() => {
     fetchAuditLogs();
@@ -415,31 +434,46 @@ export const AuditLogMain: React.FC = () => {
 
   // Compute KPI stats
   const kpiStats = useMemo(() => {
-    const total = filteredLogs.length;
+    if (serverMeta?.stats) {
+      return {
+        total: serverMeta.stats.total ?? serverMeta.total,
+        creates: serverMeta.stats.creates ?? 0,
+        updates: serverMeta.stats.updates ?? 0,
+        deletes: serverMeta.stats.deletes ?? 0,
+      };
+    }
+    const total = serverMeta?.total ?? filteredLogs.length;
     const creates = filteredLogs.filter((l) => l.action === 'CREATE').length;
     const updates = filteredLogs.filter((l) => l.action === 'UPDATE').length;
     const deletes = filteredLogs.filter((l) => l.action === 'DELETE').length;
     return { total, creates, updates, deletes };
-  }, [filteredLogs]);
+  }, [filteredLogs, serverMeta]);
 
   // Pagination hook
-  const pagination = usePagination(filteredLogs, 10);
+  const pagination = usePagination(
+    filteredLogs,
+    serverPageSize,
+    serverMeta?.total
+  );
 
   // Handlers for Search & Filters
   const handleSearchInputChange = (val: string) => {
     setSearchInput(val);
     setSearchQuery(val);
+    setServerPage(1);
     pagination.resetPage();
   };
 
   const handleExecuteSearch = () => {
     setSearchQuery(searchInput.trim());
+    setServerPage(1);
     pagination.resetPage();
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
     setSearchQuery('');
+    setServerPage(1);
     pagination.resetPage();
   };
 
@@ -447,6 +481,7 @@ export const AuditLogMain: React.FC = () => {
     setSelectedOrgId(draftOrgId);
     setSelectedModule(draftModule);
     setSelectedAction(draftAction);
+    setServerPage(1);
     pagination.resetPage();
   };
 
@@ -457,6 +492,7 @@ export const AuditLogMain: React.FC = () => {
     setSelectedOrgId('All');
     setSelectedModule('All');
     setSelectedAction('All');
+    setServerPage(1);
     pagination.resetPage();
   };
 
@@ -837,8 +873,8 @@ export const AuditLogMain: React.FC = () => {
       {/* ================================================================== */}
       {/* 4. AUDIT TRAIL DATA TABLE + PAGINATION                             */}
       {/* ================================================================== */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-[#E5E7EB] dark:border-slate-800 shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-[#E5E7EB] dark:border-slate-800 shadow-2xs">
+        <div className="overflow-x-auto rounded-t-xl">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#F8FAFC] dark:bg-slate-800/60 border-b border-[#E5E7EB] dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400">
@@ -852,7 +888,16 @@ export const AuditLogMain: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB] dark:divide-slate-800 text-xs">
-              {pagination.pageItems.length === 0 ? (
+              {loading || pagination.isPaging ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <div className="inline-block animate-spin rounded-full h-7 w-7 border-b-2 border-[#0F172A] dark:border-blue-400 mb-2.5"></div>
+                    <p className="text-xs text-[#6B7280] dark:text-slate-400">
+                      Loading governance audit events...
+                    </p>
+                  </td>
+                </tr>
+              ) : pagination.pageItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center space-y-2">
@@ -871,7 +916,7 @@ export const AuditLogMain: React.FC = () => {
                 </tr>
               ) : (
                 pagination.pageItems.map((log, idx) => {
-                  const rowNumber = pagination.startIndex + idx + 1;
+                  const rowNumber = (serverPage - 1) * serverPageSize + idx + 1;
                   const formattedDate = new Date(
                     log.created_at
                   ).toLocaleDateString('en-US', {
@@ -1020,11 +1065,18 @@ export const AuditLogMain: React.FC = () => {
 
         {/* Shared Pagination Footer */}
         <Pagination
-          page={pagination.page}
-          pageSize={pagination.pageSize}
+          page={serverPage}
+          pageSize={serverPageSize}
           total={pagination.total}
-          onPageChange={pagination.setPage}
-          onPageSizeChange={pagination.setPageSize}
+          onPageChange={(nextPage) => {
+            pagination.setPage(nextPage);
+            setServerPage(nextPage);
+          }}
+          onPageSizeChange={(nextSize) => {
+            pagination.setPageSize(nextSize);
+            setServerPageSize(nextSize);
+            setServerPage(1);
+          }}
           itemLabel="audit events"
         />
       </div>

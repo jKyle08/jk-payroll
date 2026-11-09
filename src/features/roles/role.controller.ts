@@ -66,12 +66,26 @@ export class RoleController {
         isSuperAdmin: user.isSuperAdmin,
       });
 
+      const hasPagination = req.query.page !== undefined || req.query.limit !== undefined;
+      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
+      const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10) || 10);
+      const pagedItems = hasPagination
+        ? result.items.slice((page - 1) * limit, page * limit)
+        : result.items;
+
       res.status(200).json({
         success: true,
         tenantId,
         roles: roleService.getRolesByOrganization(tenantId),
-        data: result.items,
-        meta: { total: result.total, systemCount: result.systemCount, customCount: result.customCount },
+        data: pagedItems,
+        meta: {
+          total: result.total,
+          page,
+          limit,
+          totalPages: Math.max(1, Math.ceil(result.total / limit)),
+          systemCount: result.systemCount,
+          customCount: result.customCount,
+        },
       });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

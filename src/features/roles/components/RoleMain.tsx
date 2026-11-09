@@ -29,7 +29,20 @@ const DEFAULT_ROLE_FILTER_ORGS = [
 ];
 
 export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate, onOpen }) => {
-  const { items, meta, filters, setFilters, resetFilters, isLoading, error, refresh } = useRoleDirectory();
+  const {
+    items,
+    meta,
+    page: serverPage,
+    setPage: setServerPage,
+    pageSize: serverPageSize,
+    setPageSize: setServerPageSize,
+    filters,
+    setFilters,
+    resetFilters,
+    isLoading,
+    error,
+    refresh,
+  } = useRoleDirectory();
   const { removeRole, isSubmitting, error: mutationError } = useRoleMutations();
   const [pendingDelete, setPendingDelete] = useState<RoleItem | null>(null);
 
@@ -67,7 +80,7 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
     setDraftRoleType(filters.roleType || 'All');
   }, [filters]);
 
-  const pagination = usePagination(items, 10);
+  const pagination = usePagination(items, serverPageSize, meta.total);
 
   const hasActiveDropdownFilters =
     filters.organizationId !== 'All' || filters.roleType !== 'All';
@@ -376,8 +389,8 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-xl border border-[#E5E7EB]">
+        <div className="overflow-x-auto rounded-t-xl">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#FBFBFC] border-b border-[#E5E7EB] text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">
               <tr>
@@ -390,25 +403,27 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]">
-              {isLoading && (
+              {(isLoading || pagination.isPaging) && (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-[#6B7280]">
-                    Loading roles...
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#0F172A] mb-2"></div>
+                    <p>Loading roles...</p>
                   </td>
                 </tr>
               )}
-              {!isLoading && items.length === 0 && (
+              {!(isLoading || pagination.isPaging) && items.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-[#6B7280]">
                     No roles match the current filters.
                   </td>
                 </tr>
               )}
-              {pagination.pageItems.map((r, idx) => (
-                <tr key={r.id} className="hover:bg-[#F8FAFC] transition-colors">
-                  <td className="py-3 px-3 text-center font-mono text-[11px] text-[#9CA3AF] font-medium">
-                    {pagination.startIndex + idx + 1}
-                  </td>
+              {!(isLoading || pagination.isPaging) &&
+                pagination.pageItems.map((r, idx) => (
+                  <tr key={r.id} className="hover:bg-[#F8FAFC] transition-colors">
+                    <td className="py-3 px-3 text-center font-mono text-[11px] text-[#9CA3AF] font-medium">
+                      {(serverPage - 1) * serverPageSize + idx + 1}
+                    </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{r.name}</span>
@@ -460,11 +475,17 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
 
         {/* Table Footer: Pagination */}
         <Pagination
-          page={pagination.page}
-          pageSize={pagination.pageSize}
-          total={pagination.total}
-          onPageChange={pagination.setPage}
-          onPageSizeChange={pagination.setPageSize}
+          page={serverPage}
+          pageSize={serverPageSize}
+          total={meta.total}
+          onPageChange={(nextPage) => {
+            pagination.setPage(nextPage);
+            setServerPage(nextPage);
+          }}
+          onPageSizeChange={(nextSize) => {
+            pagination.setPageSize(nextSize);
+            setServerPageSize(nextSize);
+          }}
           itemLabel="roles"
         />
       </div>

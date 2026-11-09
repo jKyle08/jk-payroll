@@ -22,12 +22,16 @@ export async function fetchUserRoles(params?: {
   tenantId?: string;
   roleId?: string;
   status?: string;
+  page?: number;
+  limit?: number;
 }): Promise<UserRoleListResponse> {
   const query = new URLSearchParams();
   if (params?.search) query.append('search', params.search);
   if (params?.tenantId && params.tenantId !== 'All') query.append('tenantId', params.tenantId);
   if (params?.roleId && params.roleId !== 'All') query.append('roleId', params.roleId);
   if (params?.status && params.status !== 'All') query.append('status', params.status);
+  if (params?.page) query.append('page', String(params.page));
+  if (params?.limit) query.append('limit', String(params.limit));
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const res = await fetch(`/api/user-roles?${query.toString()}`, {

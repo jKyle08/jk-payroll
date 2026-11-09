@@ -66,6 +66,11 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
 
   const {
     userRoles,
+    totalCount,
+    page: serverPage,
+    setPage: setServerPage,
+    pageSize: serverPageSize,
+    setPageSize: setServerPageSize,
     isLoading,
     error,
     filters,
@@ -81,7 +86,7 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
 
   const { removeRole } = useUserRoleMutations();
 
-  const pagination = usePagination(userRoles, 10);
+  const pagination = usePagination(userRoles, serverPageSize, totalCount);
 
   // Confirmation dialog state for deletion
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -181,18 +186,24 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
       {/* 4. Table */}
       <UserRoleTable
         userRoles={pagination.pageItems}
-        startIndex={pagination.startIndex}
+        startIndex={(serverPage - 1) * serverPageSize}
         pagination={
           <Pagination
-            page={pagination.page}
-            pageSize={pagination.pageSize}
-            total={pagination.total}
-            onPageChange={pagination.setPage}
-            onPageSizeChange={pagination.setPageSize}
+            page={serverPage}
+            pageSize={serverPageSize}
+            total={totalCount}
+            onPageChange={(nextPage) => {
+              pagination.setPage(nextPage);
+              setServerPage(nextPage);
+            }}
+            onPageSizeChange={(nextSize) => {
+              pagination.setPageSize(nextSize);
+              setServerPageSize(nextSize);
+            }}
             itemLabel="user roles"
           />
         }
-        isLoading={isLoading}
+        isLoading={isLoading || pagination.isPaging}
         onEdit={handleEdit}
         onDelete={(id) => setDeleteId(id)}
         onAddNew={handleAddNew}

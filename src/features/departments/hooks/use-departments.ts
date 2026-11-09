@@ -17,7 +17,9 @@ export function useDepartments(initialFilters?: DepartmentFilterState) {
   const [departments, setDepartments] = useState<DepartmentItem[]>([]);
   const [departmentTree, setDepartmentTree] = useState<DepartmentNode[]>([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<DepartmentFilterState>(initialFilters || {});
+  const [filters, setFiltersState] = useState<DepartmentFilterState>(initialFilters || {});
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [meta, setMeta] = useState({
     total: 0,
     activeCount: 0,
@@ -27,11 +29,26 @@ export function useDepartments(initialFilters?: DepartmentFilterState) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const setFilters = useCallback((nextFilters: DepartmentFilterState) => {
+    setPage(1);
+    setFiltersState(nextFilters);
+  }, []);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    const startTime = Date.now();
     try {
-      const res = await fetchDepartments(filters);
+      const res = await fetchDepartments({
+        ...filters,
+        page,
+        limit: pageSize,
+      });
+      const tree = await fetchDepartmentTree(filters.organizationId !== 'All' ? filters.organizationId : undefined);
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 300) {
+        await new Promise((r) => setTimeout(r, 300 - elapsed));
+      }
       setDepartments(res.items);
       setMeta({
         total: res.total,
@@ -39,15 +56,13 @@ export function useDepartments(initialFilters?: DepartmentFilterState) {
         rootCount: res.rootCount,
         subCount: res.subCount,
       });
-
-      const tree = await fetchDepartmentTree(filters.organizationId !== 'All' ? filters.organizationId : undefined);
       setDepartmentTree(tree);
     } catch (err: any) {
       setError(err.message || 'Failed to load departments');
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, [filters, page, pageSize]);
 
   useEffect(() => {
     loadData();
@@ -61,6 +76,13 @@ export function useDepartments(initialFilters?: DepartmentFilterState) {
     departments,
     departmentTree,
     meta,
+    page,
+    setPage,
+    pageSize,
+    setPageSize: (size: number) => {
+      setPageSize(size);
+      setPage(1);
+    },
     selectedDepartmentId,
     selectDepartment,
     filters,

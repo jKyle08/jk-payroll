@@ -20,20 +20,30 @@ export class OrganizationController {
    */
   public async listOrganizations(req: Request, res: Response): Promise<void> {
     try {
-      const query = (req.query as unknown) as OrganizationQueryInput;
+      const query = (req.query as unknown) as OrganizationQueryInput & { page?: string; limit?: string };
       const result = await organizationService.listOrganizations({
         search: query.search || '',
         status: query.status,
         tier: query.tier,
       });
 
+      const hasPagination = query.page !== undefined || query.limit !== undefined;
+      const page = Math.max(1, parseInt(String(query.page || '1'), 10) || 1);
+      const limit = Math.max(1, parseInt(String(query.limit || '10'), 10) || 10);
+      const pagedItems = hasPagination
+        ? result.items.slice((page - 1) * limit, page * limit)
+        : result.items;
+
       res.status(200).json({
         success: true,
-        data: result.items,
-        items: result.items,
-        organizations: result.items,
+        data: pagedItems,
+        items: pagedItems,
+        organizations: pagedItems,
         meta: {
           total: result.total,
+          page,
+          limit,
+          totalPages: Math.max(1, Math.ceil(result.total / limit)),
           activeCount: result.activeCount,
           pendingCount: result.pendingCount,
           totalHeadcount: result.totalHeadcount,

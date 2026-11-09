@@ -25,6 +25,8 @@ export async function fetchDepartments(params?: {
   tenantId?: string;
   status?: string;
   depth?: string | number;
+  page?: number;
+  limit?: number;
 }): Promise<DepartmentListResponse> {
   const query = new URLSearchParams();
   if (params?.search) query.append('search', params.search);
@@ -32,6 +34,8 @@ export async function fetchDepartments(params?: {
   if (org && org !== 'All') query.append('organizationId', org);
   if (params?.status && params.status !== 'All') query.append('status', params.status);
   if (params?.depth !== undefined && params.depth !== 'All') query.append('depth', String(params.depth));
+  if (params?.page) query.append('page', String(params.page));
+  if (params?.limit) query.append('limit', String(params.limit));
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const res = await fetch(`/api/departments?${query.toString()}`, {

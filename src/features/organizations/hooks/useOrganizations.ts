@@ -17,12 +17,20 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
   const [organizations, setOrganizations] = useState<Organization[]>(
     options.initialData || []
   );
+  const [serverMeta, setServerMeta] = useState<{
+    total: number;
+    activeCount: number;
+    pendingCount: number;
+    totalHeadcount: number;
+  } | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [isLoading, setIsLoading] = useState<boolean>(
     options.initialData === undefined && options.autoFetch !== false
   );
   const [error, setError] = useState<string | null>(null);
 
-  const [filters, setFilters] = useState<OrgFilterState>({
+  const [filters, setFiltersState] = useState<OrgFilterState>({
     search: '',
     status: 'All',
     planTier: 'All',
@@ -30,18 +38,38 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
     payFrequency: 'All',
   });
 
+  const setFilters = useCallback((nextFilters: OrgFilterState | ((prev: OrgFilterState) => OrgFilterState)) => {
+    setPage(1);
+    setFiltersState(nextFilters);
+  }, []);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
+    const startTime = Date.now();
     try {
-      const response = await fetchOrganizations();
+      const response = await fetchOrganizations({
+        ...filters,
+        page,
+        limit: pageSize,
+      });
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 300) {
+        await new Promise((r) => setTimeout(r, 300 - elapsed));
+      }
       setOrganizations(response.items);
+      setServerMeta({
+        total: response.total,
+        activeCount: response.activeCount,
+        pendingCount: response.pendingCount,
+        totalHeadcount: response.totalHeadcount,
+      });
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch organizations');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [filters, page, pageSize]);
 
   useEffect(() => {
     if (options.initialData !== undefined) {
@@ -82,8 +110,16 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
     });
   }, [organizations, filters]);
 
-  // Real-time KPI summaries
+  // Real-time KPI summaries (use server totals when available, fallback to client array)
   const kpis = useMemo(() => {
+    if (serverMeta && options.initialData === undefined) {
+      return {
+        total: serverMeta.total,
+        active: serverMeta.activeCount,
+        pending: serverMeta.pendingCount,
+        totalHeadcount: serverMeta.totalHeadcount,
+      };
+    }
     const total = organizations.length;
     const active = organizations.filter((o) => o.status === 'Active').length;
     const pending = organizations.filter((o) => o.status === 'Onboarding').length;
@@ -93,7 +129,7 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
     );
 
     return { total, active, pending, totalHeadcount };
-  }, [organizations]);
+  }, [organizations, serverMeta, options.initialData]);
 
   // Optimistic list updates
   const addOrganization = useCallback((newOrg: Organization) => {
@@ -114,6 +150,14 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
     organizations,
     filteredOrganizations,
     kpis,
+    totalCount: serverMeta?.total ?? filteredOrganizations.length,
+    page,
+    setPage,
+    pageSize,
+    setPageSize: (size: number) => {
+      setPageSize(size);
+      setPage(1);
+    },
     filters,
     setFilters,
     isLoading,

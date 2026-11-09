@@ -14,17 +14,33 @@ export const DEFAULT_ROLE_FILTERS: RoleFilterState = {
 };
 
 export function useRoleDirectory(initial: RoleFilterState = DEFAULT_ROLE_FILTERS) {
-  const [filters, setFilters] = useState<RoleFilterState>(initial);
+  const [filters, setFiltersState] = useState<RoleFilterState>(initial);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [items, setItems] = useState<RoleItem[]>([]);
   const [meta, setMeta] = useState({ total: 0, systemCount: 0, customCount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const setFilters = useCallback((nextFilters: RoleFilterState) => {
+    setPage(1);
+    setFiltersState(nextFilters);
+  }, []);
+
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    const startTime = Date.now();
     try {
-      const res = await fetchRoles(filters);
+      const res = await fetchRoles({
+        ...filters,
+        page,
+        limit: pageSize,
+      });
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 300) {
+        await new Promise((r) => setTimeout(r, 300 - elapsed));
+      }
       setItems(res.items);
       setMeta({ total: res.total, systemCount: res.systemCount, customCount: res.customCount });
     } catch (err: any) {
@@ -32,13 +48,32 @@ export function useRoleDirectory(initial: RoleFilterState = DEFAULT_ROLE_FILTERS
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, [filters, page, pageSize]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  const resetFilters = useCallback(() => setFilters(DEFAULT_ROLE_FILTERS), []);
+  const resetFilters = useCallback(() => {
+    setPage(1);
+    setFiltersState(DEFAULT_ROLE_FILTERS);
+  }, []);
 
-  return { items, meta, filters, setFilters, resetFilters, isLoading, error, refresh };
+  return {
+    items,
+    meta,
+    page,
+    setPage,
+    pageSize,
+    setPageSize: (size: number) => {
+      setPageSize(size);
+      setPage(1);
+    },
+    filters,
+    setFilters,
+    resetFilters,
+    isLoading,
+    error,
+    refresh,
+  };
 }

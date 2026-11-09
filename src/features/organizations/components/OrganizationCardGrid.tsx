@@ -19,6 +19,7 @@ import { Organization } from '../types.js';
 
 export interface OrganizationCardGridProps {
   organizations: Organization[];
+  isLoading?: boolean;
   startIndex?: number;
   pagination?: React.ReactNode;
   onEdit?: (id: string) => void;
@@ -28,12 +29,31 @@ export interface OrganizationCardGridProps {
 
 export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
   organizations,
+  isLoading = false,
   startIndex = 0,
   pagination,
   onEdit,
   onDelete,
   onAddNew,
 }) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="w-full bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 p-12 text-center shadow-xs">
+          <div className="inline-block animate-spin rounded-full h-7 w-7 border-b-2 border-[#0F172A] dark:border-blue-400 mb-2.5"></div>
+          <p className="text-xs text-[#6B7280] dark:text-slate-400">
+            Loading organizations...
+          </p>
+        </div>
+        {pagination && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-xs">
+            {pagination}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (organizations.length === 0) {
     return (
       <div className="w-full bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 p-12 text-center shadow-xs">
@@ -258,7 +278,7 @@ export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
 
       {/* Pagination Footer */}
       {pagination && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-xs">
           {pagination}
         </div>
       )}

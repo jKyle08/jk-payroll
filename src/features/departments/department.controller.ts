@@ -31,11 +31,21 @@ export class DepartmentController {
 
       const result = departmentService.listDepartments(filters, actor);
 
+      const hasPagination = req.query.page !== undefined || req.query.limit !== undefined;
+      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
+      const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10) || 10);
+      const pagedItems = hasPagination
+        ? result.items.slice((page - 1) * limit, page * limit)
+        : result.items;
+
       res.status(200).json({
         success: true,
-        data: result.items,
+        data: pagedItems,
         meta: {
           total: result.total,
+          page,
+          limit,
+          totalPages: Math.max(1, Math.ceil(result.total / limit)),
           activeCount: result.activeCount,
           rootCount: result.rootCount,
           subCount: result.subCount,

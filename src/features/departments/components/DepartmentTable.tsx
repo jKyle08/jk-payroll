@@ -52,8 +52,8 @@ export const DepartmentTable: React.FC<DepartmentTableProps> = ({
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-xs">
+      <div className="overflow-x-auto rounded-t-2xl">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-[#F8FAFC] dark:bg-slate-800/80 border-b border-[#E5E7EB] dark:border-slate-700 text-[11px] font-bold text-[#6B7280] dark:text-slate-300 uppercase tracking-wider">

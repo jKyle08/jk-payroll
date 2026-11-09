@@ -60,8 +60,8 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-xs">
+      <div className="overflow-x-auto rounded-t-2xl">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-[#E5E7EB] bg-[#FAFAFB] text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">

@@ -31,6 +31,10 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
     departments,
     departmentTree,
     meta,
+    page: serverPage,
+    setPage: setServerPage,
+    pageSize: serverPageSize,
+    setPageSize: setServerPageSize,
     filters,
     setFilters,
     isLoading,
@@ -46,7 +50,7 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
   const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
-  const pagination = usePagination(departments, 10);
+  const pagination = usePagination(departments, serverPageSize, meta.total);
 
   const handleOpenCreate = (parentDeptId?: string | null) => {
     setActiveEditingDept(null);
@@ -220,18 +224,24 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
       ) : (
         <DepartmentTable
           departments={pagination.pageItems}
-          startIndex={pagination.startIndex}
+          startIndex={(serverPage - 1) * serverPageSize}
           pagination={
             <Pagination
-              page={pagination.page}
-              pageSize={pagination.pageSize}
-              total={pagination.total}
-              onPageChange={pagination.setPage}
-              onPageSizeChange={pagination.setPageSize}
+              page={serverPage}
+              pageSize={serverPageSize}
+              total={meta.total}
+              onPageChange={(nextPage) => {
+                pagination.setPage(nextPage);
+                setServerPage(nextPage);
+              }}
+              onPageSizeChange={(nextSize) => {
+                pagination.setPageSize(nextSize);
+                setServerPageSize(nextSize);
+              }}
               itemLabel="departments"
             />
           }
-          isLoading={isLoading}
+          isLoading={isLoading || pagination.isPaging}
           onEdit={handleOpenEdit}
           onDelete={handleDelete}
           onAddSubDepartment={(parent) => handleOpenCreate(parent.id)}
