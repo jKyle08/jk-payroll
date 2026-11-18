@@ -6,7 +6,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { leaveService } from './leave.service.js';
-import { DataScope } from '../../types/index.js';
+import { DataScope } from '../../shared/types/index.js';
 
 const CreateTypeOfLeaveSchema = z.object({
   code: z.string().min(2).max(32),

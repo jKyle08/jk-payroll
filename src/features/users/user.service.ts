@@ -3,26 +3,51 @@
 // File: src/features/users/user.service.ts
 // ==============================================================================
 
-import { db } from '../../db/repository.js';
+import { db } from '../../server/db/repository.js';
 import { Profile, CreateUserInput } from './types.js';
-import { Module, UserPermission } from '../../types/index.js';
+import { Module, UserPermission } from '../../shared/types/index.js';
 import { permissionService } from '../access-control/services/permission.service.js';
 
 export class UserService {
-  public createUser(data: CreateUserInput): Profile {
-    return db.createProfile(data);
+  public createUser(
+    data: CreateUserInput,
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+  ): Profile {
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    const isSuperAdmin = isSuper ? Boolean(data.isSuperAdmin) : false;
+    const tenantId = actor && !isSuper && actor.tenantId ? actor.tenantId : data.tenantId;
+
+    return db.createProfile({
+      ...data,
+      tenantId,
+      isSuperAdmin,
+    });
   }
 
-  public getUserById(id: string): Profile | undefined {
-    return db.getProfileById(id);
+  public getUserById(
+    id: string,
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+  ): Profile | undefined {
+    const profile = db.getProfileById(id);
+    if (!profile) return undefined;
+    if (actor && !actor.isSuperAdmin && actor.tenantId && profile.tenantId !== actor.tenantId) {
+      return undefined;
+    }
+    return profile;
   }
 
-  public getUsersByTenant(tenantId?: string): Profile[] {
-    if (!tenantId || tenantId === 'all' || tenantId === 'All') {
+  public getUsersByTenant(
+    tenantId?: string,
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+  ): Profile[] {
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    const effectiveTenantId = actor && !isSuper && actor.tenantId ? actor.tenantId : tenantId;
+
+    if (!effectiveTenantId || effectiveTenantId === 'all' || effectiveTenantId === 'All') {
       return Array.from(db.profiles.values());
     }
     return Array.from(db.profiles.values()).filter(
-      (p) => p.tenantId === tenantId || (p as any).organizationId === tenantId
+      (p) => p.tenantId === effectiveTenantId || (p as any).organizationId === effectiveTenantId
     );
   }
 

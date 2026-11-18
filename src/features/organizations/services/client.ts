@@ -7,11 +7,16 @@
 import {
   Organization,
   OrgFilterState,
+  OrganizationOnboardingResult,
 } from '../types.js';
 import {
   CreateOrganizationInput,
   CreateOrganizationFormInput,
   UpdateOrganizationInput,
+  OrganizationOnboardingInput,
+  OrganizationOnboardingFormInput,
+  UpdateOrganizationSettingsInput,
+  UpdateOrganizationSettingsFormInput,
 } from '../organization.schema.js';
 
 export interface OrganizationListResponse {
@@ -141,7 +146,20 @@ export async function createOrganization(
 }
 
 /**
- * Update an existing organization settings
+ * Onboarding Wizard: Register brand-new tenant & root administrator
+ * Returns created organization with dashboard redirectUrl
+ */
+export async function createOrganizationOnboarding(
+  data: OrganizationOnboardingInput | OrganizationOnboardingFormInput
+): Promise<OrganizationOnboardingResult> {
+  return apiRequest<OrganizationOnboardingResult>(`${BASE_URL}/onboarding`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing organization settings (General / SuperAdmin)
  */
 export async function updateOrganization(
   id: string,
@@ -149,6 +167,21 @@ export async function updateOrganization(
 ): Promise<Organization> {
   if (!id) throw new Error('Organization ID is required');
   return apiRequest<Organization>(`${BASE_URL}/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update tenant profile, statutory agency IDs, work modalities, and organizational settings
+ * Strictly excludes modifying immutable tenant codes, slugs, tier, or user credentials
+ */
+export async function updateOrganizationSettings(
+  id: string,
+  data: UpdateOrganizationSettingsInput | UpdateOrganizationSettingsFormInput
+): Promise<Organization> {
+  if (!id) throw new Error('Organization ID is required');
+  return apiRequest<Organization>(`${BASE_URL}/${encodeURIComponent(id)}/settings`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });

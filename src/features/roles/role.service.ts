@@ -3,7 +3,7 @@
 // File: src/features/roles/role.service.ts
 // ==============================================================================
 
-import { db } from '../../db/repository.js';
+import { db } from '../../server/db/repository.js';
 import { Role, RolePermission, CreateRoleInput, RoleItem, UpdateRoleInput, RoleType } from './types.js';
 
 export class RoleService {
@@ -249,13 +249,23 @@ export class RoleService {
     };
   }
 
-  public listUserRoles(filters?: {
-    search?: string;
-    tenantId?: string;
-    roleId?: string;
-    status?: string;
-  }): { items: any[]; total: number; activeCount: number; rolesCount: number; tenantsCount: number } {
+  public listUserRoles(
+    filters?: {
+      search?: string;
+      tenantId?: string;
+      roleId?: string;
+      status?: string;
+    },
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+  ): { items: any[]; total: number; activeCount: number; rolesCount: number; tenantsCount: number } {
     let all = db.getUserRoles().map((ur) => this.mapUserRoleToItem(ur));
+
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    if (actor && !isSuper && actor.tenantId) {
+      all = all.filter((item) => item.tenantId === actor.tenantId);
+    } else if (filters?.tenantId && filters.tenantId !== 'All') {
+      all = all.filter((item) => item.tenantId === filters.tenantId);
+    }
 
     if (filters) {
       if (filters.search) {
@@ -271,7 +281,7 @@ export class RoleService {
         );
       }
 
-      if (filters.tenantId && filters.tenantId !== 'All') {
+      if (isSuper && filters.tenantId && filters.tenantId !== 'All') {
         all = all.filter((item) => item.tenantId === filters.tenantId);
       }
 
@@ -297,32 +307,125 @@ export class RoleService {
     };
   }
 
-  public getUserRoleById(id: string): any | undefined {
+  public getUserRoleById(
+    id: string,
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+  ): any | undefined {
     const ur = db.getUserRoleById(id);
     if (!ur) return undefined;
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    if (actor && !isSuper && actor.tenantId && ur.tenantId !== actor.tenantId) {
+      return undefined;
+    }
     return this.mapUserRoleToItem(ur);
   }
 
-  public createUserRole(data: {
-    tenantId: string;
-    userId: string;
-    roleId: string;
-    isActive?: boolean;
-  }): any {
-    const created = db.assignUserRole(data);
+  public createUserRole(
+    data: {
+      tenantId: string;
+      userId: string;
+      roleId: string;
+      isActive?: boolean;
+    },
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+  ): any {
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    const effectiveTenantId = actor && !isSuper && actor.tenantId ? actor.tenantId : data.tenantId;
+
+    if (!effectiveTenantId) {
+      throw new Error('Organization ID is required');
+    }
+
+    const targetUser = db.getProfileById(data.userId);
+    if (!targetUser) {
+      throw new Error(`User with ID '${data.userId}' not found`);
+    }
+
+    if (actor && !isSuper && targetUser.tenantId !== effectiveTenantId) {
+      throw new Error('Target user does not belong to your organization');
+    }
+
+    const targetRole = db.getRoleById(data.roleId);
+    if (!targetRole) {
+      throw new Error(`Role with ID '${data.roleId}' not found`);
+    }
+    if (!targetRole.isActive) {
+      throw new Error('Role is inactive and cannot be assigned');
+    }
+
+    if (actor && !isSuper) {
+      if (targetRole.roleType === 'SYSTEM' || targetRole.organizationId === null) {
+        throw new Error('Tenant administrator cannot assign a global SYSTEM role without authorization');
+      }
+      if (targetRole.organizationId !== effectiveTenantId) {
+        throw new Error('Role belongs to another organization and cannot be assigned');
+      }
+    }
+
+    const created = db.assignUserRole({
+      ...data,
+      tenantId: effectiveTenantId,
+    });
     return this.mapUserRoleToItem(created);
   }
 
   public updateUserRole(
     id: string,
-    data: { tenantId?: string; userId?: string; roleId?: string; isActive?: boolean }
+    data: { tenantId?: string; userId?: string; roleId?: string; isActive?: boolean },
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
   ): any | undefined {
-    const updated = db.updateUserRole(id, data);
+    const existing = db.getUserRoleById(id);
+    if (!existing) return undefined;
+
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    if (actor && !isSuper && actor.tenantId && existing.tenantId !== actor.tenantId) {
+      throw new Error('Access denied: Cannot modify user role assignment of another organization');
+    }
+
+    const effectiveTenantId = actor && !isSuper && actor.tenantId ? actor.tenantId : (data.tenantId || existing.tenantId);
+
+    if (data.userId && data.userId !== existing.userId) {
+      const targetUser = db.getProfileById(data.userId);
+      if (!targetUser) throw new Error(`User with ID '${data.userId}' not found`);
+      if (actor && !isSuper && targetUser.tenantId !== effectiveTenantId) {
+        throw new Error('Target user does not belong to your organization');
+      }
+    }
+
+    if (data.roleId && data.roleId !== existing.roleId) {
+      const targetRole = db.getRoleById(data.roleId);
+      if (!targetRole) throw new Error(`Role with ID '${data.roleId}' not found`);
+      if (!targetRole.isActive) throw new Error('Role is inactive and cannot be assigned');
+      if (actor && !isSuper) {
+        if (targetRole.roleType === 'SYSTEM' || targetRole.organizationId === null) {
+          throw new Error('Tenant administrator cannot assign a global SYSTEM role without authorization');
+        }
+        if (targetRole.organizationId !== effectiveTenantId) {
+          throw new Error('Role belongs to another organization and cannot be assigned');
+        }
+      }
+    }
+
+    const updated = db.updateUserRole(id, {
+      ...data,
+      tenantId: effectiveTenantId,
+    });
     if (!updated) return undefined;
     return this.mapUserRoleToItem(updated);
   }
 
-  public deleteUserRole(id: string): boolean {
+  public deleteUserRole(
+    id: string,
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+  ): boolean {
+    const existing = db.getUserRoleById(id);
+    if (!existing) return false;
+
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    if (actor && !isSuper && actor.tenantId && existing.tenantId !== actor.tenantId) {
+      throw new Error('Access denied: Cannot delete user role assignment of another organization');
+    }
+
     return db.deleteUserRole(id);
   }
 }

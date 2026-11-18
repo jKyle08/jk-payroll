@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { departmentController } from './department.controller.js';
-import { authenticateJwt, requireTenantAdmin } from '../../middleware/auth.middleware.js';
+import { authenticateJwt, requireTenantAdmin } from '../../server/middleware/auth.middleware.js';
 
 export const departmentRoutes = Router();
 

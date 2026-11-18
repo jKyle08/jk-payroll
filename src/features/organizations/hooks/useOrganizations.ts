@@ -91,15 +91,16 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
         org.name.toLowerCase().includes(query) ||
         org.code.toLowerCase().includes(query) ||
         org.slug.toLowerCase().includes(query) ||
-        org.domain.toLowerCase().includes(query) ||
-        (org.admin?.email && org.admin.email.toLowerCase().includes(query)) ||
-        (org.admin?.name && org.admin.name.toLowerCase().includes(query));
+        (org.domain ? org.domain.toLowerCase().includes(query) : false) ||
+        (org.legalName ? org.legalName.toLowerCase().includes(query) : false) ||
+        (org.admin?.email ? org.admin.email.toLowerCase().includes(query) : false) ||
+        (org.admin?.name ? org.admin.name.toLowerCase().includes(query) : false);
 
       const matchesStatus =
         filters.status === 'All' || org.status === filters.status;
 
       const activeTier = filters.tier && filters.tier !== 'All' ? filters.tier : filters.planTier;
-      const matchesTier = !activeTier || activeTier === 'All' || org.planTier === activeTier;
+      const matchesTier = !activeTier || activeTier === 'All' || (org.tier || org.planTier) === activeTier;
 
       const matchesFrequency =
         !filters.payFrequency ||

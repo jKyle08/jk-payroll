@@ -4,7 +4,7 @@
 // File: src/features/departments/components/DepartmentFormPage.tsx
 // ==============================================================================
 
-import { SearchableSelect } from '../../../components/ui/SearchableSelect.js';
+import { SearchableSelect } from '../../../client/components/ui/SearchableSelect.js';
 import React, { useState, useEffect } from 'react';
 import {
   Building2,

@@ -3,7 +3,7 @@
 // File: src/features/leave-management/types.ts
 // ==============================================================================
 
-import { DataScope, TypeOfLeave, LeaveRequest } from '../../types/index.js';
+import { DataScope, TypeOfLeave, LeaveRequest } from '../../shared/types/index.js';
 
 export { TypeOfLeave, LeaveRequest, DataScope };
 

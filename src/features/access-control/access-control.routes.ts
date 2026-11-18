@@ -6,8 +6,8 @@
 
 import { Router } from 'express';
 import { accessControlController } from './access-control.controller.js';
-import { authMiddleware, requireTenantAdmin } from '../../middleware/auth.middleware.js';
-import { validate } from '../../middleware/validate.middleware.js';
+import { authMiddleware, requireTenantAdmin } from '../../server/middleware/auth.middleware.js';
+import { validate } from '../../server/middleware/validate.middleware.js';
 import {
   evaluatePermissionSchema,
   updateRoleMatrixSchema,

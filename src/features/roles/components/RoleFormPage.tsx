@@ -22,7 +22,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { RoleItem } from '../types.js';
 import { fetchRoleById } from '../services/role.client.js';
 import { useRoleMutations } from '../hooks/useRoleMutations.js';
-import { SearchableSelect, type SearchableOption } from '../../../components/ui/SearchableSelect.js';
+import { SearchableSelect, type SearchableOption } from '../../../client/components/ui/SearchableSelect.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
 
 export interface RoleFormOrganizationOption {

@@ -24,17 +24,17 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { AuditAction, AuditLogEntry } from '../types.js';
-import { KpiCard } from '../../../components/ui/KpiCard.js';
-import { CustomSelect } from '../../../components/ui/CustomSelect.js';
+import { KpiCard } from '../../../client/components/ui/KpiCard.js';
+import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
 import {
   SearchableSelect,
   type SearchableOption,
-} from '../../../components/ui/SearchableSelect.js';
-import { SearchButton } from '../../../components/ui/SearchButton.js';
+} from '../../../client/components/ui/SearchableSelect.js';
+import { SearchButton } from '../../../client/components/ui/SearchButton.js';
 import {
   Pagination,
   usePagination,
-} from '../../../components/ui/Pagination.js';
+} from '../../../client/components/ui/Pagination.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
 import {
   AuditLogDetailModal,

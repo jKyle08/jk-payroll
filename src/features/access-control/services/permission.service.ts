@@ -3,8 +3,8 @@
 // File: src/features/access-control/services/permission.service.ts
 // ==============================================================================
 
-import { db } from '../../../db/repository.js';
-import { Module, UserPermission, DepartmentModule } from '../../../types/index.js';
+import { db } from '../../../server/db/repository.js';
+import { Module, UserPermission, DepartmentModule } from '../../../shared/types/index.js';
 
 export class PermissionService {
   /**

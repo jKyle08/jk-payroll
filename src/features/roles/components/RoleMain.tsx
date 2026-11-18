@@ -4,15 +4,15 @@
 // File: src/features/roles/components/RoleMain.tsx
 // ==============================================================================
 
-import { CustomSelect } from '../../../components/ui/CustomSelect.js';
-import { SearchableSelect } from '../../../components/ui/SearchableSelect.js';
-import { SearchButton } from '../../../components/ui/SearchButton.js';
-import { KpiCard } from '../../../components/ui/KpiCard.js';
-import { Pagination, usePagination } from '../../../components/ui/Pagination.js';
+import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
+import { SearchableSelect } from '../../../client/components/ui/SearchableSelect.js';
+import { SearchButton } from '../../../client/components/ui/SearchButton.js';
+import { KpiCard } from '../../../client/components/ui/KpiCard.js';
+import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 import React, { useState, useEffect } from 'react';
 import { Plus, UserPlus, Shield, Globe2, Building2, Search, X, Filter, Lock, Pencil, Trash2, Eye, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.js';
+import { ConfirmDialog } from '../../../client/components/ui/ConfirmDialog.js';
 import { RoleItem } from '../types.js';
 import { useRoleDirectory } from '../hooks/useRoleDirectory.js';
 import { useRoleMutations } from '../hooks/useRoleMutations.js';

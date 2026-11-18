@@ -5,10 +5,13 @@
 // ==============================================================================
 
 import { Request, Response } from 'express';
+import { db } from '../../server/db/repository.js';
 import { organizationService } from './organization.service.js';
 import {
   CreateOrganizationInput,
   UpdateOrganizationInput,
+  OrganizationOnboardingInput,
+  UpdateOrganizationSettingsInput,
   UpdateModulesInput,
   OrganizationQueryInput,
 } from './organization.schema.js';
@@ -21,11 +24,18 @@ export class OrganizationController {
   public async listOrganizations(req: Request, res: Response): Promise<void> {
     try {
       const query = (req.query as unknown) as OrganizationQueryInput & { page?: string; limit?: string };
-      const result = await organizationService.listOrganizations({
-        search: query.search || '',
-        status: query.status,
-        tier: query.tier,
-      });
+      const user = req.user;
+      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
+      const scopeTenantId = isSuperAdmin ? undefined : (user?.tenantId || '__NO_ACCESS__');
+
+      const result = await organizationService.listOrganizations(
+        {
+          search: query.search || '',
+          status: query.status,
+          tier: query.tier,
+        },
+        scopeTenantId
+      );
 
       const hasPagination = query.page !== undefined || query.limit !== undefined;
       const page = Math.max(1, parseInt(String(query.page || '1'), 10) || 1);
@@ -118,6 +128,66 @@ export class OrganizationController {
   }
 
   /**
+   * POST /api/organizations/onboarding
+   * Provisions a new tenant via Onboarding Wizard & returns redirect URL
+   */
+  public async createOrganizationOnboarding(req: Request, res: Response): Promise<void> {
+    try {
+      const input: OrganizationOnboardingInput = req.body;
+      const result = await organizationService.createOrganizationOnboarding(input);
+
+      res.status(201).json({
+        success: true,
+        message: 'Organization onboarded successfully',
+        data: result.organization,
+        organization: result.organization,
+        redirectUrl: result.redirectUrl,
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to onboard organization',
+      });
+    }
+  }
+
+  /**
+   * PUT /api/organizations/:id/settings
+   * Updates company profile, statutory agency IDs, work modalities, and organizational settings.
+   * Prohibits altering immutable identifiers (code, slug, tier, status) or admin credentials.
+   */
+  public async updateOrganizationSettings(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const input: UpdateOrganizationSettingsInput = req.body;
+      const user = req.user;
+      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
+      const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;
+
+      const updated = await organizationService.updateOrganizationSettings(id, input, scopeTenantId);
+      if (!updated) {
+        res.status(404).json({
+          success: false,
+          error: `Organization with ID '${id}' not found`,
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Organization settings updated successfully',
+        data: updated,
+        organization: updated,
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to update organization settings',
+      });
+    }
+  }
+
+  /**
    * PUT /api/organizations/:id
    * Updates an existing organization's metadata
    */
@@ -159,7 +229,11 @@ export class OrganizationController {
   public async updateModules(req: Request, res: Response): Promise<void> {
     try {
       const id = String(req.params.id);
-      const { moduleCodes }: UpdateModulesInput = req.body;
+      const rawItems = (req.body.moduleCodes || req.body.moduleIds || []) as string[];
+      const moduleCodes = rawItems.map((item) => {
+        const mod = db.modules.get(item);
+        return mod ? mod.code : item;
+      });
       const user = req.user;
       const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
       const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;

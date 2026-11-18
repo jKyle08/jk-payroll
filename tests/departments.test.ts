@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { db } from '../src/db/repository.js';
+import { db } from '../src/server/db/repository.js';
 import { departmentService } from '../src/features/departments/department.service.js';
 import {
   DepartmentMain,

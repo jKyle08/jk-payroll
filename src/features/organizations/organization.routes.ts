@@ -10,11 +10,13 @@ import {
   authMiddleware,
   requireSuperAdmin,
   requireTenantAdmin,
-} from '../../middleware/auth.middleware.js';
-import { validate } from '../../middleware/validate.middleware.js';
+} from '../../server/middleware/auth.middleware.js';
+import { validate } from '../../server/middleware/validate.middleware.js';
 import {
   createOrganizationSchema,
+  organizationOnboardingSchema,
   updateOrganizationSchema,
+  updateOrganizationSettingsSchema,
   updateModulesSchema,
   organizationIdParamSchema,
   organizationQuerySchema,
@@ -57,6 +59,32 @@ organizationRoutes.post(
   requireSuperAdmin,
   validate({ body: createOrganizationSchema }),
   (req, res) => organizationController.createOrganization(req, res)
+);
+
+/**
+ * @route   POST /api/organizations/onboarding
+ * @desc    Onboarding wizard registration for new tenant
+ * @access  SuperAdmin or Authenticated User
+ */
+organizationRoutes.post(
+  '/onboarding',
+  validate({ body: organizationOnboardingSchema }),
+  (req, res) => organizationController.createOrganizationOnboarding(req, res)
+);
+
+/**
+ * @route   PUT /api/organizations/:id/settings
+ * @desc    Update company profile, statutory agency IDs, work modalities, and organizational settings
+ * @access  Tenant Admin or SuperAdmin
+ */
+organizationRoutes.put(
+  '/:id/settings',
+  requireTenantAdmin,
+  validate({
+    params: organizationIdParamSchema,
+    body: updateOrganizationSettingsSchema,
+  }),
+  (req, res) => organizationController.updateOrganizationSettings(req, res)
 );
 
 /**

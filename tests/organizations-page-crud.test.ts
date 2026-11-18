@@ -23,7 +23,7 @@ import {
   fetchOrganizations,
   fetchOrganizationById,
 } from '../src/features/organizations/index.js';
-import { ConfirmDialog } from '../src/components/ui/ConfirmDialog.js';
+import { ConfirmDialog } from '../src/client/components/ui/ConfirmDialog.js';
 import { Organization } from '../src/features/organizations/types.js';
 
 describe('Organization Clean Page-Driven Architecture Specifications', () => {
@@ -207,7 +207,7 @@ describe('Organization Clean Page-Driven Architecture Specifications', () => {
 
   it('blocks users from logging in if their tenant company endDate has passed', async () => {
     const { AuthService } = await import('../src/features/auth/auth.service.js');
-    const { db } = await import('../src/db/repository.js');
+    const { db } = await import('../src/server/db/repository.js');
 
     const authService = new AuthService();
 
@@ -275,5 +275,42 @@ describe('Organization Clean Page-Driven Architecture Specifications', () => {
     expect(session.userId).toBe(superAdminUserId);
     expect(session.isSuperAdmin).toBe(true);
   }, 15000);
+
+  it('instantiates OrganizationOnboardingWizard for both standalone and internal modes', async () => {
+    const { OrganizationOnboardingWizard } = await import(
+      '../src/features/organizations/index.js'
+    );
+    expect(OrganizationOnboardingWizard).toBeDefined();
+
+    // Verify standalone mode element
+    const standaloneEl = React.createElement(OrganizationOnboardingWizard, {
+      mode: 'standalone',
+    });
+    expect(standaloneEl).toBeDefined();
+    expect(standaloneEl.props.mode).toBe('standalone');
+
+    // Verify internal dashboard mode element
+    const internalEl = React.createElement(OrganizationOnboardingWizard, {
+      mode: 'internal',
+    });
+    expect(internalEl).toBeDefined();
+    expect(internalEl.props.mode).toBe('internal');
+  });
+
+  it('renders StandaloneOnboardingPage and InternalNewOrganizationPage route wrappers cleanly', async () => {
+    const { StandaloneOnboardPage } = await import(
+      '../src/client/pages/onboarding/StandaloneOnboardPage.js'
+    );
+    const { NewOrganizationPage } = await import(
+      '../src/client/pages/organizations/NewOrganizationPage.js'
+    );
+    const { OnboardingLayout } = await import(
+      '../src/client/layouts/OnboardingLayout.js'
+    );
+
+    expect(StandaloneOnboardPage).toBeDefined();
+    expect(NewOrganizationPage).toBeDefined();
+    expect(OnboardingLayout).toBeDefined();
+  });
 });
 

@@ -215,6 +215,29 @@ export const LoginPage: React.FC = () => {
                 </>
               )}
             </button>
+
+            {/* Divider */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#E5E7EB] dark:border-slate-800" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-wider font-semibold">
+                <span className="bg-white dark:bg-slate-900 px-3 text-[#9CA3AF]">
+                  New Client Organization?
+                </span>
+              </div>
+            </div>
+
+            {/* Onboard Organization CTA */}
+            <button
+              type="button"
+              onClick={() => navigate('/onboard')}
+              className="w-full h-10 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-[#0F172A] dark:text-white text-xs font-semibold flex items-center justify-center gap-2 border border-[#E5E7EB] dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
+            >
+              <Building2 className="w-4 h-4 text-amber-500" />
+              <span>Onboard New Organization</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            </button>
           </form>
         </div>
 

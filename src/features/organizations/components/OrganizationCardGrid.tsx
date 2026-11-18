@@ -169,10 +169,10 @@ export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getTierBadgeClass(
-                        org.planTier
+                        org.tier || org.planTier || 'Enterprise'
                       )}`}
                     >
-                      {org.planTier}
+                      {org.tier || org.planTier || 'Enterprise'}
                     </span>
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadgeClass(

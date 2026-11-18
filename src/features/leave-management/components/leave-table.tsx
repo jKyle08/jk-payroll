@@ -17,7 +17,7 @@ import {
   User,
 } from 'lucide-react';
 import { LeaveRequest, LeaveStatus } from '../types.js';
-import { Pagination, usePagination } from '../../../components/ui/Pagination.js';
+import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 
 export interface LeaveTableProps {
   records: LeaveRequest[];

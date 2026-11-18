@@ -4,7 +4,7 @@
 // File: src/features/audit-logs/audit-logs.service.ts
 // ==============================================================================
 
-import { getSupabaseClient } from '../../db/supabase.js';
+import { getSupabaseClient } from '../../server/db/supabase.js';
 import { AuditLogEntry, AuditLogsFilterQuery } from './types.js';
 
 export class AuditLogsService {

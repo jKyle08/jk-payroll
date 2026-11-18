@@ -4,21 +4,27 @@
 // File: src/features/organizations/organization.service.ts
 // ==============================================================================
 
-import { db } from '../../db/repository.js';
-import { getSupabaseClient } from '../../db/supabase.js';
-import { Tenant } from '../../types/index.js';
+import { db } from '../../server/db/repository.js';
+import { getSupabaseClient } from '../../server/db/supabase.js';
+import { Tenant } from '../../shared/types/index.js';
 import {
   Organization,
   resolveModuleDependencies,
   OrgFilterState,
   OrganizationTier,
   OrganizationStatus,
+  OrganizationSector,
+  WorkMode,
   PayFrequency,
+  DEFAULT_ORGANIZATION_SETTINGS,
+  OrganizationOnboardingResult,
 } from './types.js';
 import {
   CreateOrganizationInput,
   CreateOrganizationFormInput,
   UpdateOrganizationInput,
+  OrganizationOnboardingInput,
+  UpdateOrganizationSettingsInput,
 } from './organization.schema.js';
 
 interface SupabaseResult<T> {
@@ -51,8 +57,10 @@ export class OrganizationService {
    */
   public mapTenantToOrganization(tenant: Tenant): Organization {
     const code = tenant.code || 'ORG';
-    const slug = `org_${code.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+    const slug = tenant.slug || `org_${code.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
     const domain = tenant.domain || `${code.toLowerCase()}.com`;
+    const tier = ((tenant.tier || tenant.planTier || 'Enterprise') as OrganizationTier);
+    const status = ((tenant.status || (tenant.isActive ? 'Active' : 'Suspended')) as OrganizationStatus);
 
     // Dynamic headcount lookup from database profiles
     const tenantProfiles = Array.from(db.profiles.values()).filter(
@@ -60,8 +68,9 @@ export class OrganizationService {
     );
     const headcount = tenantProfiles.length;
 
-    // Admin lookup from database profiles or tenant metadata
-    const adminProfile = tenantProfiles.find((p) => p.isTenantAdmin || p.isSuperAdmin);
+    // Admin lookup from database profiles or primary_contact_id or tenant metadata
+    const primaryContact = tenant.primaryContactId ? db.profiles.get(tenant.primaryContactId) : undefined;
+    const adminProfile = primaryContact || tenantProfiles.find((p) => p.isTenantAdmin || p.isSuperAdmin);
     const adminFullName = adminProfile?.fullName || tenant.adminName || 'Organization Administrator';
     const adminEmail = adminProfile?.email || tenant.adminEmail || `admin@${code.toLowerCase()}.com`;
     const adminUsername = adminProfile?.username || tenant.adminUsername || adminEmail.split('@')[0];
@@ -89,16 +98,31 @@ export class OrganizationService {
 
     return {
       id: tenant.id,
-      name: tenant.name,
       code: code,
       slug,
-      domain,
+      name: tenant.name,
+      legalName: tenant.legalName ?? null,
+      taxId: tenant.taxId ?? null,
       industry: tenant.industry || 'Technology & Software',
-      planTier: (tenant.planTier as OrganizationTier) || 'Enterprise',
-      status: (tenant.isActive ? 'Active' : 'Suspended') as OrganizationStatus,
-      healthStatus: tenant.isActive ? 'healthy' : 'error',
+      domain,
+      logoUrl: tenant.logoUrl ?? null,
+      sector: (tenant.sector as OrganizationSector) || 'Private',
+      tier,
+      planTier: tier, // Backwards compatibility for UI
+      status,
+      healthStatus: status === 'Active' ? 'healthy' : 'error',
       headcount,
+      startDate: tenant.startDate || (tenant.createdAt instanceof Date ? tenant.createdAt.toISOString() : String(tenant.createdAt || new Date().toISOString())),
+      endDate: tenant.endDate || null,
+      supportedWorkModes: (tenant.supportedWorkModes as WorkMode[]) || ['OnSite', 'Remote', 'Hybrid'],
+      statutoryIds: tenant.statutoryIds || {},
+      settings: tenant.settings || DEFAULT_ORGANIZATION_SETTINGS,
+      currency: tenant.currency || 'USD',
+      timezone: tenant.timezone || 'UTC',
+      countryCode: tenant.countryCode || 'US',
       defaultPayFrequency: (tenant.defaultPayFrequency as PayFrequency) || 'Semi-Monthly',
+      modules: resolvedModules,
+      primaryContactId: tenant.primaryContactId || adminProfile?.id || null,
       admin: {
         name: adminFullName,
         fullName: adminFullName,
@@ -107,14 +131,8 @@ export class OrganizationService {
         title: adminTitle,
         avatarInitials,
       },
-      modules: resolvedModules,
-      startDate: tenant.startDate || null,
-      endDate: tenant.endDate || null,
-      createdAt: new Date(tenant.createdAt || Date.now()).toLocaleDateString('en-US', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-      }),
+      createdAt: tenant.createdAt instanceof Date ? tenant.createdAt.toISOString() : String(tenant.createdAt || new Date().toISOString()),
+      updatedAt: tenant.updatedAt instanceof Date ? tenant.updatedAt.toISOString() : String(tenant.updatedAt || new Date().toISOString()),
     };
   }
 
@@ -122,7 +140,10 @@ export class OrganizationService {
    * Retrieves all organizations filtered and scoped directly from database data.
    * No default values are used.
    */
-  public async listOrganizations(filters?: Partial<OrgFilterState>): Promise<{
+  public async listOrganizations(
+    filters?: Partial<OrgFilterState>,
+    scopeTenantId?: string
+  ): Promise<{
     items: Organization[];
     total: number;
     activeCount: number;
@@ -132,25 +153,46 @@ export class OrganizationService {
     // 1. Sync from remote Supabase database if available
     try {
       const supabase = getSupabaseClient();
+      let query = supabase.from('organizations').select('*');
+      if (scopeTenantId) {
+        query = query.eq('id', scopeTenantId);
+      }
       const res = await withSupabaseTimeout<SupabaseResult<any[]>>(
-        supabase
-          .from('organizations')
-          .select('*')
-          .order('created_at', { ascending: false })
+        query.order('created_at', { ascending: false })
       );
 
       if (res && !res.error && Array.isArray(res.data)) {
         for (const row of res.data) {
           if (!db.tenants.has(row.id)) {
             const code = row.code || 'ORG';
+            const slug = row.slug || `org_${code.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+            const tier = row.tier || row.plan_tier || 'Enterprise';
+            const status = row.status || (row.is_active !== undefined ? (row.is_active ? 'Active' : 'Suspended') : 'Active');
+            const sector = (row.sector as OrganizationSector) || 'Private';
             const tenantRecord: Tenant = {
               id: row.id,
               name: row.name,
               code: code,
-              isActive: row.is_active !== undefined ? row.is_active : true,
-              industry: row.industry,
+              slug,
+              legalName: row.legal_name ?? null,
+              taxId: row.tax_id ?? null,
+              logoUrl: row.logo_url ?? null,
+              isActive: status === 'Active',
+              status,
+              sector,
+              tier,
+              planTier: tier,
+              industry: row.industry || 'Technology & Software',
               domain: row.domain || `${code.toLowerCase()}.com`,
-              planTier: row.plan_tier || row.tier || 'Enterprise',
+              currency: row.currency || 'USD',
+              timezone: row.timezone || 'UTC',
+              countryCode: row.country_code || 'US',
+              defaultPayFrequency: row.default_pay_frequency || 'Semi-Monthly',
+              supportedWorkModes: Array.isArray(row.supported_work_modes) ? row.supported_work_modes : ['OnSite', 'Remote', 'Hybrid'],
+              statutoryIds: row.statutory_ids || {},
+              settings: row.settings || DEFAULT_ORGANIZATION_SETTINGS,
+              modules: Array.isArray(row.modules) ? row.modules : undefined,
+              primaryContactId: row.primary_contact_id ?? null,
               adminName: row.admin_name,
               adminEmail: row.admin_email,
               adminUsername: row.admin_username,
@@ -169,7 +211,10 @@ export class OrganizationService {
     }
 
     // 2. Fetch all tenants from database repository
-    const tenants = Array.from(db.tenants.values());
+    let tenants = Array.from(db.tenants.values());
+    if (scopeTenantId) {
+      tenants = tenants.filter((tenant) => tenant.id === scopeTenantId);
+    }
     const all = tenants.map((tenant) => this.mapTenantToOrganization(tenant));
 
     const totalHeadcount = all.reduce((acc, o) => acc + (o.headcount || 0), 0);
@@ -184,9 +229,9 @@ export class OrganizationService {
           org.name.toLowerCase().includes(filters.search.toLowerCase()) ||
           org.code.toLowerCase().includes(filters.search.toLowerCase()) ||
           org.slug.toLowerCase().includes(filters.search.toLowerCase()) ||
-          org.domain.toLowerCase().includes(filters.search.toLowerCase()) ||
-          org.admin.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-          (org.admin.name && org.admin.name.toLowerCase().includes(filters.search.toLowerCase()));
+          (org.domain ? org.domain.toLowerCase().includes(filters.search.toLowerCase()) : false) ||
+          (org.admin?.email ? org.admin.email.toLowerCase().includes(filters.search.toLowerCase()) : false) ||
+          (org.admin?.name ? org.admin.name.toLowerCase().includes(filters.search.toLowerCase()) : false);
 
         const matchesStatus =
           !filters.status || filters.status === 'All' || org.status === filters.status;
@@ -195,7 +240,10 @@ export class OrganizationService {
         const matchesTier =
           !activeTier || activeTier === 'All' || org.planTier === activeTier;
 
-        return matchesSearch && matchesStatus && matchesTier;
+        const matchesSector =
+          !filters.sector || filters.sector === 'All' || org.sector === filters.sector;
+
+        return matchesSearch && matchesStatus && matchesTier && matchesSector;
       });
     }
 
@@ -276,26 +324,43 @@ export class OrganizationService {
     const { resolvedModules } = resolveModuleDependencies(data.modules || []);
 
     // 1. Store in database repository
+    const tier = data.tier || data.planTier || 'Enterprise';
+    const sector = (data.sector as OrganizationSector) || 'Private';
     const tenant = db.createTenant({
       id,
       name: data.name,
       code: data.code,
+      slug: data.slug,
+      legalName: data.legalName ?? null,
+      taxId: data.taxId ?? null,
       isActive: status === 'Active',
+      status,
+      sector,
+      tier,
+      planTier: tier,
+      currency: data.currency || 'USD',
+      timezone: data.timezone || 'UTC',
+      countryCode: data.countryCode || 'US',
+      defaultPayFrequency: data.defaultPayFrequency || 'Semi-Monthly',
+      supportedWorkModes: (data.supportedWorkModes as WorkMode[]) || ['OnSite', 'Remote', 'Hybrid'],
+      statutoryIds: data.statutoryIds || {},
+      settings: (data.settings as any) || DEFAULT_ORGANIZATION_SETTINGS,
       industry: data.industry || 'Technology & Software',
       domain: data.domain || `${data.code.toLowerCase()}.com`,
       adminName: data.admin.fullName,
       adminEmail: data.admin.email,
       adminUsername: data.admin.username || data.admin.email.split('@')[0],
-      adminTitle: data.admin.title || 'Organization Administrator',
+      adminTitle: data.admin.title || 'Super Administrator',
+      primaryContactId: `usr-${id}-admin`,
       modules: resolvedModules,
-      planTier: data.planTier || 'Enterprise',
       startDate: typeof data.startDate === 'string' && data.startDate ? data.startDate : null,
       endDate: typeof data.endDate === 'string' && data.endDate ? data.endDate : null,
     });
 
-    // 2. Provision Admin profile in database
+    // 2. Provision fresh root Admin profile in database (Always a new user)
+    const adminUserId = `usr-${id}-admin`;
     db.createProfile({
-      id: `usr-${id}-admin`,
+      id: adminUserId,
       tenantId: tenant.id,
       fullName: data.admin.fullName,
       email: data.admin.email,
@@ -304,6 +369,7 @@ export class OrganizationService {
       isSuperAdmin: false,
       isActive: true,
     });
+    tenant.primaryContactId = adminUserId;
 
     // 3. Allocate modules in database
     if (resolvedModules.length > 0) {
@@ -336,6 +402,109 @@ export class OrganizationService {
   }
 
   /**
+   * Onboarding Wizard: Provisions a new organization and root administrator
+   * Returns newly created organization and tenant dashboard redirect URL
+   */
+  public async createOrganizationOnboarding(
+    data: OrganizationOnboardingInput
+  ): Promise<OrganizationOnboardingResult> {
+    const org = await this.createOrganization(data);
+    return {
+      organization: org,
+      redirectUrl: `/${org.slug}/dashboard`,
+    };
+  }
+
+  /**
+   * Tenant Settings Form: Updates company profile, statutory agency IDs,
+   * work modalities, and organizational settings.
+   * Strictly protects immutable identifiers (code, slug, tier, status) and admin credentials.
+   */
+  public async updateOrganizationSettings(
+    id: string,
+    data: UpdateOrganizationSettingsInput,
+    scopeTenantId?: string
+  ): Promise<Organization | undefined> {
+    if (scopeTenantId && scopeTenantId !== id) {
+      throw new Error('Tenant isolation violation: Access denied to this organization.');
+    }
+
+    const existing = db.getTenantById(id);
+    if (!existing) return undefined;
+
+    // Merge settings cleanly
+    const currentSettings = existing.settings || DEFAULT_ORGANIZATION_SETTINGS;
+    const mergedSettings = data.settings
+      ? {
+          payroll: {
+            ...currentSettings.payroll,
+            ...(data.settings.payroll || {}),
+          },
+          timeAndAttendance: {
+            ...currentSettings.timeAndAttendance,
+            ...(data.settings.timeAndAttendance || {}),
+          },
+          leaves: {
+            ...currentSettings.leaves,
+            ...(data.settings.leaves || {}),
+          },
+          security: {
+            ...currentSettings.security,
+            ...(data.settings.security || {}),
+          },
+        }
+      : currentSettings;
+
+    const mergedStatutoryIds = data.statutoryIds
+      ? { ...(existing.statutoryIds || {}), ...data.statutoryIds }
+      : existing.statutoryIds || {};
+
+    const updated = db.updateTenant(id, {
+      name: data.name ?? existing.name,
+      legalName: data.legalName !== undefined ? data.legalName : existing.legalName,
+      taxId: data.taxId !== undefined ? data.taxId : existing.taxId,
+      logoUrl: data.logoUrl !== undefined ? data.logoUrl : existing.logoUrl,
+      domain: data.domain !== undefined ? data.domain : existing.domain,
+      industry: data.industry ?? existing.industry,
+      sector: data.sector ?? existing.sector,
+      currency: data.currency ?? existing.currency,
+      timezone: data.timezone ?? existing.timezone,
+      defaultPayFrequency: data.defaultPayFrequency ?? existing.defaultPayFrequency,
+      supportedWorkModes: data.supportedWorkModes ?? existing.supportedWorkModes,
+      statutoryIds: mergedStatutoryIds,
+      settings: mergedSettings,
+      // code, slug, tier, status, admin remain strictly immutable
+    });
+
+    if (!updated) return undefined;
+
+    // Mirror updates to Supabase
+    try {
+      const supabase = getSupabaseClient();
+      await withSupabaseTimeout(
+        supabase
+          .from('organizations')
+          .update({
+            name: updated.name,
+            legal_name: updated.legalName,
+            tax_id: updated.taxId,
+            domain: updated.domain,
+            logo_url: updated.logoUrl,
+            default_pay_frequency: updated.defaultPayFrequency,
+            supported_work_modes: updated.supportedWorkModes,
+            statutory_ids: updated.statutoryIds,
+            settings: updated.settings,
+          })
+          .eq('id', id)
+      );
+    } catch (err) {
+      console.warn('Supabase organization settings update warning:', err);
+    }
+
+    return this.mapTenantToOrganization(updated);
+  }
+
+  /**
    * Updates organization settings in the database
    */
   public async updateOrganization(
@@ -364,12 +533,31 @@ export class OrganizationService {
       db.setTenantModules(id, moduleIds);
     }
 
+    const tier = data.tier ?? data.planTier ?? existing.tier ?? existing.planTier;
+    const status = data.status ?? (data.status ? (data.status === 'Active' ? 'Active' : 'Suspended') : existing.status);
+
     const updated = db.updateTenant(id, {
       name: data.name ?? existing.name,
-      domain: data.domain ?? existing.domain,
+      code: data.code ? data.code.toUpperCase() : existing.code,
+      slug: data.slug ?? existing.slug,
+      legalName: data.legalName !== undefined ? data.legalName : existing.legalName,
+      taxId: data.taxId !== undefined ? data.taxId : existing.taxId,
+      logoUrl: data.logoUrl !== undefined ? data.logoUrl : existing.logoUrl,
+      domain: data.domain !== undefined ? data.domain : existing.domain,
       industry: data.industry ?? existing.industry,
-      planTier: data.planTier ?? existing.planTier,
-      isActive: data.status ? data.status === 'Active' : existing.isActive,
+      sector: data.sector ?? existing.sector,
+      tier,
+      planTier: tier,
+      status: status as any,
+      isActive: status ? status === 'Active' : existing.isActive,
+      currency: data.currency ?? existing.currency,
+      timezone: data.timezone ?? existing.timezone,
+      countryCode: data.countryCode ?? existing.countryCode,
+      defaultPayFrequency: data.defaultPayFrequency ?? existing.defaultPayFrequency,
+      supportedWorkModes: data.supportedWorkModes ?? existing.supportedWorkModes,
+      statutoryIds: data.statutoryIds ?? existing.statutoryIds,
+      settings: data.settings ? { ...(existing.settings || DEFAULT_ORGANIZATION_SETTINGS), ...data.settings } : existing.settings,
+      primaryContactId: data.primaryContactId !== undefined ? data.primaryContactId : existing.primaryContactId,
       startDate: data.startDate !== undefined ? data.startDate : existing.startDate,
       endDate: data.endDate !== undefined ? data.endDate : existing.endDate,
       adminName: data.admin?.fullName ?? existing.adminName,

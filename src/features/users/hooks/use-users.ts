@@ -4,7 +4,7 @@
 // ==============================================================================
 
 import { useState } from 'react';
-import { UserProfileData } from '../../../components/layout/user-profile-popover.js';
+import { UserProfileData } from '../../../client/components/layout/user-profile-popover.js';
 
 export function useUsers(initialUsers: UserProfileData[] = []) {
   const [users, setUsers] = useState<UserProfileData[]>(initialUsers);

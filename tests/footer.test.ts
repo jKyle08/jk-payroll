@@ -4,11 +4,11 @@
 // ==============================================================================
 
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_FOOTER_LINKS } from '../src/components/layout/footer.js';
+import { DEFAULT_FOOTER_LINKS } from '../src/client/components/layout/footer.js';
 
 describe('Application Footer Component Specifications', () => {
   it('has default system name PayPulse and company name jko.tech', async () => {
-    const { Footer } = await import('../src/components/layout/footer.js');
+    const { Footer } = await import('../src/client/components/layout/footer.js');
     expect(Footer).toBeDefined();
     expect(typeof Footer).toBe('function');
   });
@@ -22,7 +22,7 @@ describe('Application Footer Component Specifications', () => {
   });
 
   it('preserves system name and company branding contract', async () => {
-    const layout = await import('../src/components/layout/index.js');
+    const layout = await import('../src/client/components/layout/index.js');
     expect(layout.Footer).toBeDefined();
     expect(layout.DEFAULT_FOOTER_LINKS).toBeDefined();
   });

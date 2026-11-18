@@ -19,34 +19,91 @@ BEGIN
 END $$;
 
 -- ------------------------------------------------------------------------------
--- 2. ORGANIZATIONS TABLE
+-- 2. ORGANIZATIONS DOMAIN ENUMS & TABLE
 -- ------------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'organization_status') THEN
+        CREATE TYPE organization_status AS ENUM ('Onboarding', 'Active', 'Suspended');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'organization_tier') THEN
+        CREATE TYPE organization_tier AS ENUM ('Starter', 'Standard', 'Enterprise');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pay_frequency') THEN
+        CREATE TYPE pay_frequency AS ENUM ('Weekly', 'Bi-Weekly', 'Semi-Monthly', 'Monthly');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'organization_sector') THEN
+        CREATE TYPE organization_sector AS ENUM ('Private', 'Public', 'NonProfit');
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(64) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    industry VARCHAR(128),
-    tier VARCHAR(64) NOT NULL DEFAULT 'Growth',
-    domain VARCHAR(255),
-    status VARCHAR(32) NOT NULL DEFAULT 'Active',
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    admin_name VARCHAR(255),
-    admin_email VARCHAR(255),
-    admin_username VARCHAR(128),
-    admin_title VARCHAR(128),
-    employee_count INTEGER NOT NULL DEFAULT 0,
+    code VARCHAR(32) NOT NULL UNIQUE,
+    slug VARCHAR(64) NOT NULL UNIQUE,
+    name VARCHAR(150) NOT NULL,
+    legal_name VARCHAR(255),
+    tax_id VARCHAR(64),
+    industry VARCHAR(100) DEFAULT 'Technology & Software',
+    domain VARCHAR(120),
+    logo_url TEXT,
+    
+    -- Sector, Plan & Lifecycle
+    sector organization_sector NOT NULL DEFAULT 'Private',
+    tier organization_tier NOT NULL DEFAULT 'Enterprise',
+    status organization_status NOT NULL DEFAULT 'Active',
     start_date TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     end_date TIMESTAMPTZ,
+    
+    -- HRIS & Payroll Defaults
+    currency CHAR(3) NOT NULL DEFAULT 'USD',
+    timezone VARCHAR(64) NOT NULL DEFAULT 'UTC',
+    country_code CHAR(2) NOT NULL DEFAULT 'US',
+    default_pay_frequency pay_frequency NOT NULL DEFAULT 'Semi-Monthly',
+    
+    -- Multi-Modal Work & Statutory Registrations
+    supported_work_modes JSONB NOT NULL DEFAULT '["OnSite", "Remote", "Hybrid"]'::jsonb,
+    statutory_ids JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+    -- Dynamic Organizational Settings (Divisors, Attendance, Security)
+    settings JSONB NOT NULL DEFAULT '{
+        "payroll": {
+            "standardDailyHours": 8,
+            "standardWorkingDaysPerYear": 261,
+            "prorationMethod": "WorkingDays",
+            "statutoryDeductionSplit": "SplitEqually"
+        },
+        "timeAndAttendance": {
+            "gracePeriodMinutes": 15,
+            "overtimeMinimumMinutes": 60,
+            "allowWebClockIn": true,
+            "requireGeofence": false,
+            "geofenceRadiusMeters": 100
+        },
+        "security": {
+            "enforce2FA": false,
+            "protectPayslipWithPassword": true,
+            "payslipPasswordFormat": "BIRTHDATE_YYYYMMDD"
+        }
+    }'::jsonb,
+
+    -- Enabled Sub-modules
+    modules JSONB NOT NULL DEFAULT '["Department", "EmployeeProfile", "RolePermission"]'::jsonb,
+    
+    -- Metadata & Auditing
+    primary_contact_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_organizations_code ON public.organizations(code);
-CREATE INDEX IF NOT EXISTS idx_organizations_is_active ON public.organizations(is_active);
+-- Indexes for tenant routing, search, and queries
+-- Note: code and slug have UNIQUE constraints which create unique indexes automatically
 CREATE INDEX IF NOT EXISTS idx_organizations_status ON public.organizations(status);
+CREATE INDEX IF NOT EXISTS idx_organizations_sector ON public.organizations(sector);
+CREATE INDEX IF NOT EXISTS idx_organizations_primary_contact ON public.organizations(primary_contact_id);
+CREATE INDEX IF NOT EXISTS idx_organizations_settings ON public.organizations USING gin (settings);
 
 -- ------------------------------------------------------------------------------
 -- 3. DEPARTMENTS TABLE (Hierarchical Tree with Materialized Path & Depth)
@@ -234,3 +291,33 @@ CREATE TABLE IF NOT EXISTS public.user_permissions (
     allocated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     PRIMARY KEY (organization_id, user_id, module_action_id)
 );
+
+-- ------------------------------------------------------------------------------
+-- 8. PAYROLL RUNS & HISTORICAL IMMUTABILITY SNAPSHOTS
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.payroll_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    payout_date DATE NOT NULL,
+    pay_frequency pay_frequency NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'Draft',
+    
+    -- Immutable historical rules snapshot captured at the exact moment payroll is calculated
+    -- Preserves the organizational settings (divisors, formulas, deduction splits) and rates
+    calculation_snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+    
+    total_gross NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
+    total_deductions NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
+    total_net NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
+    
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_payroll_runs_org_period ON public.payroll_runs(organization_id, period_start, period_end);
+CREATE INDEX IF NOT EXISTS idx_payroll_runs_status ON public.payroll_runs(status);
+CREATE INDEX IF NOT EXISTS idx_payroll_runs_snapshot ON public.payroll_runs USING gin (calculation_snapshot);

@@ -96,10 +96,10 @@ export const OrganizationTableRow: React.FC<OrganizationTableRowProps> = ({
       <td className="py-4 px-4 whitespace-nowrap">
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getTierBadge(
-            org.planTier
+            org.tier || org.planTier || 'Enterprise'
           )}`}
         >
-          {org.planTier}
+          {org.tier || org.planTier || 'Enterprise'}
         </span>
       </td>
 

@@ -3,7 +3,7 @@
 // File: src/features/users/types.ts
 // ==============================================================================
 
-import { Module, UserPermission } from '../../types/index.js';
+import { Module, UserPermission } from '../../shared/types/index.js';
 
 export interface Profile {
   id: string; // Auth User ID

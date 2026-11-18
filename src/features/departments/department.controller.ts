@@ -63,7 +63,14 @@ export class DepartmentController {
   public async getDepartment(req: Request, res: Response): Promise<void> {
     try {
       const id = String(req.params.id);
-      const dept = departmentService.getDepartmentById(id);
+      const actor = req.user
+        ? {
+            isSuperAdmin: (req.user as any).isSuperAdmin ?? false,
+            tenantId: (req.user as any).tenantId,
+          }
+        : undefined;
+
+      const dept = departmentService.getDepartmentById(id, actor);
       if (!dept) {
         res.status(404).json({ success: false, error: `Department '${id}' not found` });
         return;
@@ -184,7 +191,9 @@ export class DepartmentController {
    */
   public async getDepartmentTree(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = (req.query.organizationId as string) || (req.query.tenantId as string) || req.user?.tenantId;
+      const isSuper = Boolean(req.user?.isSuperAdmin);
+      const requestedOrgId = (req.query.organizationId as string) || (req.query.tenantId as string);
+      const tenantId = isSuper && requestedOrgId ? requestedOrgId : req.user?.tenantId;
       if (!tenantId) {
         res.status(400).json({ success: false, error: 'Organization ID is required' });
         return;
@@ -202,8 +211,23 @@ export class DepartmentController {
    */
   public async getDepartmentSubTree(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = (req.query.organizationId as string) || (req.query.tenantId as string) || req.user?.tenantId;
+      const isSuper = Boolean(req.user?.isSuperAdmin);
+      const requestedOrgId = (req.query.organizationId as string) || (req.query.tenantId as string);
+      const tenantId = isSuper && requestedOrgId ? requestedOrgId : req.user?.tenantId;
       const departmentId = req.params.id as string;
+      const actor = req.user
+        ? {
+            isSuperAdmin: isSuper,
+            tenantId,
+          }
+        : undefined;
+
+      const dept = departmentService.getDepartmentById(departmentId, actor);
+      if (!dept) {
+        res.status(404).json({ success: false, error: `Department '${departmentId}' not found` });
+        return;
+      }
+
       const subTree = departmentService.getDepartmentSubTree(tenantId || '', departmentId);
       res.status(200).json({ success: true, departmentId, subTree, data: subTree });
     } catch (error: any) {
@@ -217,8 +241,11 @@ export class DepartmentController {
    */
   public async allocateDepartmentModules(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = req.user?.tenantId || (req.body.organizationId as string);
+      const isSuper = Boolean(req.user?.isSuperAdmin);
+      const requestedOrgId = req.body.organizationId as string;
+      const tenantId = isSuper && requestedOrgId ? requestedOrgId : req.user?.tenantId;
       const departmentId = req.params.id as string;
+
       const parsed = allocateDepartmentModulesSchema.safeParse(req.body);
       if (!parsed.success) {
         res.status(400).json({ success: false, error: 'Validation Error', details: parsed.error.format() });
@@ -226,7 +253,7 @@ export class DepartmentController {
       }
 
       const allocated = permissionService.allocateDepartmentModules(
-        tenantId,
+        tenantId!,
         departmentId,
         parsed.data.moduleIds
       );

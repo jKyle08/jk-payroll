@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../src/app.js';
-import { db } from '../src/db/repository.js';
-import { generateTestToken } from '../src/middleware/auth.middleware.js';
+import { createApp } from '../src/server/app.js';
+import { db } from '../src/server/db/repository.js';
+import { generateTestToken } from '../src/server/middleware/auth.middleware.js';
 import { permissionService } from '../src/features/access-control/services/permission.service.js';
-import { dataScopingService } from '../src/middleware/data-scoping.middleware.js';
+import { dataScopingService } from '../src/server/middleware/data-scoping.middleware.js';
 
 describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () => {
   const app = createApp();
@@ -470,7 +470,7 @@ describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () 
   // ============================================================================
   describe('requirePermission Set Caching & O(1) Resolution', () => {
     it('caches req.permissionSet and reuses it for subsequent permission checks', async () => {
-      const { requirePermission } = await import('../src/middleware/rbac.guard.js');
+      const { requirePermission } = await import('../src/server/middleware/rbac.guard.js');
 
       const mockReq: any = {
         user: { id: 'user-1', isSuperAdmin: false },

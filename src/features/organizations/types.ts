@@ -4,10 +4,98 @@
 // File: src/features/organizations/types.ts
 // ==============================================================================
 
+export type OrganizationSector = 'Private' | 'Public' | 'NonProfit';
 export type OrganizationStatus = 'Active' | 'Onboarding' | 'Suspended';
-export type OrganizationTier = 'Enterprise' | 'Standard' | 'Starter';
+export type OrganizationTier = 'Starter' | 'Standard' | 'Enterprise';
 export type OrganizationHealth = 'healthy' | 'syncing' | 'error';
-export type PayFrequency = 'Semi-Monthly' | 'Monthly' | 'Bi-Weekly' | 'Weekly';
+export type PayFrequency = 'Weekly' | 'Bi-Weekly' | 'Semi-Monthly' | 'Monthly';
+export type WorkMode = 'OnSite' | 'Remote' | 'Hybrid';
+export type ProrationMethod = 'CalendarDays' | 'WorkingDays' | 'FixedHours';
+export type StatutoryDeductionSplit = 'SplitEqually' | 'FirstPeriodOnly' | 'SecondPeriodOnly';
+
+export interface PayrollSettings {
+  standardDailyHours: number;
+  standardWorkingDaysPerYear: number;
+  prorationMethod: ProrationMethod;
+  statutoryDeductionSplit: StatutoryDeductionSplit;
+}
+
+export interface TimeAndAttendanceSettings {
+  gracePeriodMinutes: number;
+  overtimeMinimumMinutes: number;
+  allowWebClockIn: boolean;
+  requireGeofence: boolean;
+  geofenceRadiusMeters: number;
+}
+
+export interface LeavesSettings {
+  allowNegativeBalance?: boolean;
+  requireApprovalLevels?: number;
+  carryOverLimitDays?: number;
+}
+
+export interface SecuritySettings {
+  enforce2FA: boolean;
+  protectPayslipWithPassword: boolean;
+  payslipPasswordFormat: string;
+}
+
+export interface OrganizationSettings {
+  payroll: PayrollSettings;
+  timeAndAttendance: TimeAndAttendanceSettings;
+  leaves?: LeavesSettings;
+  security: SecuritySettings;
+}
+
+export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
+  payroll: {
+    standardDailyHours: 8,
+    standardWorkingDaysPerYear: 261,
+    prorationMethod: 'WorkingDays',
+    statutoryDeductionSplit: 'SplitEqually',
+  },
+  timeAndAttendance: {
+    gracePeriodMinutes: 15,
+    overtimeMinimumMinutes: 60,
+    allowWebClockIn: true,
+    requireGeofence: false,
+    geofenceRadiusMeters: 100,
+  },
+  leaves: {
+    allowNegativeBalance: false,
+    requireApprovalLevels: 1,
+    carryOverLimitDays: 5,
+  },
+  security: {
+    enforce2FA: false,
+    protectPayslipWithPassword: true,
+    payslipPasswordFormat: 'BIRTHDATE_YYYYMMDD',
+  },
+};
+
+export interface PayrollCalculationSnapshot {
+  organizationId: string;
+  payFrequency: PayFrequency;
+  currency: string;
+  settings: OrganizationSettings;
+  statutoryIds: Record<string, string>;
+  effectiveDate: string;
+  capturedAt: string;
+}
+
+export interface OrganizationOnboardingResult {
+  organization: Organization;
+  redirectUrl: string;
+}
+
+export interface OrganizationAdminInput {
+  fullName: string;
+  email: string;
+  username?: string;
+  title?: string;
+  password?: string;
+  confirmPassword?: string;
+}
 
 export interface OrganizationAdmin {
   name: string;
@@ -16,35 +104,59 @@ export interface OrganizationAdmin {
   username: string;
   title: string;
   avatarInitials?: string;
-  isExistingUser?: boolean;
   userId?: string;
 }
 
 export interface Organization {
   id: string;
-  name: string;
   code: string;
   slug: string;
-  domain: string;
+  name: string;
+  legalName?: string | null;
+  taxId?: string | null;
   industry: string;
-  planTier: OrganizationTier;
+  domain?: string | null;
+  logoUrl?: string | null;
+  sector: OrganizationSector;
+  tier: OrganizationTier;
   status: OrganizationStatus;
-  healthStatus: OrganizationHealth;
-  headcount: number;
-  defaultPayFrequency: PayFrequency;
-  admin: OrganizationAdmin;
-  modules: string[];
-  startDate?: string | null;
+  startDate: string;
   endDate?: string | null;
+
+  // Multi-modal work & Statutory registrations
+  supportedWorkModes: WorkMode[];
+  statutoryIds: Record<string, string>;
+
+  // Dynamic organizational settings
+  settings: OrganizationSettings;
+
+  // HRIS / Payroll config
+  currency: string;
+  timezone: string;
+  countryCode: string;
+  defaultPayFrequency: PayFrequency;
+  modules: string[];
+
+  // Relations / Metadata
+  primaryContactId?: string | null;
   createdAt: string;
-  updatedAt?: string;
+  createdBy?: string | null;
+  updatedAt: string;
+  updatedBy?: string | null;
+
+  // Presentation & UI backward-compatibility aliases
+  planTier?: OrganizationTier;
+  headcount?: number;
+  healthStatus?: OrganizationHealth;
+  admin?: OrganizationAdmin;
 }
 
 export interface OrgFilterState {
   search: string;
   status: OrganizationStatus | 'All';
-  planTier: OrganizationTier | 'All';
-  tier?: OrganizationTier | 'All';
+  sector?: OrganizationSector | 'All';
+  tier: OrganizationTier | 'All';
+  planTier?: OrganizationTier | 'All';
   payFrequency: PayFrequency | 'All';
 }
 

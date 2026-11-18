@@ -22,7 +22,7 @@ import { useUserRoleMutations } from '../hooks/useUserRoleMutations.js';
 import {
   SearchableSelect,
   type SearchableOption,
-} from '../../../components/ui/SearchableSelect.js';
+} from '../../../client/components/ui/SearchableSelect.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
 
 export interface UserRoleFormPageProps {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { UserProfileData, NotificationItem } from '../src/components/layout/index.js';
+import { UserProfileData, NotificationItem } from '../src/client/components/layout/index.js';
 
 describe('Facebook-Style Topbar & Popover Logic Tests', () => {
   const mockUser: UserProfileData = {

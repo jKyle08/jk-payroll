@@ -5,14 +5,18 @@
 // ==============================================================================
 
 import { useState, useCallback } from 'react';
-import { Organization } from '../types.js';
+import { Organization, OrganizationOnboardingResult } from '../types.js';
 import {
   CreateOrganizationInput,
   UpdateOrganizationInput,
+  OrganizationOnboardingInput,
+  UpdateOrganizationSettingsInput,
 } from '../organization.schema.js';
 import {
   createOrganization,
+  createOrganizationOnboarding,
   updateOrganization,
+  updateOrganizationSettings,
   deleteOrganization,
 } from '../services/client.js';
 
@@ -56,6 +60,42 @@ export function useOrganizationMutations() {
     []
   );
 
+  const onboardOrg = useCallback(
+    async (data: OrganizationOnboardingInput): Promise<OrganizationOnboardingResult> => {
+      setIsSubmitting(true);
+      setMutationError(null);
+      try {
+        const result = await createOrganizationOnboarding(data);
+        return result;
+      } catch (err: any) {
+        const msg = err.message || 'Failed to onboard organization';
+        setMutationError(msg);
+        throw err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    []
+  );
+
+  const updateOrgSettings = useCallback(
+    async (id: string, data: UpdateOrganizationSettingsInput): Promise<Organization> => {
+      setIsSubmitting(true);
+      setMutationError(null);
+      try {
+        const result = await updateOrganizationSettings(id, data);
+        return result;
+      } catch (err: any) {
+        const msg = err.message || 'Failed to update organization settings';
+        setMutationError(msg);
+        throw err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    []
+  );
+
   const deleteOrg = useCallback(
     async (id: string): Promise<boolean> => {
       setIsSubmitting(true);
@@ -76,7 +116,9 @@ export function useOrganizationMutations() {
 
   return {
     createOrg,
+    onboardOrg,
     updateOrg,
+    updateOrgSettings,
     deleteOrg,
     isSubmitting,
     mutationError,

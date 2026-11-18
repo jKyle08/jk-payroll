@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { authController } from './auth.controller.js';
-import { authenticateJwt } from '../../middleware/auth.middleware.js';
+import { authenticateJwt } from '../../server/middleware/auth.middleware.js';
 
 export const authRoutes = Router();
 

@@ -9,12 +9,12 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, Filter, GitBranch, List } from 'lucide-react';
 import { DepartmentFilterState } from '../types.js';
-import { CustomSelect } from '../../../components/ui/CustomSelect.js';
+import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
 import {
   SearchableSelect,
   SearchableOption,
-} from '../../../components/ui/SearchableSelect.js';
-import { SearchButton } from '../../../components/ui/SearchButton.js';
+} from '../../../client/components/ui/SearchableSelect.js';
+import { SearchButton } from '../../../client/components/ui/SearchButton.js';
 
 const ORGANIZATION_FILTER_OPTIONS: SearchableOption[] = [
   { value: 'All', label: 'All Organizations' },

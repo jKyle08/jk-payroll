@@ -3,7 +3,7 @@
 // File: src/features/departments/department.service.ts
 // ==============================================================================
 
-import { db } from '../../db/repository.js';
+import { db } from '../../server/db/repository.js';
 import {
   Department,
   DepartmentNode,
@@ -122,9 +122,21 @@ export class DepartmentService {
     };
   }
 
-  public getDepartmentById(id: string): DepartmentItem | undefined {
+  public getDepartmentById(
+    id: string,
+    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+  ): DepartmentItem | undefined {
     const dept = db.getDepartmentById(id);
     if (!dept) return undefined;
+
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    if (actor && !isSuper && actor.tenantId) {
+      const deptOrgId = dept.organizationId || dept.tenantId;
+      if (deptOrgId !== actor.tenantId) {
+        return undefined;
+      }
+    }
+
     return this.enrichDepartment(dept);
   }
 

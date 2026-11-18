@@ -21,7 +21,13 @@ export class UserRoleController {
     try {
       const parsed = userRoleQuerySchema.safeParse(req.query);
       const filters = parsed.success ? parsed.data : undefined;
-      const result = roleService.listUserRoles(filters);
+      const actor = req.user
+        ? {
+            isSuperAdmin: Boolean(req.user.isSuperAdmin),
+            tenantId: req.user.tenantId,
+          }
+        : undefined;
+      const result = roleService.listUserRoles(filters, actor);
 
       const hasPagination = req.query.page !== undefined || req.query.limit !== undefined;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
@@ -55,7 +61,13 @@ export class UserRoleController {
   public async getUserRole(req: Request, res: Response): Promise<void> {
     try {
       const id = String(req.params.id);
-      const item = roleService.getUserRoleById(id);
+      const actor = req.user
+        ? {
+            isSuperAdmin: Boolean(req.user.isSuperAdmin),
+            tenantId: req.user.tenantId,
+          }
+        : undefined;
+      const item = roleService.getUserRoleById(id, actor);
       if (!item) {
         res.status(404).json({ success: false, error: `User role assignment with ID '${id}' not found` });
         return;
@@ -78,7 +90,14 @@ export class UserRoleController {
         return;
       }
 
-      const created = roleService.createUserRole(parsed.data);
+      const actor = req.user
+        ? {
+            isSuperAdmin: Boolean(req.user.isSuperAdmin),
+            tenantId: req.user.tenantId,
+          }
+        : undefined;
+
+      const created = roleService.createUserRole(parsed.data, actor);
       res.status(201).json({
         success: true,
         message: 'User role assigned successfully',
@@ -102,7 +121,14 @@ export class UserRoleController {
         return;
       }
 
-      const updated = roleService.updateUserRole(id, parsed.data);
+      const actor = req.user
+        ? {
+            isSuperAdmin: Boolean(req.user.isSuperAdmin),
+            tenantId: req.user.tenantId,
+          }
+        : undefined;
+
+      const updated = roleService.updateUserRole(id, parsed.data, actor);
       if (!updated) {
         res.status(404).json({ success: false, error: `User role assignment with ID '${id}' not found` });
         return;
@@ -114,6 +140,10 @@ export class UserRoleController {
         data: updated,
       });
     } catch (error: any) {
+      if (error.message?.includes('Access denied')) {
+        res.status(404).json({ success: false, error: `User role assignment with ID '${req.params.id}' not found` });
+        return;
+      }
       res.status(400).json({ success: false, error: error.message || 'Failed to update user role' });
     }
   }
@@ -125,7 +155,14 @@ export class UserRoleController {
   public async deleteUserRole(req: Request, res: Response): Promise<void> {
     try {
       const id = String(req.params.id);
-      const success = roleService.deleteUserRole(id);
+      const actor = req.user
+        ? {
+            isSuperAdmin: Boolean(req.user.isSuperAdmin),
+            tenantId: req.user.tenantId,
+          }
+        : undefined;
+
+      const success = roleService.deleteUserRole(id, actor);
       if (!success) {
         res.status(404).json({ success: false, error: `User role assignment with ID '${id}' not found` });
         return;
@@ -136,6 +173,10 @@ export class UserRoleController {
         message: 'User role assignment deleted successfully',
       });
     } catch (error: any) {
+      if (error.message?.includes('Access denied')) {
+        res.status(404).json({ success: false, error: `User role assignment with ID '${req.params.id}' not found` });
+        return;
+      }
       res.status(500).json({ success: false, error: error.message || 'Failed to delete user role' });
     }
   }

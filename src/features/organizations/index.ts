@@ -7,6 +7,8 @@
 // Primary Page-Driven Architecture Exports
 export { OrganizationMain } from './components/OrganizationMain.js';
 export { OrganizationFormPage } from './components/OrganizationFormPage.js';
+export { OrganizationSettingsForm } from './components/OrganizationSettingsForm.js';
+export { OrganizationOnboardingWizard } from '../../client/components/onboarding/OrganizationOnboardingWizard.js';
 export { OrganizationToolbar, type OrganizationViewMode } from './components/OrganizationToolbar.js';
 export { OrganizationTable } from './components/OrganizationTable.js';
 export { OrganizationCardGrid } from './components/OrganizationCardGrid.js';

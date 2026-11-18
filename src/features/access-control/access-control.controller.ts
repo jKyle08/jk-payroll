@@ -6,7 +6,7 @@
 
 import { Request, Response } from 'express';
 import { permissionService } from './services/permission.service.js';
-import { db } from '../../db/repository.js';
+import { db } from '../../server/db/repository.js';
 import {
   EvaluatePermissionInput,
   UpdateRoleMatrixInput,

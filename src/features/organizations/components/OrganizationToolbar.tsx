@@ -22,8 +22,8 @@ import {
   OrganizationTier,
   PayFrequency,
 } from '../types.js';
-import { CustomSelect } from '../../../components/ui/CustomSelect.js';
-import { SearchButton } from '../../../components/ui/SearchButton.js';
+import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
+import { SearchButton } from '../../../client/components/ui/SearchButton.js';
 
 export type OrganizationViewMode = 'table' | 'cards';
 

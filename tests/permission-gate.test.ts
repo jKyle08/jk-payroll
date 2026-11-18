@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluatePermission } from '../src/features/access-control/hooks/use-permission.js';
-import { PERMISSIONS } from '../src/lib/constants/permissions.js';
+import { PERMISSIONS } from '../src/shared/constants/permissions.js';
 
 describe('Client-Side Permission Evaluation Logic (evaluatePermission & usePermission)', () => {
   it('correctly matches direct permissions', () => {

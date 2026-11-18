@@ -5,9 +5,9 @@
 
 import { Router } from 'express';
 import { leaveController } from './leave.controller.js';
-import { authenticateJwt } from '../../middleware/auth.middleware.js';
-import { requirePermission } from '../../middleware/rbac.guard.js';
-import { PERMISSIONS } from '../../lib/constants/permissions.js';
+import { authenticateJwt } from '../../server/middleware/auth.middleware.js';
+import { requirePermission } from '../../server/middleware/rbac.guard.js';
+import { PERMISSIONS } from '../../shared/constants/permissions.js';
 
 export const leaveRoutes = Router();
 

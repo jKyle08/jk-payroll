@@ -19,8 +19,8 @@ import { DepartmentToolbar } from './DepartmentToolbar.js';
 import { DepartmentTable } from './DepartmentTable.js';
 import { DepartmentTree } from './department-tree.js';
 import { DepartmentFormPage } from './DepartmentFormPage.js';
-import { KpiCard } from '../../../components/ui/KpiCard.js';
-import { Pagination, usePagination } from '../../../components/ui/Pagination.js';
+import { KpiCard } from '../../../client/components/ui/KpiCard.js';
+import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 
 export interface DepartmentMainProps {
   isSuperAdmin?: boolean;

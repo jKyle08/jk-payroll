@@ -3,9 +3,9 @@
 // File: src/features/payroll/payroll.service.ts
 // ==============================================================================
 
-import { db } from '../../db/repository.js';
+import { db } from '../../server/db/repository.js';
 import { PayrollBatch, PayrollItem, ComputePayrollInput, PayrollStatus } from './types.js';
-import { AuthUserContext } from '../../types/index.js';
+import { AuthUserContext } from '../../shared/types/index.js';
 
 // In-memory collection for payroll demo records
 const payrollBatches = new Map<string, PayrollBatch>();

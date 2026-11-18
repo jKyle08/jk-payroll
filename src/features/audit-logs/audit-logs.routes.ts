@@ -5,7 +5,7 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { auditLogsController } from './audit-logs.controller.js';
-import { authMiddleware } from '../../middleware/auth.middleware.js';
+import { authMiddleware } from '../../server/middleware/auth.middleware.js';
 
 export const auditLogsRoutes = Router();
 

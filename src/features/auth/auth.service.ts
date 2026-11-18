@@ -3,9 +3,9 @@
 // File: src/features/auth/auth.service.ts
 // ==============================================================================
 
-import { getSupabaseAnonClient, getSupabaseClient } from '../../db/supabase.js';
-import { db } from '../../db/repository.js';
-import { generateTestToken } from '../../middleware/auth.middleware.js';
+import { getSupabaseAnonClient, getSupabaseClient } from '../../server/db/supabase.js';
+import { db } from '../../server/db/repository.js';
+import { generateTestToken } from '../../server/middleware/auth.middleware.js';
 import { LoginInput, RegisterInput, UserSessionData } from './types.js';
 
 export class AuthService {
@@ -344,21 +344,23 @@ export class AuthService {
         ];
       }
     } else {
-      const { data: rpcPerms } = await adminClient.rpc('get_user_effective_permissions', {
-        p_user_id: userId,
-      });
+      try {
+        const { data: rpcPerms, error: rpcError } = await adminClient.rpc('get_user_effective_permissions', {
+          p_organization_id: profile.organization_id,
+          p_user_id: userId,
+        });
 
-      if (rpcPerms && Array.isArray(rpcPerms) && rpcPerms.length > 0) {
-        permissions = rpcPerms;
-      } else {
-        // Fallback default permissions
-        permissions = [
-          'TypeOfLeave.View',
-          'TypeOfLeave.Add',
-          'RequestForLeave.View',
-          'RequestForLeave.Approval.Create',
-          'PayrollComputation.View',
-        ];
+        if (rpcError) {
+          console.error('Failed to resolve effective permissions via RPC:', rpcError.message);
+          permissions = [];
+        } else if (rpcPerms && Array.isArray(rpcPerms)) {
+          permissions = rpcPerms;
+        } else {
+          permissions = [];
+        }
+      } catch (err: any) {
+        console.error('Exception resolving effective permissions via RPC:', err?.message || err);
+        permissions = [];
       }
     }
 

@@ -3,14 +3,14 @@
 // File: src/features/leave-management/leave.service.ts
 // ==============================================================================
 
-import { db } from '../../db/repository.js';
+import { db } from '../../server/db/repository.js';
 import {
   TypeOfLeave,
   LeaveRequest,
   CreateTypeOfLeaveInput,
   CreateLeaveRequestInput,
 } from './types.js';
-import { AuthUserContext, DataScope } from '../../types/index.js';
+import { AuthUserContext, DataScope } from '../../shared/types/index.js';
 
 export class LeaveService {
   // ----------------------------------------------------------------------------

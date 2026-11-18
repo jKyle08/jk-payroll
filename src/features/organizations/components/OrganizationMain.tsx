@@ -26,9 +26,9 @@ import {
 import { OrganizationTable } from './OrganizationTable.js';
 import { OrganizationCardGrid } from './OrganizationCardGrid.js';
 import { OrganizationTableSkeleton } from './OrganizationTableSkeleton.js';
-import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.js';
-import { KpiCard } from '../../../components/ui/KpiCard.js';
-import { Pagination, usePagination } from '../../../components/ui/Pagination.js';
+import { ConfirmDialog } from '../../../client/components/ui/ConfirmDialog.js';
+import { KpiCard } from '../../../client/components/ui/KpiCard.js';
+import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 
 export interface OrganizationMainProps {
   onNavigateToCreate?: () => void;
