@@ -1,8 +1,24 @@
 // ==============================================================================
-// JK PAYROLL: RBAC PERMISSION GUARDS
+// JK PAYROLL: RBAC PERMISSION GUARDS & SUPER ADMIN AUTHORIZATION
+// File: src/server/middleware/rbac.guard.ts
 // ==============================================================================
 import { Request, Response, NextFunction } from 'express';
+import { AuthUserContext } from '../../shared/types/index.js';
 import { MUTATING_ACTIONS } from '../../shared/constants/permissions.js';
+
+/**
+ * Authoritatively verifies if the user context represents an active Super Administrator.
+ *
+ * Strict Security Rules:
+ * 1. The user object must be present and defined.
+ * 2. The user account must NOT be inactive (`isActive !== false`).
+ * 3. The `isSuperAdmin` boolean flag must be explicitly `true`.
+ * 4. Rejects untyped overrides, frontend-provided strings, or inactive accounts.
+ */
+export function isSuperAdmin(user?: AuthUserContext | null): boolean {
+  if (!user) return false;
+  return Boolean(user.isSuperAdmin === true && user.isActive !== false);
+}
 
 /**
  * Enforces a required granular permission key (e.g. 'TypeOfLeave.View', 'RequestForLeave.Add').
@@ -19,8 +35,13 @@ export function requirePermission(requiredKey: string) {
       return;
     }
 
-    // Super Admin has global bypass
-    if (req.user.isSuperAdmin) {
+    if (req.user.isActive === false) {
+      res.status(403).json({ error: 'Forbidden: User account is inactive' });
+      return;
+    }
+
+    // Active Super Admin has global bypass
+    if (isSuperAdmin(req.user)) {
       return next();
     }
 
@@ -65,7 +86,12 @@ export function requireTenantAdmin() {
       return;
     }
 
-    if (!req.user.isTenantAdmin && !req.user.isSuperAdmin) {
+    if (req.user.isActive === false) {
+      res.status(403).json({ error: 'Forbidden: User account is inactive' });
+      return;
+    }
+
+    if (!req.user.isTenantAdmin && !isSuperAdmin(req.user)) {
       res.status(403).json({ error: 'Forbidden: Tenant Admin privilege required' });
       return;
     }
@@ -75,7 +101,7 @@ export function requireTenantAdmin() {
 }
 
 /**
- * Restricts access strictly to Super Admins
+ * Restricts access strictly to active Super Admins
  */
 export function requireSuperAdmin() {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -84,7 +110,12 @@ export function requireSuperAdmin() {
       return;
     }
 
-    if (!req.user.isSuperAdmin) {
+    if (req.user.isActive === false) {
+      res.status(403).json({ error: 'Forbidden: User account is inactive' });
+      return;
+    }
+
+    if (!isSuperAdmin(req.user)) {
       res.status(403).json({ error: 'Forbidden: Super Admin privilege required' });
       return;
     }

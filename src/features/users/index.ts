@@ -4,7 +4,7 @@
 // File: src/features/users/index.ts
 // ==============================================================================
 
-export * from './types.js';
+export type { Profile } from './types.js';
 export * from './user.schema.js';
 export * from './hooks/use-users.js';
 export * from './components/user-avatar.js';

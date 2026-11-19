@@ -11,6 +11,7 @@ import {
   updateUserRoleSchema,
   userRoleQuerySchema,
 } from './role.schema.js';
+import { auditLogsService, extractTrustedActor } from '../audit-logs/audit-logs.service.js';
 
 export class UserRoleController {
   /**
@@ -98,6 +99,21 @@ export class UserRoleController {
         : undefined;
 
       const created = roleService.createUserRole(parsed.data, actor);
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: created.tenantId || actor?.tenantId || '00000000-0000-0000-0000-000000000000',
+          actor: trustedActor,
+          module: 'USER_ROLES',
+          entityType: 'user_roles',
+          entityId: created.id,
+          action: 'CREATE',
+          oldValues: null,
+          newValues: { ...created },
+        })
+        .catch(() => {});
+
       res.status(201).json({
         success: true,
         message: 'User role assigned successfully',
@@ -167,6 +183,20 @@ export class UserRoleController {
         res.status(404).json({ success: false, error: `User role assignment with ID '${id}' not found` });
         return;
       }
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: actor?.tenantId || '00000000-0000-0000-0000-000000000000',
+          actor: trustedActor,
+          module: 'USER_ROLES',
+          entityType: 'user_roles',
+          entityId: id,
+          action: 'DELETE',
+          oldValues: { id },
+          newValues: null,
+        })
+        .catch(() => {});
 
       res.status(200).json({
         success: true,

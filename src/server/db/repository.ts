@@ -18,12 +18,15 @@ import {
   Role,
   RolePermission,
   UserRole,
+  OrganizationMember,
 } from '../../shared/types/index.js';
+import { AuditLogEntry, AuditLogsFilterQuery } from '../../features/audit-logs/types.js';
 
 export class DatabaseRepository {
   public tenants = new Map<string, Tenant>();
   public departments = new Map<string, Department>();
   public profiles = new Map<string, Profile>();
+  public organizationMembers = new Map<string, OrganizationMember>();
   public modules = new Map<string, Module>();
   public moduleActions = new Map<string, ModuleAction>();
   public tenantModules: TenantModule[] = [];
@@ -35,6 +38,7 @@ export class DatabaseRepository {
   public roles = new Map<string, Role>();
   public rolePermissions = new Map<string, RolePermission>();
   public userRoles = new Map<string, UserRole>();
+  public auditLogs = new Map<string, AuditLogEntry>();
 
   constructor() {
     this.seedCatalog();
@@ -45,6 +49,7 @@ export class DatabaseRepository {
     this.tenants.clear();
     this.departments.clear();
     this.profiles.clear();
+    this.organizationMembers.clear();
     this.tenantModules = [];
     this.departmentModules = [];
     this.userPermissions = [];
@@ -53,6 +58,7 @@ export class DatabaseRepository {
     this.roles.clear();
     this.rolePermissions.clear();
     this.userRoles.clear();
+    this.auditLogs.clear();
     this.seedDefaultRolesAndUsers();
   }
 
@@ -820,6 +826,15 @@ export class DatabaseRepository {
       treePath = `${parentPath}/${code.toLowerCase()}`;
     }
 
+    // Validate headUserId belongs to the same organization
+    if (data.headUserId) {
+      const headUser = this.getProfileById(data.headUserId);
+      const headUserOrg = headUser?.tenantId;
+      if (!headUser || headUserOrg !== orgId) {
+        throw new Error(`Head user ${data.headUserId} does not belong to organization ${orgId}`);
+      }
+    }
+
     // Validate unique (organizationId, code)
     const existing = Array.from(this.departments.values()).find(
       (d) => (d.organizationId === orgId || d.tenantId === orgId) && d.code.toUpperCase() === code
@@ -875,6 +890,15 @@ export class DatabaseRepository {
       );
       if (conflict) {
         throw new Error(`Department code '${newCode}' already exists in organization`);
+      }
+    }
+
+    // Validate headUserId belongs to the same organization
+    if (data.headUserId) {
+      const headUser = this.getProfileById(data.headUserId);
+      const headUserOrg = headUser?.tenantId;
+      if (!headUser || headUserOrg !== orgId) {
+        throw new Error(`Head user ${data.headUserId} does not belong to organization ${orgId}`);
       }
     }
 
@@ -1121,11 +1145,86 @@ export class DatabaseRepository {
     };
 
     this.profiles.set(profile.id, profile);
+
+    // Synchronize default organization membership for profile
+    if (profile.tenantId) {
+      const memberKey = `${profile.tenantId}:${profile.id}`;
+      if (!this.organizationMembers.has(memberKey)) {
+        this.organizationMembers.set(memberKey, {
+          id: randomUUID(),
+          organizationId: profile.tenantId,
+          userId: profile.id,
+          roleId: null,
+          departmentId: profile.departmentId,
+          isOwner: Boolean(profile.isTenantAdmin || profile.isSuperAdmin),
+          isActive: profile.isActive,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+    }
+
     return profile;
   }
 
   public getProfileById(id: string): Profile | undefined {
     return this.profiles.get(id);
+  }
+
+  // ----------------------------------------------------------------------------
+  // ORGANIZATION MEMBERS MANAGEMENT
+  // ----------------------------------------------------------------------------
+  public createOrganizationMember(data: {
+    id?: string;
+    organizationId: string;
+    userId: string;
+    roleId?: string | null;
+    departmentId?: string | null;
+    isOwner?: boolean;
+    isActive?: boolean;
+  }): OrganizationMember {
+    const member: OrganizationMember = {
+      id: data.id || randomUUID(),
+      organizationId: data.organizationId,
+      userId: data.userId,
+      roleId: data.roleId || null,
+      departmentId: data.departmentId || null,
+      isOwner: Boolean(data.isOwner),
+      isActive: data.isActive !== undefined ? data.isActive : true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.organizationMembers.set(`${data.organizationId}:${data.userId}`, member);
+    return member;
+  }
+
+  public getOrganizationMember(organizationId: string, userId: string): OrganizationMember | undefined {
+    return this.organizationMembers.get(`${organizationId}:${userId}`);
+  }
+
+  public listOrganizationMembers(userId: string): OrganizationMember[] {
+    return Array.from(this.organizationMembers.values()).filter((m) => m.userId === userId);
+  }
+
+  public updateOrganizationMember(
+    organizationId: string,
+    userId: string,
+    data: Partial<OrganizationMember>
+  ): OrganizationMember | undefined {
+    const key = `${organizationId}:${userId}`;
+    const existing = this.organizationMembers.get(key);
+    if (!existing) return undefined;
+    const updated: OrganizationMember = {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    };
+    this.organizationMembers.set(key, updated);
+    return updated;
+  }
+
+  public deleteOrganizationMember(organizationId: string, userId: string): boolean {
+    return this.organizationMembers.delete(`${organizationId}:${userId}`);
   }
 
   // ----------------------------------------------------------------------------
@@ -1459,6 +1558,98 @@ export class DatabaseRepository {
 
   public deleteUserRole(id: string): boolean {
     return this.userRoles.delete(id);
+  }
+
+  // ----------------------------------------------------------------------------
+  // AUDIT LOGS REPOSITORY METHODS (APPEND-ONLY IMMUTABILITY)
+  // ----------------------------------------------------------------------------
+  public createAuditLog(
+    entry: Omit<AuditLogEntry, 'id' | 'created_at'> & { id?: string; created_at?: string }
+  ): AuditLogEntry {
+    const id = entry.id || randomUUID();
+    if (this.auditLogs.has(id)) {
+      throw new Error(
+        'Audit logs are immutable, append-only records. Updates and deletions are strictly prohibited.'
+      );
+    }
+    const created_at = entry.created_at || new Date().toISOString();
+    const logRecord: AuditLogEntry = {
+      ...entry,
+      id,
+      actor_type: entry.actor_type || (entry.actor_id ? 'USER' : 'SYSTEM'),
+      resource_type: entry.resource_type || entry.entity_type,
+      resource_id: entry.resource_id || entry.entity_id,
+      created_at,
+    };
+    this.auditLogs.set(id, logRecord);
+    return logRecord;
+  }
+
+  public getAuditLogs(filter: AuditLogsFilterQuery): {
+    logs: AuditLogEntry[];
+    total: number;
+    stats: {
+      total: number;
+      creates: number;
+      updates: number;
+      deletes: number;
+    };
+  } {
+    let logs = Array.from(this.auditLogs.values());
+
+    if (filter.organizationId && filter.organizationId !== 'All') {
+      logs = logs.filter((l) => l.organization_id === filter.organizationId);
+    }
+    if (filter.moduleId && filter.moduleId !== 'All') {
+      logs = logs.filter((l) => l.module_id === filter.moduleId);
+    }
+    if (filter.action && filter.action !== ('All' as any)) {
+      logs = logs.filter((l) => l.action === filter.action);
+    }
+    if (filter.actorId) {
+      logs = logs.filter((l) => l.actor_id === filter.actorId);
+    }
+    if (filter.actorType) {
+      logs = logs.filter((l) => l.actor_type === filter.actorType);
+    }
+    if (filter.search && filter.search.trim() !== '') {
+      const term = filter.search.trim().toLowerCase();
+      logs = logs.filter(
+        (l) =>
+          (l.actor_name && l.actor_name.toLowerCase().includes(term)) ||
+          (l.actor_email && l.actor_email.toLowerCase().includes(term)) ||
+          (l.entity_type && l.entity_type.toLowerCase().includes(term)) ||
+          (l.entity_id && l.entity_id.toLowerCase().includes(term)) ||
+          (l.actor_role_name && l.actor_role_name.toLowerCase().includes(term))
+      );
+    }
+
+    // Sort descending by created_at
+    logs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    const total = logs.length;
+    let creates = 0;
+    let updates = 0;
+    let deletes = 0;
+    for (const l of logs) {
+      if (l.action === 'CREATE') creates++;
+      else if (l.action === 'UPDATE') updates++;
+      else if (l.action === 'DELETE') deletes++;
+    }
+
+    const limit = Math.min(filter.limit || 50, 200);
+    const offset = filter.offset || 0;
+    const paginated = logs.slice(offset, offset + limit);
+
+    return {
+      logs: paginated,
+      total,
+      stats: { total, creates, updates, deletes },
+    };
+  }
+
+  public getAuditLogById(id: string): AuditLogEntry | null {
+    return this.auditLogs.get(id) || null;
   }
 }
 

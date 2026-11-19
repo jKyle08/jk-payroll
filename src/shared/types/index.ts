@@ -37,6 +37,18 @@ export interface Tenant {
   updatedAt: Date;
 }
 
+export interface OrganizationMember {
+  id: string;
+  organizationId: string;
+  userId: string;
+  roleId?: string | null;
+  departmentId?: string | null;
+  isOwner: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Department {
   id: string;
   organizationId: string;
@@ -181,16 +193,21 @@ export interface LeaveRequest {
   updatedAt: Date;
 }
 
+export type Organization = Tenant;
+export type OrganizationItem = Tenant;
+
 // Scoping Scopes for Transactional Queries
-export type DataScope = 'Self' | 'SubDepartment' | 'EntireDepartment' | 'Tenant';
+export type DataScope = 'Self' | 'SubDepartment' | 'EntireDepartment' | 'Tenant' | 'Organization';
 
 // Authenticated user request context
 export interface AuthUserContext {
   userId: string;
-  tenantId: string;
+  organizationId: string;
+  tenantId: string; // Backward compatibility alias
   departmentId: string | null;
   fullName: string;
-  isTenantAdmin: boolean;
+  isOrganizationAdmin: boolean;
+  isTenantAdmin: boolean; // Backward compatibility alias
   isSuperAdmin: boolean;
   isActive: boolean;
 }
@@ -199,6 +216,8 @@ declare global {
   namespace Express {
     interface Request {
       user?: AuthUserContext;
+      organization?: Tenant;
+      tenant?: Tenant;
       effectivePermissions?: string[];
       permissionSet?: Set<string>;
     }

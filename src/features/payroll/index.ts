@@ -4,7 +4,7 @@
 // File: src/features/payroll/index.ts
 // ==============================================================================
 
-export * from './types.js';
+export type { PayrollStatus, PayrollItem, PayrollBatch, PayrollComputation } from './types.js';
 export * from './payroll.schema.js';
 export * from './hooks/use-payroll.js';
 export * from './components/payroll-run-card.js';

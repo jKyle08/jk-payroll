@@ -6,6 +6,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { authService } from './auth.service.js';
+import { LoginInput, RegisterInput } from './types.js';
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -34,14 +35,13 @@ export class AuthController {
         return;
       }
 
-      const session = await authService.login(parsed.data);
+      const session = await authService.login(parsed.data as LoginInput);
       res.status(200).json({
         token: session.token,
         user: session,
       });
     } catch (error: any) {
-      const statusCode = error.message?.includes('Invalid') ? 401 : 400;
-      res.status(statusCode).json({ error: error.message || 'Login failed' });
+      res.status(401).json({ error: error.message || 'Invalid email or password' });
     }
   }
 
@@ -56,7 +56,7 @@ export class AuthController {
         return;
       }
 
-      const session = await authService.register(parsed.data);
+      const session = await authService.register(parsed.data as RegisterInput);
       res.status(201).json({
         message: 'Account registered successfully',
         token: session.token,
@@ -90,6 +90,34 @@ export class AuthController {
    */
   public async logout(_req: Request, res: Response): Promise<void> {
     res.status(200).json({ message: 'Signed out successfully' });
+  }
+
+  /**
+   * POST /api/auth/switch-organization
+   */
+  public async switchOrganization(req: Request, res: Response): Promise<void> {
+    try {
+      const authUser = req.user;
+      if (!authUser) {
+        res.status(401).json({ error: 'Unauthorized: Session missing', code: 'UNAUTHORIZED' });
+        return;
+      }
+
+      const requestedOrgId = (req.body.organizationId || req.body.tenantId) as string | undefined;
+      if (!requestedOrgId || typeof requestedOrgId !== 'string' || !requestedOrgId.trim()) {
+        res.status(400).json({
+          error: 'Organization ID is required',
+          code: 'ORGANIZATION_CONTEXT_REQUIRED',
+        });
+        return;
+      }
+
+      const result = await authService.switchOrganization(authUser.userId, requestedOrgId.trim());
+      res.status(200).json(result);
+    } catch (error: any) {
+      const statusCode = error.statusCode || 400;
+      res.status(statusCode).json({ error: error.message, code: error.code });
+    }
   }
 }
 

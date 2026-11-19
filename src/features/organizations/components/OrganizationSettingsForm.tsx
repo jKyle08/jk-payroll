@@ -36,6 +36,7 @@ import {
 } from '../organization.schema.js';
 import {
   Organization,
+  OrganizationSector,
   PayFrequency,
   WorkMode,
   ProrationMethod,

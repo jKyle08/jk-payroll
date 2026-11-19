@@ -58,7 +58,7 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   },
   {
     id: 'notif-2',
-    type: 'approval_alert',
+    type: 'approval',
     title: 'Payroll run #PR-2026-11 requires final audit approval',
     description: '142 active employee disbursements totaling $482,910.00 ready.',
     timestamp: '1h ago',
@@ -191,12 +191,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   // Convert organization context for Sidebar
   const orgContext: OrganizationContext = useMemo(
     () => ({
+      id: currentUser.tenantId,
       code: activeTenantCode,
       name: currentUser.tenantName || 'Apex Health Systems',
+      slug: (currentUser.tenantName || 'Apex Health Systems').toLowerCase().replace(/\s+/g, '-'),
       sector: 'Healthcare & Payroll',
       currency: 'USD ($)',
     }),
-    [activeTenantCode, currentUser.tenantName]
+    [activeTenantCode, currentUser.tenantName, currentUser.tenantId]
   );
 
   return (
@@ -206,8 +208,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         activePath={activePath}
         userPermissions={userPermissions}
         isSuperAdmin={currentUser.role === 'Super Admin'}
-        isTenantAdmin={currentUser.role === 'Tenant Admin'}
-        orgContext={orgContext}
+        roleName={currentUser.role}
+        organization={orgContext}
+        tenantCode={activeTenantCode}
         onNavigate={(path) => navigate(path)}
       />
 
@@ -215,15 +218,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Modern Facebook-Style Topbar */}
         <Topbar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearch={setSearchQuery}
           notifications={notifications}
-          onMarkAsRead={handleMarkAsRead}
           onMarkAllAsRead={handleMarkAllAsRead}
           user={currentUser}
-          onSwitchTenant={() => setIsSwitcherOpen(true)}
-          onLogout={handleLogout}
-          tenantBadge={activeTenantCode}
+          onSignOut={handleLogout}
+          tenantCode={activeTenantCode}
         />
 
         {/* 3. Main Workspace Viewport */}
@@ -246,10 +246,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <OrganizationSwitcherModal
         isOpen={isSwitcherOpen}
         onClose={() => setIsSwitcherOpen(false)}
-        organizations={organizations}
-        activeTenantCode={activeTenantCode}
-        onSelectOrganization={handleSelectScope}
-        isLoading={isOrgsLoading}
+        currentOrgId={currentUser.tenantId}
+        onSelectOrg={handleSelectScope}
       />
     </div>
   );

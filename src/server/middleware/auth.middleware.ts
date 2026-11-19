@@ -1,5 +1,6 @@
 // ==============================================================================
 // JK PAYROLL: AUTHENTICATION & TENANT MIDDLEWARE (SUPABASE INTEGRATED)
+// File: src/server/middleware/auth.middleware.ts
 // ==============================================================================
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
@@ -8,7 +9,23 @@ import { db } from '../db/repository.js';
 import { getSupabaseClient } from '../db/supabase.js';
 import { permissionService } from '../../features/access-control/services/permission.service.js';
 import { AuthUserContext } from '../../shared/types/index.js';
-import { requireTenantAdmin as rbacRequireTenantAdmin, requireSuperAdmin as rbacRequireSuperAdmin } from './rbac.guard.js';
+import {
+  requireTenantAdmin as rbacRequireTenantAdmin,
+  requireSuperAdmin as rbacRequireSuperAdmin,
+  isSuperAdmin,
+} from './rbac.guard.js';
+import {
+  resolveOrganizationContext,
+  validateOrganizationEligibility,
+  validateUserOrganizationMembership,
+} from '../../features/organizations/organization-context.service.js';
+
+export { isSuperAdmin } from './rbac.guard.js';
+export {
+  resolveOrganizationContext,
+  validateOrganizationEligibility,
+  validateUserOrganizationMembership,
+} from '../../features/organizations/organization-context.service.js';
 
 export function generateTestToken(payload: {
   userId: string;
@@ -17,7 +34,12 @@ export function generateTestToken(payload: {
   departmentId?: string | null;
   isTenantAdmin?: boolean;
   isSuperAdmin?: boolean;
+  appMetadata?: Record<string, any>;
 }): string {
+  if (!ENV.JWT_SECRET) {
+    throw new Error('JWT_SECRET must be configured for token generation.');
+  }
+
   return jwt.sign(
     {
       sub: payload.userId,
@@ -26,9 +48,15 @@ export function generateTestToken(payload: {
       department_id: payload.departmentId,
       isTenantAdmin: payload.isTenantAdmin,
       isSuperAdmin: payload.isSuperAdmin,
+      app_metadata: payload.appMetadata,
     },
     ENV.JWT_SECRET,
-    { expiresIn: '1d' }
+    {
+      algorithm: 'HS256',
+      issuer: ENV.JWT_ISSUER,
+      audience: ENV.JWT_AUDIENCE,
+      expiresIn: '1d',
+    }
   );
 }
 
@@ -49,6 +77,9 @@ export const requireSuperAdmin = (req?: Request, res?: Response, next?: NextFunc
   return guard;
 };
 
+export const requireOrganizationAdmin = requireTenantAdmin;
+export const organizationContextMiddleware = (req: Request, res: Response, next: NextFunction) => authMiddleware(req, res, next);
+
 export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const authHeader = req.headers.authorization;
@@ -58,16 +89,67 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
     const token = authHeader.split(' ')[1];
+    if (!token) {
+      res.status(401).json({ error: 'Unauthorized: Missing token' });
+      return;
+    }
+
     let userId: string | null = null;
     let decodedEmail: string | undefined;
+    let tokenTenantId: string | undefined;
 
-    // 1. Try local JWT verify first
-    try {
-      const decoded: any = jwt.verify(token, ENV.JWT_SECRET);
-      userId = decoded.sub;
-      decodedEmail = decoded.email;
-    } catch {
-      // 2. Fallback to Supabase auth validation
+    // Decode token header & payload to determine token family and inspect claims safely
+    const unverified = jwt.decode(token, { complete: true }) as {
+      header?: { alg?: string; typ?: string };
+      payload?: jwt.JwtPayload | string;
+    } | null;
+
+    if (!unverified || typeof unverified !== 'object' || !unverified.payload || typeof unverified.payload !== 'object') {
+      res.status(401).json({ error: 'Unauthorized: Malformed token' });
+      return;
+    }
+
+    const rawPayload = unverified.payload as jwt.JwtPayload;
+
+    // 1. In production, local JWT authentication is strictly prohibited
+    if (ENV.NODE_ENV === 'production' && rawPayload.iss === ENV.JWT_ISSUER) {
+      res.status(401).json({ error: 'Unauthorized: Local JWT tokens are not permitted in production' });
+      return;
+    }
+
+    // 2. Local JWT verification: Allowed ONLY in development/test when explicitly enabled
+    // and token does not indicate a remote Supabase token
+    const isSupabaseToken = Boolean(
+      typeof rawPayload.iss === 'string' && rawPayload.iss.includes('supabase.co')
+    );
+
+    if (ENV.ALLOW_LOCAL_JWT && ENV.NODE_ENV !== 'production' && !isSupabaseToken) {
+      try {
+        const decoded = jwt.verify(token, ENV.JWT_SECRET, {
+          algorithms: ['HS256'],
+          issuer: ENV.JWT_ISSUER,
+          audience: ENV.JWT_AUDIENCE,
+        }) as jwt.JwtPayload;
+
+        if (!decoded.sub || typeof decoded.sub !== 'string') {
+          res.status(401).json({ error: 'Unauthorized: Token missing subject claim' });
+          return;
+        }
+
+        userId = decoded.sub;
+        decodedEmail = decoded.email;
+        tokenTenantId = (decoded.tenant_id || decoded.organization_id || decoded.tenantId || decoded.organizationId) as string | undefined;
+      } catch (jwtErr: any) {
+        res.status(401).json({
+          error: 'Unauthorized: Invalid or expired token',
+          message: jwtErr.message,
+        });
+        return;
+      }
+    }
+
+    // 3. Fallback to Supabase Auth identity provider
+    if (!userId) {
       try {
         const supabase = getSupabaseClient();
         const { data: authData, error: authError } = await supabase.auth.getUser(token);
@@ -77,6 +159,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
         }
         userId = authData.user.id;
         decodedEmail = authData.user.email;
+        tokenTenantId = (authData.user.user_metadata?.organization_id || authData.user.app_metadata?.organization_id) as string | undefined;
       } catch (err: any) {
         res.status(401).json({ error: 'Unauthorized: Could not verify token', details: err.message });
         return;
@@ -88,7 +171,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    // 3. Resolve user profile (Check in-memory db first, fallback to Supabase PostgreSQL)
+    // 4. Resolve user profile (Check in-memory db first, fallback to Supabase PostgreSQL)
     let profile = db.getProfileById(userId);
 
     if (!profile) {
@@ -147,49 +230,60 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    // Check user active status
+    // 5. Enforce user active status
     if (!profile.isActive) {
-      res.status(403).json({ error: 'Forbidden: User account is inactive' });
+      res.status(403).json({ error: 'Forbidden: User account is inactive', code: 'ORGANIZATION_ACCESS_DENIED' });
       return;
     }
 
-    // Check tenant active status
-    let tenant = db.getTenantById(profile.tenantId);
-    if (!tenant) {
-      res.status(403).json({ error: 'Forbidden: User tenant does not exist' });
-      return;
-    }
-
-    if (!tenant.isActive) {
-      res.status(403).json({ error: 'Forbidden: Tenant account is inactive' });
-      return;
-    }
-
-    // Check organization expiration for non-superadmin users
-    if (!profile.isSuperAdmin && tenant.endDate) {
-      const expirationTime = new Date(tenant.endDate).getTime();
-      if (expirationTime < Date.now()) {
-        res.status(403).json({
-          error: 'Forbidden: Organization access period has expired. Access blocked.',
-        });
-        return;
-      }
-    }
-
-    // Construct Auth Context
-    const userContext: AuthUserContext = {
+    // 6. Centralized Organization Context & Membership Resolution (SEC-FIND-04 & SEC-FIND-08)
+    const effectiveOrgId = tokenTenantId || profile.tenantId;
+    const initialUserContext: AuthUserContext = {
       userId: profile.id,
-      tenantId: profile.tenantId,
+      organizationId: effectiveOrgId,
+      tenantId: effectiveOrgId,
       departmentId: profile.departmentId,
       fullName: profile.fullName,
-      isTenantAdmin: profile.isTenantAdmin,
-      isSuperAdmin: profile.isSuperAdmin,
-      isActive: profile.isActive,
+      isOrganizationAdmin: Boolean(profile.isTenantAdmin),
+      isTenantAdmin: Boolean(profile.isTenantAdmin),
+      isSuperAdmin: Boolean(profile.isSuperAdmin),
+      isActive: Boolean(profile.isActive),
+    };
+
+    const orgResolution = await resolveOrganizationContext(req, initialUserContext);
+    if (!orgResolution.valid || !orgResolution.organization) {
+      res.status(orgResolution.statusCode || 403).json({
+        error: orgResolution.error || 'Forbidden: Organization access denied',
+        code: orgResolution.code,
+      });
+      return;
+    }
+
+    const validatedTenant = orgResolution.organization;
+    const membership = orgResolution.membership;
+
+    const isOrgAdmin = Boolean(
+      membership?.isOwner || (profile.tenantId === validatedTenant.id && profile.isTenantAdmin)
+    );
+
+    // 7. Establish unified, authoritative request context
+    const userContext: AuthUserContext = {
+      userId: profile.id,
+      organizationId: validatedTenant.id,
+      tenantId: validatedTenant.id,
+      departmentId: membership?.departmentId || profile.departmentId,
+      fullName: profile.fullName,
+      isOrganizationAdmin: isOrgAdmin,
+      isTenantAdmin: isOrgAdmin,
+      isSuperAdmin: Boolean(profile.isSuperAdmin),
+      isActive: Boolean(profile.isActive),
     };
 
     req.user = userContext;
+    req.organization = validatedTenant;
+    req.tenant = validatedTenant;
 
-    // Preload effective permissions for fast evaluation
+    // Preload effective permissions for fast evaluation against validated tenant
     req.effectivePermissions = permissionService.getUserEffectivePermissions(
       userContext.tenantId,
       userContext.userId
@@ -202,4 +296,3 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 }
 
 export const authenticateJwt = authMiddleware;
-

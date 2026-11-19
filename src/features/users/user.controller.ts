@@ -6,6 +6,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { userService } from './user.service.js';
+import { auditLogsService, extractTrustedActor } from '../audit-logs/audit-logs.service.js';
 
 const CreateUserSchema = z.object({
   fullName: z.string().min(2),
@@ -52,6 +53,20 @@ export class UserController {
         },
         actor
       );
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: profile.tenantId,
+          actor: trustedActor,
+          module: 'PROFILES',
+          entityType: 'profiles',
+          entityId: profile.id,
+          action: 'CREATE',
+          oldValues: null,
+          newValues: { ...profile },
+        })
+        .catch(() => {});
 
       res.status(201).json({ message: 'User created successfully', user: profile });
     } catch (error: any) {
@@ -151,6 +166,20 @@ export class UserController {
         userId,
         parsed.data.actionIds
       );
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: tenantId,
+          actor: trustedActor,
+          module: 'USERS',
+          entityType: 'user_permissions',
+          entityId: userId,
+          action: 'UPDATE',
+          oldValues: null,
+          newValues: { userId, permissions },
+        })
+        .catch(() => {});
 
       res.status(200).json({
         message: 'User permissions assigned successfully',

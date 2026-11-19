@@ -17,6 +17,18 @@ export class UserService {
     const isSuperAdmin = isSuper ? Boolean(data.isSuperAdmin) : false;
     const tenantId = actor && !isSuper && actor.tenantId ? actor.tenantId : data.tenantId;
 
+    if (!tenantId) {
+      throw new Error('Organization ID is required to create a user');
+    }
+
+    if (data.departmentId) {
+      const dept = db.getDepartmentById(data.departmentId);
+      const deptOrg = dept?.organizationId || dept?.tenantId;
+      if (!dept || deptOrg !== tenantId) {
+        throw new Error(`Department ${data.departmentId} does not belong to organization ${tenantId}`);
+      }
+    }
+
     return db.createProfile({
       ...data,
       tenantId,

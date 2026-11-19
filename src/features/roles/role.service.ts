@@ -65,8 +65,21 @@ export class RoleService {
     }
   }
 
-  public getRoleById(id: string): Role | undefined {
-    return db.roles.get(id);
+  public getRoleById(
+    id: string,
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; organizationId?: string }
+  ): Role | undefined {
+    const role = db.roles.get(id);
+    if (!role) return undefined;
+
+    if (actor && !actor.isSuperAdmin) {
+      const activeOrgId = actor.organizationId || actor.tenantId;
+      const isGlobal = role.roleType === 'SYSTEM' || role.organizationId === null;
+      if (!isGlobal && activeOrgId && role.organizationId !== activeOrgId) {
+        return undefined;
+      }
+    }
+    return role;
   }
 
   /** Roles visible to an organization: its own CUSTOM roles + all global SYSTEM roles */
@@ -154,9 +167,30 @@ export class RoleService {
     }
   }
 
-  public updateRole(id: string, data: UpdateRoleInput, isSuperAdmin = false): Role | undefined {
+  public updateRole(
+    id: string,
+    data: UpdateRoleInput,
+    isSuperAdmin = false,
+    actorOrgId?: string
+  ): Role | undefined {
     const role = db.roles.get(id);
     if (!role) return undefined;
+
+    if (!isSuperAdmin) {
+      if (role.roleType === 'SYSTEM' || role.organizationId === null) {
+        throw Object.assign(new Error('System Global roles can only be edited by Super Admin'), {
+          statusCode: 403,
+          code: 'SYSTEM_ROLE_MODIFICATION_FORBIDDEN',
+        });
+      }
+      if (actorOrgId && role.organizationId !== actorOrgId) {
+        throw Object.assign(new Error('Access denied: You can only modify roles of your own organization'), {
+          statusCode: 403,
+          code: 'ORGANIZATION_ACCESS_DENIED',
+        });
+      }
+    }
+
     this.assertMutable(role, isSuperAdmin);
 
     if (data.name !== undefined) role.name = data.name.trim();
@@ -170,9 +204,25 @@ export class RoleService {
     return role;
   }
 
-  public deleteRole(id: string, isSuperAdmin = false): boolean {
+  public deleteRole(id: string, isSuperAdmin = false, actorOrgId?: string): boolean {
     const role = db.roles.get(id);
     if (!role) return false;
+
+    if (!isSuperAdmin) {
+      if (role.roleType === 'SYSTEM' || role.organizationId === null) {
+        throw Object.assign(new Error('System Global roles can only be deleted by Super Admin'), {
+          statusCode: 403,
+          code: 'SYSTEM_ROLE_MODIFICATION_FORBIDDEN',
+        });
+      }
+      if (actorOrgId && role.organizationId !== actorOrgId) {
+        throw Object.assign(new Error('Access denied: You can only delete roles of your own organization'), {
+          statusCode: 403,
+          code: 'ORGANIZATION_ACCESS_DENIED',
+        });
+      }
+    }
+
     this.assertMutable(role, isSuperAdmin);
 
     const inUse = db.getUserRoles().some((ur) => ur.roleId === id);
@@ -185,7 +235,63 @@ export class RoleService {
     return db.roles.delete(id);
   }
 
-  public assignRolePermissions(roleId: string, actionIds: string[]): RolePermission[] {
+  public assignRolePermissions(
+    roleId: string,
+    actionIds: string[],
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; organizationId?: string }
+  ): RolePermission[] {
+    const role = db.roles.get(roleId);
+    if (!role) {
+      throw Object.assign(new Error(`Role with ID '${roleId}' not found`), {
+        statusCode: 404,
+        code: 'ROLE_NOT_FOUND',
+      });
+    }
+
+    const isSuper = Boolean(actor?.isSuperAdmin);
+    const actorOrgId = actor?.organizationId || actor?.tenantId;
+
+    if (!isSuper) {
+      if (role.roleType === 'SYSTEM' || role.organizationId === null) {
+        throw Object.assign(new Error('Global SYSTEM roles can only be edited by Super Admin'), {
+          statusCode: 403,
+          code: 'SYSTEM_ROLE_MODIFICATION_FORBIDDEN',
+        });
+      }
+      if (actorOrgId && role.organizationId !== actorOrgId) {
+        throw Object.assign(new Error('Access denied: You can only modify permissions of roles in your own organization'), {
+          statusCode: 403,
+          code: 'ORGANIZATION_ACCESS_DENIED',
+        });
+      }
+    }
+
+    this.assertMutable(role, isSuper);
+
+    // Validate that every actionId exists and is valid
+    const targetOrgId = role.organizationId || actorOrgId;
+    for (const actionId of actionIds) {
+      const action = db.moduleActions.get(actionId);
+      if (!action) {
+        throw Object.assign(new Error(`Invalid permission: Module action '${actionId}' does not exist`), {
+          statusCode: 400,
+          code: 'INVALID_PERMISSION_ASSIGNMENT',
+        });
+      }
+
+      // Tier 1 constraint: module must be enabled for the organization if not Super Admin
+      if (!isSuper && targetOrgId && !db.isModuleActiveForTenant(targetOrgId, action.moduleId)) {
+        const mod = db.modules.get(action.moduleId);
+        throw Object.assign(
+          new Error(`Cannot grant permission '${action.action}' for module '${mod?.name || action.moduleId}': module is not allocated to organization`),
+          {
+            statusCode: 403,
+            code: 'MODULE_NOT_ALLOCATED',
+          }
+        );
+      }
+    }
+
     // Clear existing
     for (const [key, rp] of db.rolePermissions.entries()) {
       if (rp.roleId === roleId) {
@@ -206,7 +312,18 @@ export class RoleService {
     return assigned;
   }
 
-  public getRolePermissions(roleId: string): string[] {
+  public getRolePermissions(
+    roleId: string,
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; organizationId?: string }
+  ): string[] {
+    const role = this.getRoleById(roleId, actor);
+    if (!role) {
+      throw Object.assign(new Error(`Role with ID '${roleId}' not found`), {
+        statusCode: 404,
+        code: 'ROLE_NOT_FOUND',
+      });
+    }
+
     return Array.from(db.rolePermissions.values())
       .filter((rp) => rp.roleId === roleId)
       .map((rp) => rp.actionId);

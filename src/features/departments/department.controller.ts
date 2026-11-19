@@ -6,6 +6,7 @@
 import { Request, Response } from 'express';
 import { departmentService } from './department.service.js';
 import { permissionService } from '../access-control/services/permission.service.js';
+import { extractTrustedActor } from '../audit-logs/audit-logs.service.js';
 import {
   createDepartmentSchema,
   updateDepartmentSchema,
@@ -87,10 +88,12 @@ export class DepartmentController {
    */
   public async createDepartment(req: Request, res: Response): Promise<void> {
     try {
+      const trustedActor = req.user ? extractTrustedActor(req) : undefined;
       const actor = req.user
         ? {
             isSuperAdmin: (req.user as any).isSuperAdmin ?? false,
             tenantId: (req.user as any).tenantId,
+            trustedActor,
           }
         : undefined;
 
@@ -131,10 +134,12 @@ export class DepartmentController {
   public async updateDepartment(req: Request, res: Response): Promise<void> {
     try {
       const id = String(req.params.id);
+      const trustedActor = req.user ? extractTrustedActor(req) : undefined;
       const actor = req.user
         ? {
             isSuperAdmin: (req.user as any).isSuperAdmin ?? false,
             tenantId: (req.user as any).tenantId,
+            trustedActor,
           }
         : undefined;
 
@@ -163,10 +168,12 @@ export class DepartmentController {
   public async deleteDepartment(req: Request, res: Response): Promise<void> {
     try {
       const id = String(req.params.id);
+      const trustedActor = req.user ? extractTrustedActor(req) : undefined;
       const actor = req.user
         ? {
             isSuperAdmin: (req.user as any).isSuperAdmin ?? false,
             tenantId: (req.user as any).tenantId,
+            trustedActor,
           }
         : undefined;
 

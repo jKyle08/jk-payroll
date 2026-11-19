@@ -4,6 +4,7 @@
 // ==============================================================================
 
 import { db } from '../../server/db/repository.js';
+import { auditLogsService } from '../audit-logs/audit-logs.service.js';
 import {
   Department,
   DepartmentNode,
@@ -142,7 +143,7 @@ export class DepartmentService {
 
   public createDepartment(
     data: CreateDepartmentInput,
-    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; trustedActor?: any }
   ): Department {
     const orgId = data.organizationId || data.tenantId || actor?.tenantId;
     if (!orgId) {
@@ -154,7 +155,7 @@ export class DepartmentService {
       throw new Error('Access denied: cannot create department for another organization');
     }
 
-    return db.createDepartment({
+    const created = db.createDepartment({
       organizationId: orgId,
       parentDepartmentId: data.parentDepartmentId,
       code: data.code,
@@ -163,12 +164,28 @@ export class DepartmentService {
       headUserId: data.headUserId,
       isActive: data.isActive,
     });
+
+    const trustedActor = (actor as any)?.trustedActor ?? ((actor as any)?.actorType ? actor : undefined);
+    auditLogsService
+      .recordAuditLog({
+        organizationId: orgId,
+        actor: trustedActor as any,
+        module: 'DEPARTMENTS',
+        entityType: 'departments',
+        entityId: created.id,
+        action: 'CREATE',
+        oldValues: null,
+        newValues: { ...created },
+      })
+      .catch(() => {});
+
+    return created;
   }
 
   public updateDepartment(
     id: string,
     data: UpdateDepartmentInput,
-    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; trustedActor?: any }
   ): Department {
     const existing = db.getDepartmentById(id);
     if (!existing) {
@@ -182,7 +199,8 @@ export class DepartmentService {
       throw new Error('Access denied: cannot update department of another organization');
     }
 
-    return db.updateDepartment(id, {
+    const oldValues = { ...existing };
+    const updated = db.updateDepartment(id, {
       organizationId: data.organizationId || existingOrgId,
       parentDepartmentId: data.parentDepartmentId,
       code: data.code,
@@ -191,11 +209,27 @@ export class DepartmentService {
       headUserId: data.headUserId,
       isActive: data.isActive,
     });
+
+    const trustedActor = (actor as any)?.trustedActor ?? ((actor as any)?.actorType ? actor : undefined);
+    auditLogsService
+      .recordAuditLog({
+        organizationId: updated.organizationId,
+        actor: trustedActor as any,
+        module: 'DEPARTMENTS',
+        entityType: 'departments',
+        entityId: updated.id,
+        action: 'UPDATE',
+        oldValues,
+        newValues: { ...updated },
+      })
+      .catch(() => {});
+
+    return updated;
   }
 
   public deleteDepartment(
     id: string,
-    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; trustedActor?: any }
   ): boolean {
     const existing = db.getDepartmentById(id);
     if (!existing) {
@@ -209,7 +243,26 @@ export class DepartmentService {
       throw new Error('Access denied: cannot delete department of another organization');
     }
 
-    return db.deleteDepartment(id);
+    const oldValues = { ...existing };
+    const success = db.deleteDepartment(id);
+
+    if (success) {
+      const trustedActor = (actor as any)?.trustedActor ?? ((actor as any)?.actorType ? actor : undefined);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: existingOrgId,
+          actor: trustedActor as any,
+          module: 'DEPARTMENTS',
+          entityType: 'departments',
+          entityId: id,
+          action: 'DELETE',
+          oldValues,
+          newValues: null,
+        })
+        .catch(() => {});
+    }
+
+    return success;
   }
 
   public getDepartmentsByTenant(tenantId: string): Department[] {

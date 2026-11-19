@@ -41,3 +41,18 @@ export interface ComputePayrollInput {
   periodEnd: string;
   departmentId?: string;
 }
+
+export interface PayrollComputation {
+  id: string;
+  batchId?: string;
+  userId?: string;
+  employeeName?: string;
+  departmentName?: string;
+  status?: PayrollStatus;
+  baseSalary?: number;
+  allowances?: number;
+  deductions?: number;
+  tax?: number;
+  netPay: number;
+  createdAt?: Date | string;
+}

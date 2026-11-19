@@ -4,7 +4,7 @@
 // ==============================================================================
 
 import { useCallback, useMemo } from 'react';
-import { MUTATING_ACTIONS } from '../../../lib/constants/permissions.js';
+import { MUTATING_ACTIONS } from '../../../shared/constants/permissions.js';
 import { PermissionState } from '../types.js';
 
 /**

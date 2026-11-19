@@ -6,7 +6,9 @@
 
 import { Request, Response } from 'express';
 import { db } from '../../server/db/repository.js';
+import { isSuperAdmin } from '../../server/middleware/rbac.guard.js';
 import { organizationService } from './organization.service.js';
+import { auditLogsService, extractTrustedActor } from '../audit-logs/audit-logs.service.js';
 import {
   CreateOrganizationInput,
   UpdateOrganizationInput,
@@ -25,8 +27,8 @@ export class OrganizationController {
     try {
       const query = (req.query as unknown) as OrganizationQueryInput & { page?: string; limit?: string };
       const user = req.user;
-      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
-      const scopeTenantId = isSuperAdmin ? undefined : (user?.tenantId || '__NO_ACCESS__');
+      const isSuperAdminUser = isSuperAdmin(user);
+      const scopeTenantId = isSuperAdminUser ? undefined : (user?.tenantId || '__NO_ACCESS__');
 
       const result = await organizationService.listOrganizations(
         {
@@ -79,8 +81,8 @@ export class OrganizationController {
     try {
       const id = String(req.params.id);
       const user = req.user;
-      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
-      const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;
+      const isSuperAdminUser = isSuperAdmin(user);
+      const scopeTenantId = isSuperAdminUser ? undefined : user?.tenantId;
 
       const org = await organizationService.getOrganizationById(id, scopeTenantId);
       if (!org) {
@@ -112,6 +114,20 @@ export class OrganizationController {
     try {
       const input: CreateOrganizationInput = req.body;
       const created = await organizationService.createOrganization(input);
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: created.id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organizations',
+          entityId: created.id,
+          action: 'CREATE',
+          oldValues: null,
+          newValues: { id: created.id, name: created.name, code: created.code, status: created.status },
+        })
+        .catch(() => {});
 
       res.status(201).json({
         success: true,
@@ -161,8 +177,8 @@ export class OrganizationController {
       const id = String(req.params.id);
       const input: UpdateOrganizationSettingsInput = req.body;
       const user = req.user;
-      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
-      const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;
+      const isSuperAdminUser = isSuperAdmin(user);
+      const scopeTenantId = isSuperAdminUser ? undefined : user?.tenantId;
 
       const updated = await organizationService.updateOrganizationSettings(id, input, scopeTenantId);
       if (!updated) {
@@ -172,6 +188,20 @@ export class OrganizationController {
         });
         return;
       }
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organizations',
+          entityId: id,
+          action: 'UPDATE',
+          oldValues: null,
+          newValues: { id, settings: input.settings, statutoryIds: input.statutoryIds },
+        })
+        .catch(() => {});
 
       res.status(200).json({
         success: true,
@@ -196,8 +226,8 @@ export class OrganizationController {
       const id = String(req.params.id);
       const input: UpdateOrganizationInput = req.body;
       const user = req.user;
-      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
-      const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;
+      const isSuperAdminUser = isSuperAdmin(user);
+      const scopeTenantId = isSuperAdminUser ? undefined : user?.tenantId;
 
       const updated = await organizationService.updateOrganization(id, input, scopeTenantId);
       if (!updated) {
@@ -207,6 +237,20 @@ export class OrganizationController {
         });
         return;
       }
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organizations',
+          entityId: id,
+          action: 'UPDATE',
+          oldValues: null,
+          newValues: { id, name: updated.name, status: updated.status, tier: updated.tier },
+        })
+        .catch(() => {});
 
       res.status(200).json({
         success: true,
@@ -235,14 +279,28 @@ export class OrganizationController {
         return mod ? mod.code : item;
       });
       const user = req.user;
-      const isSuperAdmin = Boolean(user?.isSuperAdmin || (user as any)?.role === 'SuperAdmin');
-      const scopeTenantId = isSuperAdmin ? undefined : user?.tenantId;
+      const isSuperAdminUser = isSuperAdmin(user);
+      const scopeTenantId = isSuperAdminUser ? undefined : user?.tenantId;
 
       const activeModules = await organizationService.setOrganizationModules(
         id,
         moduleCodes,
         scopeTenantId
       );
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organization_modules',
+          entityId: id,
+          action: 'UPDATE',
+          oldValues: null,
+          newValues: { organizationId: id, modules: activeModules },
+        })
+        .catch(() => {});
 
       res.status(200).json({
         success: true,
@@ -275,6 +333,20 @@ export class OrganizationController {
         return;
       }
 
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organizations',
+          entityId: id,
+          action: 'UPDATE',
+          oldValues: { status: 'Active' },
+          newValues: { status: 'Suspended' },
+        })
+        .catch(() => {});
+
       res.status(200).json({
         success: true,
         message: 'Organization suspended successfully',
@@ -305,6 +377,20 @@ export class OrganizationController {
         });
         return;
       }
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organizations',
+          entityId: id,
+          action: 'DELETE',
+          oldValues: { id },
+          newValues: null,
+        })
+        .catch(() => {});
 
       res.status(200).json({
         success: true,

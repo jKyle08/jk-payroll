@@ -34,7 +34,7 @@ interface SupabaseResult<T> {
 
 async function withSupabaseTimeout<T = any>(
   promise: PromiseLike<T> | Promise<T>,
-  timeoutMs = 1200
+  timeoutMs = (process.env.NODE_ENV === 'test' ? 100 : 1200)
 ): Promise<T | null> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<null>((resolve) => {

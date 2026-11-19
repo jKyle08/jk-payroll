@@ -90,50 +90,52 @@ export const LoginPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Quick Demo Logins Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-              <span>1-Click Test Personas</span>
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-              Demo Access
-            </span>
-          </div>
+        {/* Quick Demo Logins Card (Development Only) */}
+        {import.meta.env.DEV && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                <span>1-Click Test Personas</span>
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                Dev Only
+              </span>
+            </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleQuickLogin('superadmin@paypulse.internal', 'SuperAdmin2026!')}
-              className="p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-950/60 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100/60 dark:hover:bg-indigo-950/60 text-left transition-all group cursor-pointer disabled:opacity-50"
-            >
-              <div className="flex items-center justify-between text-indigo-700 dark:text-indigo-300 font-bold text-xs">
-                <span>Super Admin</span>
-                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                Global platform scope
-              </p>
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => handleQuickLogin('superadmin@paypulse.internal', 'SuperAdmin2026!')}
+                className="p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-950/60 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100/60 dark:hover:bg-indigo-950/60 text-left transition-all group cursor-pointer disabled:opacity-50"
+              >
+                <div className="flex items-center justify-between text-indigo-700 dark:text-indigo-300 font-bold text-xs">
+                  <span>Super Admin</span>
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                  Global platform scope
+                </p>
+              </button>
 
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleQuickLogin('admin@apexcorp.com', 'Password123!')}
-              className="p-2.5 rounded-xl border border-emerald-100 dark:border-emerald-950/60 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-950/60 text-left transition-all group cursor-pointer disabled:opacity-50"
-            >
-              <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-300 font-bold text-xs">
-                <span>Tenant Admin</span>
-                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                Apex Health scope
-              </p>
-            </button>
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => handleQuickLogin('admin@apexcorp.com', 'Password123!')}
+                className="p-2.5 rounded-xl border border-emerald-100 dark:border-emerald-950/60 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-950/60 text-left transition-all group cursor-pointer disabled:opacity-50"
+              >
+                <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-300 font-bold text-xs">
+                  <span>Tenant Admin</span>
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                  Apex Health scope
+                </p>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Credentials Form Card */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-[#E5E7EB] dark:border-slate-800 shadow-sm space-y-5">
