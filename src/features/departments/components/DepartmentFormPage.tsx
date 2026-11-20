@@ -5,6 +5,7 @@
 // ==============================================================================
 
 import { SearchableSelect } from '../../../client/components/ui/SearchableSelect.js';
+import { Button } from '../../../client/components/ui/index.js';
 import React, { useState, useEffect } from 'react';
 import {
   Building2,
@@ -295,22 +296,25 @@ export const DepartmentFormPage: React.FC<DepartmentFormPageProps> = ({
 
         {/* Form Actions */}
         <div className="border-t border-[#E5E7EB] dark:border-slate-800 pt-5 flex items-center justify-end gap-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="lg"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="h-10 px-4 rounded-xl border border-[#E5E7EB] dark:border-slate-700 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 text-[#475569] dark:text-slate-300 text-xs font-semibold transition-all cursor-pointer"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
+            size="lg"
             disabled={isSubmitting}
-            className="h-10 px-5 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            isLoading={isSubmitting}
+            leftIcon={<Save className="w-4 h-4" />}
           >
-            <Save className="w-4 h-4" />
-            <span>{isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Department' : 'Save Changes'}</span>
-          </button>
+            {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Department' : 'Save Changes'}
+          </Button>
         </div>
       </form>
     </div>

@@ -53,6 +53,19 @@ export function requirePermission(requiredKey: string) {
     const permissionSet = req.permissionSet;
     let isPermitted = permissionSet.has(requiredKey);
 
+    // Organization <-> Tenant legacy alias equivalence
+    if (!isPermitted) {
+      if (requiredKey.startsWith('Organization.')) {
+        isPermitted = permissionSet.has('Tenant.' + requiredKey.slice(13));
+      } else if (requiredKey.startsWith('Tenant.')) {
+        isPermitted = permissionSet.has('Organization.' + requiredKey.slice(7));
+      } else if (requiredKey.startsWith('OrganizationModule.')) {
+        isPermitted = permissionSet.has('TenantModule.' + requiredKey.slice(19));
+      } else if (requiredKey.startsWith('TenantModule.')) {
+        isPermitted = permissionSet.has('OrganizationModule.' + requiredKey.slice(13));
+      }
+    }
+
     // Maintain implicit .View inheritance rule when checking for *.View
     if (!isPermitted && requiredKey.endsWith('.View')) {
       const modulePrefix = requiredKey.slice(0, -5);
@@ -61,6 +74,14 @@ export function requirePermission(requiredKey: string) {
         permissionSet.has(`${modulePrefix}.Edit`) ||
         permissionSet.has(`${modulePrefix}.Delete`) ||
         permissionSet.has(`${modulePrefix}.Approval.Create`);
+
+      if (!isPermitted) {
+        if (modulePrefix === 'Organization') {
+          isPermitted = permissionSet.has('Tenant.Add') || permissionSet.has('Tenant.Edit') || permissionSet.has('Tenant.Delete');
+        } else if (modulePrefix === 'Tenant') {
+          isPermitted = permissionSet.has('Organization.Add') || permissionSet.has('Organization.Edit') || permissionSet.has('Organization.Delete');
+        }
+      }
     }
 
     if (!isPermitted) {

@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { PayrollComputation } from '../types.js';
+import { Button, Badge } from '../../../client/components/ui/index.js';
 
 export interface PayrollRunCardProps {
   computation: PayrollComputation;
@@ -18,9 +19,9 @@ export const PayrollRunCard: React.FC<PayrollRunCardProps> = ({ computation, onA
         <span className="text-xs font-semibold text-[#111827]">
           Batch #{computation.id}
         </span>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <Badge variant="neutral" size="sm">
           {computation.status || 'Computed'}
-        </span>
+        </Badge>
       </div>
       <div className="flex items-baseline justify-between pt-1">
         <span className="text-sm font-bold text-[#111827] tabular-nums">
@@ -31,13 +32,17 @@ export const PayrollRunCard: React.FC<PayrollRunCardProps> = ({ computation, onA
         </span>
       </div>
       {onApprove && (
-        <button
-          type="button"
-          onClick={() => onApprove(computation.id)}
-          className="w-full mt-2 h-8 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors"
-        >
-          Approve Batch
-        </button>
+        <div className="pt-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            fullWidth
+            onClick={() => onApprove(computation.id)}
+          >
+            Approve Batch
+          </Button>
+        </div>
       )}
     </div>
   );

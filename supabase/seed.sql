@@ -30,6 +30,7 @@ VALUES
     ('a0000000-0000-0000-0000-000000000011', 'Organization', 'Organizations & Companies', 'Administration', 'Multi-tenant organization management and isolation settings', true),
     ('a0000000-0000-0000-0000-000000000012', 'Department', 'Department Hierarchy', 'Administration', 'Organizational chart and hierarchical department structure', true),
     ('a0000000-0000-0000-0000-000000000013', 'Profile', 'Staff & User Profiles', 'Administration', 'Employee profile master records and organizational assignments', true),
+    ('a0000000-0000-0000-0000-000000000019', 'Role', 'Security Roles', 'Administration', 'Security role definitions and access profile management', true),
     ('a0000000-0000-0000-0000-000000000014', 'UserRole', 'User Role Assignment', 'Administration', 'Assignment of security roles and access scopes to users', true),
     ('a0000000-0000-0000-0000-000000000015', 'OrganizationModule', 'Organization Module Allocation', 'Administration', 'Assignment of licensed modules to organizations', true),
     ('a0000000-0000-0000-0000-000000000016', 'DepartmentModule', 'Department Module Allocation', 'Administration', 'Cascading module entitlements down department tree', true),
@@ -63,6 +64,12 @@ VALUES
     ('b0000000-0000-0000-0000-000000000132', 'a0000000-0000-0000-0000-000000000013', 'Add', 'Profile.Add'),
     ('b0000000-0000-0000-0000-000000000133', 'a0000000-0000-0000-0000-000000000013', 'Edit', 'Profile.Edit'),
     ('b0000000-0000-0000-0000-000000000134', 'a0000000-0000-0000-0000-000000000013', 'Delete', 'Profile.Delete'),
+
+    -- Role Actions
+    ('b0000000-0000-0000-0000-000000000191', 'a0000000-0000-0000-0000-000000000019', 'View', 'Role.View'),
+    ('b0000000-0000-0000-0000-000000000192', 'a0000000-0000-0000-0000-000000000019', 'Add', 'Role.Add'),
+    ('b0000000-0000-0000-0000-000000000193', 'a0000000-0000-0000-0000-000000000019', 'Edit', 'Role.Edit'),
+    ('b0000000-0000-0000-0000-000000000194', 'a0000000-0000-0000-0000-000000000019', 'Delete', 'Role.Delete'),
 
     -- UserRole Actions
     ('b0000000-0000-0000-0000-000000000141', 'a0000000-0000-0000-0000-000000000014', 'View', 'UserRole.View'),

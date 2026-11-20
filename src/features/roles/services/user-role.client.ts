@@ -8,6 +8,7 @@ import {
   CreateUserRoleInput,
   UpdateUserRoleInput,
 } from '../types.js';
+import { authFetch } from '../../../client/lib/auth-session.js';
 
 export interface UserRoleListResponse {
   items: UserRoleItem[];
@@ -33,13 +34,7 @@ export async function fetchUserRoles(params?: {
   if (params?.page) query.append('page', String(params.page));
   if (params?.limit) query.append('limit', String(params.limit));
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/user-roles?${query.toString()}`, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
-  });
+  const res = await authFetch(`/api/user-roles?${query.toString()}`);
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -57,13 +52,7 @@ export async function fetchUserRoles(params?: {
 }
 
 export async function fetchUserRoleById(id: string): Promise<UserRoleItem> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/user-roles/${id}`, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
-  });
+  const res = await authFetch(`/api/user-roles/${id}`);
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -75,13 +64,8 @@ export async function fetchUserRoleById(id: string): Promise<UserRoleItem> {
 }
 
 export async function createUserRole(data: CreateUserRoleInput): Promise<UserRoleItem> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch('/api/user-roles', {
+  const res = await authFetch('/api/user-roles', {
     method: 'POST',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data),
   });
 
@@ -95,13 +79,8 @@ export async function createUserRole(data: CreateUserRoleInput): Promise<UserRol
 }
 
 export async function updateUserRole(id: string, data: UpdateUserRoleInput): Promise<UserRoleItem> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/user-roles/${id}`, {
+  const res = await authFetch(`/api/user-roles/${id}`, {
     method: 'PUT',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data),
   });
 
@@ -115,13 +94,8 @@ export async function updateUserRole(id: string, data: UpdateUserRoleInput): Pro
 }
 
 export async function deleteUserRole(id: string): Promise<void> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/user-roles/${id}`, {
+  const res = await authFetch(`/api/user-roles/${id}`, {
     method: 'DELETE',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
   });
 
   if (!res.ok) {

@@ -8,6 +8,7 @@
 import React from 'react';
 import { Edit2, Trash2, Shield, Building2 } from 'lucide-react';
 import { UserRoleItem } from '../types.js';
+import { Badge, StatusIndicator, TableActionMenu } from '../../../client/components/ui/index.js';
 
 export interface UserRoleTableRowProps {
   item: UserRoleItem;
@@ -43,11 +44,7 @@ export const UserRoleTableRow: React.FC<UserRoleTableRowProps> = ({
       {/* 1. User Identity */}
       <td className="py-3 px-4">
         <div className="flex items-center gap-3">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 ${
-              isSuperAdminRole ? 'bg-purple-600' : 'bg-slate-700'
-            }`}
-          >
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 bg-slate-700">
             {avatarInitials}
           </div>
           <div>
@@ -74,10 +71,10 @@ export const UserRoleTableRow: React.FC<UserRoleTableRowProps> = ({
 
       {/* 3. Role & Code */}
       <td className="py-3 px-4">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#F1F5F9] text-[#0F172A] border border-[#E2E8F0]">
-          <Shield className="w-3 h-3 text-[#64748B]" />
+        <Badge variant="neutral" size="sm">
+          <Shield className="w-3 h-3 mr-1 text-[#64748B]" />
           <span>{item.roleName}</span>
-        </div>
+        </Badge>
         <div className="text-[10px] font-mono text-[#6B7280] mt-0.5">
           {item.roleCode}
         </div>
@@ -85,17 +82,7 @@ export const UserRoleTableRow: React.FC<UserRoleTableRowProps> = ({
 
       {/* 4. Active Status */}
       <td className="py-3 px-4">
-        {item.isActive ? (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            Active
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-            Inactive
-          </span>
-        )}
+        <StatusIndicator isActive={item.isActive} />
       </td>
 
       {/* 5. Assigned Date */}
@@ -103,24 +90,25 @@ export const UserRoleTableRow: React.FC<UserRoleTableRowProps> = ({
         {item.assignedAt}
       </td>
 
-      {/* 6. Action Buttons */}
+      {/* 6. Action 3-Dots Menu */}
       <td className="py-3 px-4 text-right">
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            onClick={() => onEdit(item.id)}
-            className="w-7 h-7 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#E5E7EB]/60 flex items-center justify-center transition-all cursor-pointer"
-            title="Edit User Role"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => onDelete(item.id)}
-            className="w-7 h-7 rounded-lg text-[#6B7280] hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-all cursor-pointer"
-            title="Delete User Role"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <TableActionMenu
+          actions={[
+            {
+              label: 'Edit Assignment',
+              icon: <Edit2 className="w-3.5 h-3.5" />,
+              onClick: () => onEdit(item.id),
+            },
+            {
+              label: 'Revoke Role',
+              icon: <Trash2 className="w-3.5 h-3.5" />,
+              variant: 'danger',
+              divider: true,
+              onClick: () => onDelete(item.id),
+            },
+          ]}
+          title="User Role Actions"
+        />
       </td>
     </tr>
   );

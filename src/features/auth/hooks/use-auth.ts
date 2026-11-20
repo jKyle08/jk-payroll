@@ -1,19 +1,40 @@
 // ==============================================================================
 // JK-PAYROLL: CLIENT USE-AUTH HOOK
+// Proactive token expiration checking, idle timeout detection, and session management
 // File: src/features/auth/hooks/use-auth.ts
 // ==============================================================================
 
 import { useState, useCallback, useEffect } from 'react';
 import { AuthUser } from '../types.js';
-
-const AUTH_CHANGE_EVENT = 'paypulse-auth-change';
+import {
+  AUTH_CHANGE_EVENT,
+  isTokenExpired,
+  getTokenRemainingTime,
+  handleSessionTimeout,
+} from '../../../client/lib/auth-session.js';
 
 function readStoredToken(): string | null {
-  return typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  if (typeof window === 'undefined') return null;
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  if (isTokenExpired(token)) {
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentUser');
+    } catch {
+      // Ignore
+    }
+    return null;
+  }
+  return token;
 }
 
 function readStoredUser(): AuthUser | null {
   if (typeof window === 'undefined') return null;
+  const token = localStorage.getItem('token');
+  if (!token || isTokenExpired(token)) {
+    return null;
+  }
   const saved = localStorage.getItem('currentUser');
   if (!saved) return null;
   try {
@@ -27,6 +48,7 @@ export function useAuth() {
   const [token, setToken] = useState<string | null>(readStoredToken);
   const [user, setUser] = useState<AuthUser | null>(readStoredUser);
 
+  // Sync state with storage and auth-change events
   useEffect(() => {
     const syncAuth = () => {
       setToken(readStoredToken());
@@ -40,9 +62,50 @@ export function useAuth() {
     };
   }, []);
 
+  // Periodic expiration & timer check: auto-timeout when token reaches expiry
+  useEffect(() => {
+    if (!token) return;
+
+    if (isTokenExpired(token)) {
+      handleSessionTimeout('Your session has timed out. Please sign in again to continue.');
+      return;
+    }
+
+    const remainingMs = getTokenRemainingTime(token);
+    // If we have a known expiration time, schedule auto-timeout
+    let timer: NodeJS.Timeout | undefined;
+    if (remainingMs !== null && remainingMs > 0) {
+      timer = setTimeout(() => {
+        handleSessionTimeout('Your session has timed out. Please sign in again to continue.');
+      }, remainingMs);
+    }
+
+    // Secondary interval check every 30 seconds (or when tab regains focus)
+    const interval = setInterval(() => {
+      if (isTokenExpired(token)) {
+        handleSessionTimeout('Your session has timed out. Please sign in again to continue.');
+      }
+    }, 30000);
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible' && isTokenExpired(token)) {
+        handleSessionTimeout('Your session has timed out. Please sign in again to continue.');
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      clearInterval(interval);
+      window.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+    };
+  }, [token]);
+
   const effectiveToken = token ?? readStoredToken();
   const effectiveUser = user ?? readStoredUser();
-  const isAuthenticated = Boolean(effectiveToken && effectiveUser);
+  const isAuthenticated = Boolean(effectiveToken && effectiveUser && !isTokenExpired(effectiveToken));
 
   const loginWithData = useCallback((newToken: string, newUser: AuthUser) => {
     if (typeof window !== 'undefined') {
@@ -68,10 +131,14 @@ export function useAuth() {
     return data;
   }, [loginWithData]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback((reason?: string) => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('currentUser');
+      if (reason) {
+        handleSessionTimeout(reason);
+        return;
+      }
       window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
     }
     setToken(null);

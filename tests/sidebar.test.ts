@@ -107,11 +107,12 @@ describe('Sidebar Navigation Permission Logic', () => {
 
       const visibleIds = visibleItems.map((i) => i.id);
 
-      // Core modules are visible
+      // Core modules are visible (Role Directory is in sidebar, User Role is assigned via Role Directory)
       expect(visibleIds).toContain('dashboard');
       expect(visibleIds).toContain('departments');
       expect(visibleIds).toContain('employee-profiles');
-      expect(visibleIds).toContain('employee-roles');
+      expect(visibleIds).toContain('roles-directory');
+      expect(visibleIds).not.toContain('employee-roles');
 
       // Unallocated add-on modules are hidden
       expect(visibleIds).not.toContain('payroll-computation');

@@ -1,7 +1,7 @@
 // ==============================================================================
 // JK-PAYROLL: ORGANIZATION CARD GRID COMPONENT (CARD VIEW)
 // Renders organizations in a 2-column responsive card grid with pagination
-// Design System: "Midnight & Champagne Steel"
+// Design System: Monochromatic Enterprise SaaS ("Midnight & Champagne Steel")
 // File: src/features/organizations/components/OrganizationCardGrid.tsx
 // ==============================================================================
 
@@ -16,6 +16,7 @@ import {
   CalendarClock,
 } from 'lucide-react';
 import { Organization } from '../types.js';
+import { Badge, Button, StatusIndicator } from '../../../client/components/ui/index.js';
 
 export interface OrganizationCardGridProps {
   organizations: Organization[];
@@ -67,42 +68,20 @@ export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
           No organizations match your current search and filter criteria, or none have been provisioned yet.
         </p>
         {onAddNew && (
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="md"
             onClick={onAddNew}
-            className="mt-4 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            className="mt-4"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Provision First Organization</span>
-          </button>
+            Provision First Organization
+          </Button>
         )}
       </div>
     );
   }
-
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800';
-      case 'Onboarding':
-        return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800';
-      case 'Suspended':
-      default:
-        return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800';
-    }
-  };
-
-  const getTierBadgeClass = (tier: string) => {
-    switch (tier) {
-      case 'Enterprise':
-        return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800';
-      case 'Standard':
-        return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800';
-      case 'Starter':
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -128,33 +107,29 @@ export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
               .filter(Boolean)
               .slice(0, 2)
               .join('')
-              .toUpperCase() ||
-            'TA';
-          const adminEmail =
-            org.admin?.email || `admin@${org.code.toLowerCase()}.com`;
-          const adminUsername = org.admin?.username || 'admin';
-          const adminTitle = org.admin?.title || 'Organization Administrator';
+              .toUpperCase();
+
+          const adminEmail = org.admin?.email || 'admin@tenant.internal';
+          const adminUsername = org.admin?.username;
+          const adminTitle = org.admin?.title;
 
           return (
             <div
               key={org.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-4 hover:shadow-md transition-shadow flex flex-col justify-between"
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 p-5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between space-y-4"
             >
-              <div className="space-y-4">
-                {/* 1. Card Top Header */}
+              {/* 1. Header Section */}
+              <div className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 text-[#0F172A] dark:text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-2xs">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className="w-11 h-11 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 text-[#0F172A] dark:text-slate-200 font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-2xs">
                       {orgInitials}
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-sm text-[#111827] dark:text-white truncate">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-[#111827] dark:text-white truncate">
                           {org.name}
-                        </h3>
-                        <span className="px-2 py-0.5 rounded-md bg-[#F8FAFC] dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 font-mono text-[10px] font-semibold text-[#475569] dark:text-slate-300">
-                          {org.code}
-                        </span>
+                        </h4>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
                         <span className="truncate">{org.industry || 'Enterprise'}</span>
@@ -166,28 +141,18 @@ export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getTierBadgeClass(
-                        org.tier || org.planTier || 'Enterprise'
-                      )}`}
-                    >
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge variant="neutral" size="sm">
                       {org.tier || org.planTier || 'Enterprise'}
-                    </span>
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadgeClass(
-                        org.status
-                      )}`}
-                    >
-                      {org.status}
-                    </span>
+                    </Badge>
+                    <StatusIndicator status={org.status} />
                   </div>
                 </div>
 
                 {/* 2. Assigned Organization Administrator Info Card */}
                 <div className="p-3.5 rounded-xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
                   <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#0F172A] text-white font-bold text-xs flex items-center justify-center flex-shrink-0">
                       {adminInitials}
                     </div>
                     <div className="min-w-0">
@@ -227,12 +192,9 @@ export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
                   </div>
                   <div className="flex flex-wrap gap-1.5 text-[11px]">
                     {(org.modules || []).map((mod) => (
-                      <span
-                        key={mod}
-                        className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 font-medium"
-                      >
+                      <Badge key={mod} variant="neutral" size="sm">
                         {mod}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -248,26 +210,28 @@ export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
 
                 <div className="flex items-center gap-1.5">
                   {onEdit && (
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => onEdit(org.id)}
-                      className="h-8 px-2.5 rounded-lg border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-700 text-[#374151] dark:text-slate-200 text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                      leftIcon={<Edit3 className="w-3.5 h-3.5" />}
                       title="Edit Organization"
                     >
-                      <Edit3 className="w-3.5 h-3.5 text-[#6B7280]" />
-                      <span>Edit</span>
-                    </button>
+                      Edit
+                    </Button>
                   )}
                   {onDelete && (
-                    <button
+                    <Button
                       type="button"
+                      variant="destructive"
+                      size="sm"
                       onClick={() => onDelete(org)}
-                      className="h-8 px-2.5 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950 text-rose-600 dark:text-rose-400 text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                      leftIcon={<Trash2 className="w-3.5 h-3.5" />}
                       title="Delete Organization"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete</span>
-                    </button>
+                      Delete
+                    </Button>
                   )}
                 </div>
               </div>
@@ -287,4 +251,3 @@ export const OrganizationCardGrid: React.FC<OrganizationCardGridProps> = ({
 };
 
 export default OrganizationCardGrid;
-

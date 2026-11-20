@@ -44,7 +44,7 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
     if (onNavigateToCreate) {
       onNavigateToCreate();
     } else if (navigate) {
-      navigate('/admin/permissions/new');
+      navigate('/admin/user-roles/assign');
     }
   };
 
@@ -60,7 +60,7 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
     if (onNavigateToEdit) {
       onNavigateToEdit(id);
     } else if (navigate) {
-      navigate(`/admin/permissions/${id}/edit`);
+      navigate(`/admin/user-roles/${id}/edit`);
     }
   };
 
@@ -118,14 +118,14 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
             </span>
             <span className="text-xs text-[#E5E7EB]">/</span>
             <span className="text-xs font-semibold text-[#111827]">
-              User Role Directory
+              User Role Assignments
             </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
             User Roles
           </h1>
           <p className="text-xs text-[#6B7280] mt-0.5">
-            Assign security roles, audit permissions, and enforce organization-level scoping.
+            Assign security roles to multiple users, manage user assignments, and enforce organization-level scoping.
           </p>
         </div>
       </div>

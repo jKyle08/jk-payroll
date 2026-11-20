@@ -9,6 +9,7 @@ import {
   OrgFilterState,
   OrganizationOnboardingResult,
 } from '../types.js';
+import { authFetch, handleSessionTimeout } from '../../../client/lib/auth-session.js';
 import {
   CreateOrganizationInput,
   CreateOrganizationFormInput,
@@ -33,35 +34,15 @@ const BASE_URL = '/api/organizations';
  * Standard HTTP Request helper with consistent error throwing
  */
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const headers = new Headers(options.headers || {});
-  if (!headers.has('Content-Type') && options.body) {
-    headers.set('Content-Type', 'application/json');
-  }
-
-  // Attach JWT Bearer token from localStorage
-  if (typeof window !== 'undefined' && !headers.has('Authorization')) {
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  const response = await authFetch(url, options);
 
   const contentType = response.headers.get('content-type');
   const isJson = contentType && contentType.includes('application/json');
   const data = isJson ? await response.json() : null;
 
   if (!response.ok) {
-    if (response.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('currentUser');
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/401') {
-        window.location.href = '/401';
-      }
+    if (response.status === 401) {
+      handleSessionTimeout(data?.error);
     }
     const errorMessage =
       data?.error || data?.message || `Request failed with status ${response.status}`;
@@ -94,14 +75,12 @@ export async function fetchOrganizations(
   const queryString = queryParams.toString();
   const url = queryString ? `${BASE_URL}?${queryString}` : BASE_URL;
 
-  const headers: Record<string, string> = {};
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
-  const response = await fetch(url, { headers });
+  const response = await authFetch(url);
   const res = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (response.status === 401) {
+      handleSessionTimeout(res?.error);
+    }
     throw new Error(res?.error || `Request failed with status ${response.status}`);
   }
 

@@ -24,6 +24,7 @@ import {
 } from '../types.js';
 import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
 import { SearchButton } from '../../../client/components/ui/SearchButton.js';
+import { Button, Badge } from '../../../client/components/ui/index.js';
 
 export type OrganizationViewMode = 'table' | 'cards';
 
@@ -245,22 +246,19 @@ export const OrganizationToolbar: React.FC<OrganizationToolbarProps> = ({
           )}
 
           {/* Filter Panel Toggle Button */}
-          <button
+          <Button
             type="button"
+            variant={isFilterPanelOpen || hasActiveDropdownFilters ? 'primary' : 'outline'}
+            size="lg"
             onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-            className={`h-10 px-3.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all flex-shrink-0 cursor-pointer ${
-              isFilterPanelOpen || hasActiveDropdownFilters
-                ? 'border-[#0F172A] bg-[#0F172A]/5 text-[#0F172A] dark:border-slate-400 dark:text-white'
-                : 'border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-[#F8FAFC] text-[#475569] dark:text-slate-200'
-            }`}
+            leftIcon={<Filter className="w-4 h-4" />}
             title="Filter Organizations"
           >
-            <Filter className="w-4 h-4 text-[#6B7280]" />
             <span>Filter</span>
             {hasActiveDropdownFilters && (
-              <span className="w-2 h-2 rounded-full bg-[#0F172A] dark:bg-blue-400" />
+              <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-slate-900 ml-1" />
             )}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -274,20 +272,21 @@ export const OrganizationToolbar: React.FC<OrganizationToolbarProps> = ({
             <span>Active Filters:</span>
           </span>
           {activeChips.map((chip) => (
-            <span
+            <Badge
               key={chip.key}
-              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] dark:bg-slate-800 text-[#0F172A] dark:text-white border border-[#E5E7EB] dark:border-slate-700 shadow-2xs"
+              variant="neutral"
+              size="md"
             >
               <span>{chip.label}</span>
               <button
                 type="button"
                 onClick={() => handleRemoveFilterChip(chip.key)}
-                className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer ml-1"
                 title="Remove filter"
               >
                 ✕
               </button>
-            </span>
+            </Badge>
           ))}
           <button
             type="button"
@@ -342,20 +341,22 @@ export const OrganizationToolbar: React.FC<OrganizationToolbarProps> = ({
                   </button>
                 </div>
               )}
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={handleResetFilters}
-                className="h-8 px-3 rounded-lg border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-700 text-xs font-semibold text-[#475569] dark:text-slate-300 transition-all cursor-pointer"
               >
                 Reset
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="primary"
+                size="sm"
                 onClick={handleApplyFilters}
-                className="h-8 px-4 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
               >
-                <span>Apply</span>
-              </button>
+                Apply
+              </Button>
             </div>
           </div>
 

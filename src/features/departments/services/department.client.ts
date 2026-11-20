@@ -10,6 +10,7 @@ import {
   CreateDepartmentInput,
   UpdateDepartmentInput,
 } from '../types.js';
+import { authFetch } from '../../../client/lib/auth-session.js';
 
 export interface DepartmentListResponse {
   items: DepartmentItem[];
@@ -37,13 +38,7 @@ export async function fetchDepartments(params?: {
   if (params?.page) query.append('page', String(params.page));
   if (params?.limit) query.append('limit', String(params.limit));
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/departments?${query.toString()}`, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
-  });
+  const res = await authFetch(`/api/departments?${query.toString()}`);
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -61,13 +56,7 @@ export async function fetchDepartments(params?: {
 }
 
 export async function fetchDepartmentById(id: string): Promise<DepartmentItem> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/departments/${id}`, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
-  });
+  const res = await authFetch(`/api/departments/${id}`);
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -79,13 +68,8 @@ export async function fetchDepartmentById(id: string): Promise<DepartmentItem> {
 }
 
 export async function createDepartment(data: CreateDepartmentInput): Promise<Department> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch('/api/departments', {
+  const res = await authFetch('/api/departments', {
     method: 'POST',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data),
   });
 
@@ -99,13 +83,8 @@ export async function createDepartment(data: CreateDepartmentInput): Promise<Dep
 }
 
 export async function updateDepartment(id: string, data: UpdateDepartmentInput): Promise<Department> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/departments/${id}`, {
+  const res = await authFetch(`/api/departments/${id}`, {
     method: 'PUT',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data),
   });
 
@@ -119,13 +98,8 @@ export async function updateDepartment(id: string, data: UpdateDepartmentInput):
 }
 
 export async function deleteDepartment(id: string): Promise<void> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/departments/${id}`, {
+  const res = await authFetch(`/api/departments/${id}`, {
     method: 'DELETE',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
   });
 
   if (!res.ok) {
@@ -138,13 +112,7 @@ export async function fetchDepartmentTree(organizationId?: string): Promise<Depa
   const query = new URLSearchParams();
   if (organizationId) query.append('organizationId', organizationId);
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(`/api/departments/tree?${query.toString()}`, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
-  });
+  const res = await authFetch(`/api/departments/tree?${query.toString()}`);
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

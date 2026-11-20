@@ -527,9 +527,9 @@ describe('Phase 3 — Cross-Organization Resource Isolation & IDOR Remediation S
     });
 
     it('25. Ordinary organization administrators cannot access global administrative resources or routes', async () => {
-      // Ordinary Org Admin A attempts to hit /api/super-admin/tenants
+      // Ordinary Org Admin A attempts to hit /api/organizations (SuperAdmin only)
       const res = await request(app)
-        .post('/api/super-admin/tenants')
+        .post('/api/organizations')
         .set('Authorization', `Bearer ${orgAdminAToken}`)
         .send({ name: 'Malicious Org', code: 'MAL' });
 

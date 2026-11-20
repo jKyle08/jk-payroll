@@ -127,7 +127,7 @@ describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () 
       // Tenant A currently has NO modules enabled.
       // Tenant Admin A attempts to assign 'TypeOfLeave' to deptHR_A.
       const res = await request(app)
-        .put(`/api/tenant/departments/${deptHR_A.id}/modules`)
+        .put(`/api/departments/${deptHR_A.id}/modules`)
         .set('Authorization', `Bearer ${tenantAdminAToken}`)
         .send({ moduleIds: [MOD_TYPE_OF_LEAVE] });
 
@@ -138,7 +138,7 @@ describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () 
     it('SUCCEEDS after Super Admin enables the module for the tenant', async () => {
       // Super Admin enables TypeOfLeave and RequestForLeave for Tenant A
       const saRes = await request(app)
-        .put(`/api/super-admin/tenants/${tenantA.id}/modules`)
+        .put(`/api/organizations/${tenantA.id}/modules`)
         .set('Authorization', `Bearer ${superAdminToken}`)
         .send({ moduleIds: [MOD_TYPE_OF_LEAVE, MOD_REQUEST_FOR_LEAVE] });
 
@@ -146,7 +146,7 @@ describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () 
 
       // Now Tenant Admin can successfully allocate TypeOfLeave to deptHR_A
       const deptRes = await request(app)
-        .put(`/api/tenant/departments/${deptHR_A.id}/modules`)
+        .put(`/api/departments/${deptHR_A.id}/modules`)
         .set('Authorization', `Bearer ${tenantAdminAToken}`)
         .send({ moduleIds: [MOD_TYPE_OF_LEAVE] });
 
@@ -171,7 +171,7 @@ describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () 
 
       // 3. Attempt to grant TypeOfLeave.Add to userFinance_A (who is in deptFin_A)
       const res = await request(app)
-        .put(`/api/tenant/users/${userFinance_A.id}/permissions`)
+        .put(`/api/users/${userFinance_A.id}/permissions`)
         .set('Authorization', `Bearer ${tenantAdminAToken}`)
         .send({ actionIds: [ACT_TYPE_OF_LEAVE_ADD] });
 
@@ -186,7 +186,7 @@ describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () 
 
       // Since deptHROps_A is a child of deptHR_A, userHROps_A inherits TypeOfLeave!
       const res = await request(app)
-        .put(`/api/tenant/users/${userHROps_A.id}/permissions`)
+        .put(`/api/users/${userHROps_A.id}/permissions`)
         .set('Authorization', `Bearer ${tenantAdminAToken}`)
         .send({ actionIds: [ACT_TYPE_OF_LEAVE_ADD] });
 
@@ -290,7 +290,7 @@ describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () 
     it('Tenant Admin A cannot manage departments in Tenant B', async () => {
       // Tenant Admin A tries to allocate modules to Tenant B's department
       const res = await request(app)
-        .put(`/api/tenant/departments/${deptHQ_B.id}/modules`)
+        .put(`/api/departments/${deptHQ_B.id}/modules`)
         .set('Authorization', `Bearer ${tenantAdminAToken}`)
         .send({ moduleIds: [MOD_TYPE_OF_LEAVE] });
 
@@ -305,7 +305,7 @@ describe('Multi-Tenant, Departmental Hierarchy & Cascading RBAC Test Suite', () 
   describe('Department Hierarchy Tree & Ancestor Inheritance', () => {
     it('Correctly retrieves complete department tree for tenant', async () => {
       const res = await request(app)
-        .get('/api/tenant/departments/tree')
+        .get('/api/departments/tree')
         .set('Authorization', `Bearer ${tenantAdminAToken}`);
 
       expect(res.status).toBe(200);

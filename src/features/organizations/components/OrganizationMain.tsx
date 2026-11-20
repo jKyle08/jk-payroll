@@ -28,6 +28,7 @@ import { OrganizationCardGrid } from './OrganizationCardGrid.js';
 import { OrganizationTableSkeleton } from './OrganizationTableSkeleton.js';
 import { ConfirmDialog } from '../../../client/components/ui/ConfirmDialog.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
+import { Button } from '../../../client/components/ui/index.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 
 export interface OrganizationMainProps {
@@ -151,15 +152,16 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
 
         {/* Header CTA */}
         <div className="flex items-center gap-2.5">
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="lg"
             onClick={handleAddNew}
-            className="h-10 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-semibold flex items-center justify-center gap-2 border border-[#0F172A] dark:border-slate-100 transition-all cursor-pointer"
+            leftIcon={<Plus className="w-4 h-4" />}
             title="Create New Organization"
           >
-            <Plus className="w-4 h-4" />
-            <span>New Organization</span>
-          </button>
+            New Organization
+          </Button>
         </div>
       </div>
 

@@ -4,9 +4,10 @@
 // File: src/features/departments/components/DepartmentTableRow.tsx
 // ==============================================================================
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Building2, GitBranch, Edit2, Trash2, Plus, User, MoreVertical } from 'lucide-react';
+import React from 'react';
+import { Building2, GitBranch, Edit2, Trash2, Plus, User } from 'lucide-react';
 import { DepartmentItem } from '../types.js';
+import { Badge, StatusIndicator, TableActionMenu } from '../../../client/components/ui/index.js';
 
 export interface DepartmentTableRowProps {
   department: DepartmentItem;
@@ -23,23 +24,7 @@ export const DepartmentTableRow: React.FC<DepartmentTableRowProps> = ({
   onDelete,
   onAddSubDepartment,
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const isHead = department.depth === 0;
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuOpen]);
 
   return (
     <tr className="hover:bg-[#F8FAFC] dark:hover:bg-slate-800/40 transition-colors border-b border-[#E5E7EB] dark:border-slate-800 text-xs">
@@ -87,17 +72,9 @@ export const DepartmentTableRow: React.FC<DepartmentTableRowProps> = ({
       {/* Depth & Parent Hierarchy */}
       <td className="py-3 px-4">
         <div className="flex items-center gap-1.5">
-          <span
-            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-              isHead
-                ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
-                : department.depth === 1
-                ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800'
-                : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
-            }`}
-          >
+          <Badge variant="neutral" size="sm">
             Depth {department.depth}: {department.depthLabel}
-          </span>
+          </Badge>
         </div>
         {department.parentDepartmentName && (
           <div className="text-[11px] text-[#6B7280] mt-1 flex items-center gap-1">
@@ -133,75 +110,33 @@ export const DepartmentTableRow: React.FC<DepartmentTableRowProps> = ({
 
       {/* Status */}
       <td className="py-3 px-4">
-        {department.isActive ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-[#047857] bg-[#ECFDF5] border border-[#A7F3D0]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#047857]"></span>
-            Active
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200">
-            Inactive
-          </span>
-        )}
+        <StatusIndicator isActive={department.isActive} />
       </td>
 
       {/* Actions: 3-Dots Dropdown */}
       <td className="py-3 px-4 text-right">
-        <div className="relative inline-block text-left" ref={menuRef}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMenuOpen((prev) => !prev);
-            }}
-            title="Department Actions"
-            className="h-7 w-7 rounded-lg border border-transparent hover:border-[#E5E7EB] dark:hover:border-slate-700 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 text-[#475569] dark:text-slate-300 inline-flex items-center justify-center transition-colors cursor-pointer"
-          >
-            <MoreVertical className="w-3.5 h-3.5" />
-          </button>
-
-          {isMenuOpen && (
-            <div className="absolute right-0 z-50 mt-1 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-[#E5E7EB] dark:border-slate-700 py-1 text-xs text-[#111827] dark:text-white divide-y divide-[#E5E7EB] dark:divide-slate-800">
-              <div className="py-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onAddSubDepartment(department);
-                  }}
-                  className="w-full text-left px-3.5 py-1.5 flex items-center gap-2 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 font-medium transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Add Sub-Department</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onEdit(department);
-                  }}
-                  className="w-full text-left px-3.5 py-1.5 flex items-center gap-2 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 font-medium transition-colors cursor-pointer"
-                >
-                  <Edit2 className="w-3.5 h-3.5 text-[#0F172A] dark:text-slate-300" />
-                  <span>Edit Department</span>
-                </button>
-              </div>
-              <div className="py-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onDelete(department);
-                  }}
-                  className="w-full text-left px-3.5 py-1.5 flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-medium transition-colors cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Department</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <TableActionMenu
+          actions={[
+            {
+              label: 'Add Sub-Department',
+              icon: <Plus className="w-3.5 h-3.5 text-indigo-600" />,
+              onClick: () => onAddSubDepartment(department),
+            },
+            {
+              label: 'Edit Department',
+              icon: <Edit2 className="w-3.5 h-3.5" />,
+              onClick: () => onEdit(department),
+            },
+            {
+              label: 'Delete Department',
+              icon: <Trash2 className="w-3.5 h-3.5" />,
+              variant: 'danger',
+              divider: true,
+              onClick: () => onDelete(department),
+            },
+          ]}
+          title="Department Actions"
+        />
       </td>
     </tr>
   );

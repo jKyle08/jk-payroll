@@ -1,11 +1,12 @@
 // ==============================================================================
 // JK-PAYROLL: REUSABLE SEARCH BUTTON COMPONENT
-// Design System: "Midnight & Champagne Steel"
-// File: src/components/ui/SearchButton.tsx
+// Design System: Monochromatic Enterprise SaaS ("Midnight & Champagne Steel")
+// File: src/client/components/ui/SearchButton.tsx
 // ==============================================================================
 
 import React from 'react';
 import { Search } from 'lucide-react';
+import { Button } from './Button.js';
 
 export interface SearchButtonProps {
   onClick?: () => void;
@@ -25,18 +26,19 @@ export const SearchButton: React.FC<SearchButtonProps> = ({
   title = 'Execute search',
 }) => {
   return (
-    <button
+    <Button
       type={type}
+      variant="primary"
+      size="lg"
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`h-10 px-4 rounded-lg bg-[#475569] hover:bg-[#334155] active:bg-[#1E293B] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      leftIcon={<Search className="w-3.5 h-3.5" />}
+      className={`h-10 ${className}`}
     >
-      <Search className="w-3.5 h-3.5" />
-      <span>{label}</span>
-    </button>
+      {label}
+    </Button>
   );
 };
 
 export default SearchButton;
-

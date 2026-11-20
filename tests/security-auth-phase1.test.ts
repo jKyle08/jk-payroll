@@ -513,9 +513,9 @@ describe('Phase 1 — Authentication & Privileged Account Security Remediation S
         { algorithm: 'HS256', issuer: ENV.JWT_ISSUER, audience: ENV.JWT_AUDIENCE, expiresIn: '1h' }
       );
 
-      // Attempt to access Super Admin endpoint (/api/super-admin/tenants)
+      // Attempt to access Super Admin endpoint (/api/organizations)
       const res = await request(app)
-        .post('/api/super-admin/tenants')
+        .post('/api/organizations')
         .set('Authorization', `Bearer ${forgedToken}`)
         .send({ name: 'Malicious Org', code: 'MAL' });
 
@@ -525,7 +525,7 @@ describe('Phase 1 — Authentication & Privileged Account Security Remediation S
 
     it('Missing role assignment or regular user privileges cannot access privileged endpoints', async () => {
       const res = await request(app)
-        .post('/api/super-admin/tenants')
+        .post('/api/organizations')
         .set('Authorization', `Bearer ${regularUserAToken}`)
         .send({ name: 'Unauthorized Tenant', code: 'UNAUTH' });
 

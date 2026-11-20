@@ -23,7 +23,9 @@ import { RoleItem } from '../types.js';
 import { fetchRoleById } from '../services/role.client.js';
 import { useRoleMutations } from '../hooks/useRoleMutations.js';
 import { SearchableSelect, type SearchableOption } from '../../../client/components/ui/SearchableSelect.js';
+import { Button, Badge } from '../../../client/components/ui/index.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
+import { authFetch } from '../../../client/lib/auth-session.js';
 
 export interface RoleFormOrganizationOption {
   id: string;
@@ -101,9 +103,7 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
     let isMounted = true;
     const loadOrgs = async () => {
       try {
-        const headers: Record<string, string> = {};
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        const res = await fetch('/api/organizations', { headers });
+        const res = await authFetch('/api/organizations');
         if (res.ok) {
           const json = await res.json();
           const list = Array.isArray(json)
@@ -266,7 +266,7 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
               onClick={handleBack}
               className="text-xs font-semibold text-[#6B7280] hover:underline cursor-pointer"
             >
-              User Roles
+              Roles
             </button>
             <span className="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
             <button
@@ -274,7 +274,7 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
               onClick={handleBack}
               className="text-xs font-semibold text-[#6B7280] hover:underline cursor-pointer"
             >
-              User Role Directory
+              Role Directory
             </button>
             <span className="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
             <span className="text-xs font-semibold text-[#111827] dark:text-slate-200">
@@ -442,9 +442,9 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
                         SYSTEM Role (Global)
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      <Badge variant="neutral" size="sm">
                         Platform-Wide
-                      </span>
+                      </Badge>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">
                       Global standard role available across all organizations.
@@ -592,43 +592,39 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
         </div>
 
         {/* Form Actions */}
+        {/* BOTTOM ACTION BAR: Right-aligned Cancel, Reset, Save */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB] dark:border-slate-800">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="lg"
             onClick={handleBack}
             disabled={isSubmitting}
-            className="h-10 px-5 text-xs font-semibold text-[#4B5563] bg-white hover:bg-[#F3F4F6] border border-[#E5E7EB] rounded-xl transition-all cursor-pointer shadow-2xs"
           >
             {isReadOnly ? 'Back' : 'Cancel'}
-          </button>
+          </Button>
 
           {!isReadOnly && (
             <>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="lg"
                 onClick={handleReset}
                 disabled={isSubmitting}
-                className="h-10 px-5 text-xs font-semibold text-[#4B5563] bg-white hover:bg-[#F3F4F6] border border-[#E5E7EB] rounded-xl transition-all cursor-pointer shadow-2xs"
               >
                 Reset
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="primary"
+                size="lg"
                 disabled={isSubmitting}
-                className="h-10 px-6 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
+                isLoading={isSubmitting}
+                leftIcon={<Check className="w-4 h-4" />}
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{isEditMode ? 'Updating...' : 'Saving...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>{isEditMode ? 'Update' : 'Save'}</span>
-                  </>
-                )}
-              </button>
+                {isEditMode ? 'Update' : 'Save'}
+              </Button>
             </>
           )}
         </div>

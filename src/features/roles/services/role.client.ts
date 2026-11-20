@@ -4,20 +4,13 @@
 // ==============================================================================
 
 import { RoleItem, CreateRoleInput, UpdateRoleInput } from '../types.js';
+import { authFetch } from '../../../client/lib/auth-session.js';
 
 export interface RoleListResponse {
   items: RoleItem[];
   total: number;
   systemCount: number;
   customCount: number;
-}
-
-function authHeaders(): Record<string, string> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
 }
 
 async function unwrap<T>(res: Response, fallback: string): Promise<T> {
@@ -42,7 +35,7 @@ export async function fetchRoles(params?: {
   if (params?.page) query.append('page', String(params.page));
   if (params?.limit) query.append('limit', String(params.limit));
 
-  const json = await unwrap<any>(await fetch(`/api/roles?${query.toString()}`, { headers: authHeaders() }), 'Failed to fetch roles');
+  const json = await unwrap<any>(await authFetch(`/api/roles?${query.toString()}`), 'Failed to fetch roles');
   return {
     items: json.data || [],
     total: json.meta?.total || 0,
@@ -52,13 +45,13 @@ export async function fetchRoles(params?: {
 }
 
 export async function fetchRoleById(id: string): Promise<RoleItem> {
-  const json = await unwrap<any>(await fetch(`/api/roles/${id}`, { headers: authHeaders() }), 'Failed to fetch role');
+  const json = await unwrap<any>(await authFetch(`/api/roles/${id}`), 'Failed to fetch role');
   return json.data;
 }
 
 export async function createRole(data: CreateRoleInput): Promise<RoleItem> {
   const json = await unwrap<any>(
-    await fetch('/api/roles', { method: 'POST', headers: authHeaders(), body: JSON.stringify(data) }),
+    await authFetch('/api/roles', { method: 'POST', body: JSON.stringify(data) }),
     'Failed to create role'
   );
   return json.data;
@@ -66,12 +59,12 @@ export async function createRole(data: CreateRoleInput): Promise<RoleItem> {
 
 export async function updateRole(id: string, data: UpdateRoleInput): Promise<RoleItem> {
   const json = await unwrap<any>(
-    await fetch(`/api/roles/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(data) }),
+    await authFetch(`/api/roles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     'Failed to update role'
   );
   return json.data;
 }
 
 export async function deleteRole(id: string): Promise<void> {
-  await unwrap<any>(await fetch(`/api/roles/${id}`, { method: 'DELETE', headers: authHeaders() }), 'Failed to delete role');
+  await unwrap<any>(await authFetch(`/api/roles/${id}`, { method: 'DELETE' }), 'Failed to delete role');
 }

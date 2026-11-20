@@ -107,7 +107,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
             </div>
             <span
               className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ring-2 ring-white ${
-                user.isActive ? 'bg-[#047857]' : 'bg-[#9CA3AF]'
+                user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
               }`}
             />
           </div>

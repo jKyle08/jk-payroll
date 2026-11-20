@@ -28,6 +28,7 @@ import {
   Globe,
   Sliders,
 } from 'lucide-react';
+import { Badge, Button, StatusIndicator } from '../../../client/components/ui/index.js';
 import { CustomSelect } from '../../../client/components/ui/index.js';
 import {
   updateOrganizationSettingsSchema,
@@ -237,24 +238,14 @@ export const OrganizationSettingsForm: React.FC<OrganizationSettingsFormProps> =
               )}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <h1 className="text-base font-bold text-[#111827] dark:text-white">
                   {organization.name}
                 </h1>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                    organization.status === 'Active'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : organization.status === 'Onboarding'
-                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                      : 'bg-rose-50 text-rose-700 border border-rose-200'
-                  }`}
-                >
-                  {organization.status}
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                <StatusIndicator status={organization.status} />
+                <Badge variant="neutral" size="sm">
                   {organization.sector} Sector
-                </span>
+                </Badge>
               </div>
               <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
                 {organization.industry} • Plan: {organization.tier || organization.planTier}
@@ -482,9 +473,9 @@ export const OrganizationSettingsForm: React.FC<OrganizationSettingsFormProps> =
                     <label className="block text-xs font-semibold text-[#374151] dark:text-slate-300">
                       GSIS Agency Code (Government)
                     </label>
-                    <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                    <Badge variant="neutral" size="sm">
                       Public Sector
-                    </span>
+                    </Badge>
                   </div>
                   <input
                     type="text"
@@ -499,9 +490,9 @@ export const OrganizationSettingsForm: React.FC<OrganizationSettingsFormProps> =
                     <label className="block text-xs font-semibold text-[#374151] dark:text-slate-300">
                       SSS Employer Number
                     </label>
-                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                    <Badge variant="neutral" size="sm">
                       Private / NonProfit
-                    </span>
+                    </Badge>
                   </div>
                   <input
                     type="text"
@@ -811,23 +802,16 @@ export const OrganizationSettingsForm: React.FC<OrganizationSettingsFormProps> =
 
         {/* SUBMIT BUTTON BAR */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB] dark:border-slate-800">
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="lg"
             disabled={isSubmitting}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-all disabled:opacity-50"
+            isLoading={isSubmitting}
+            leftIcon={<Save className="w-4 h-4" />}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Saving Changes...</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>Save Organization Settings</span>
-              </>
-            )}
-          </button>
+            {isSubmitting ? 'Saving Changes...' : 'Save Organization Settings'}
+          </Button>
         </div>
       </form>
     </div>

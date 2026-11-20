@@ -71,8 +71,8 @@ export class DatabaseRepository {
       // Administrative Modules
       {
         id: 'a0000000-0000-0000-0000-000000000011',
-        code: 'Tenant',
-        name: 'Tenants & Organizations',
+        code: 'Organization',
+        name: 'Organizations & Companies',
         category: 'Administration',
         description: 'Multi-tenant organization management and isolation settings',
         createdAt: new Date(),
@@ -94,6 +94,14 @@ export class DatabaseRepository {
         createdAt: new Date(),
       },
       {
+        id: 'a0000000-0000-0000-0000-000000000019',
+        code: 'Role',
+        name: 'Role Management',
+        category: 'Administration',
+        description: 'Security role definitions and access profile management',
+        createdAt: new Date(),
+      },
+      {
         id: 'a0000000-0000-0000-0000-000000000014',
         code: 'UserRole',
         name: 'User Role Assignment',
@@ -103,10 +111,10 @@ export class DatabaseRepository {
       },
       {
         id: 'a0000000-0000-0000-0000-000000000015',
-        code: 'TenantModule',
-        name: 'Tenant Module Allocation',
+        code: 'OrganizationModule',
+        name: 'Organization Module Allocation',
         category: 'Administration',
-        description: 'Tenant subscription and feature entitlement allocations',
+        description: 'Organization subscription and feature entitlement allocations',
         createdAt: new Date(),
       },
       {
@@ -181,11 +189,16 @@ export class DatabaseRepository {
 
     // 2. Module Actions
     const catalogActions: ModuleAction[] = [
-      // Tenant
-      { id: 'b0000000-0000-0000-0000-000000000111', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'View', fullKey: 'Tenant.View', createdAt: new Date() },
-      { id: 'b0000000-0000-0000-0000-000000000112', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Add', fullKey: 'Tenant.Add', createdAt: new Date() },
-      { id: 'b0000000-0000-0000-0000-000000000113', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Edit', fullKey: 'Tenant.Edit', createdAt: new Date() },
-      { id: 'b0000000-0000-0000-0000-000000000114', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Delete', fullKey: 'Tenant.Delete', createdAt: new Date() },
+      // Organization
+      { id: 'b0000000-0000-0000-0000-000000000111', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'View', fullKey: 'Organization.View', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000112', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Add', fullKey: 'Organization.Add', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000113', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Edit', fullKey: 'Organization.Edit', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000114', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Delete', fullKey: 'Organization.Delete', createdAt: new Date() },
+      // Backward-compatibility Tenant actions
+      { id: 'b0000000-0000-0000-0000-000000000115', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'View', fullKey: 'Tenant.View', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000116', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Add', fullKey: 'Tenant.Add', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000117', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Edit', fullKey: 'Tenant.Edit', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000118', moduleId: 'a0000000-0000-0000-0000-000000000011', action: 'Delete', fullKey: 'Tenant.Delete', createdAt: new Date() },
 
       // Department
       { id: 'b0000000-0000-0000-0000-000000000121', moduleId: 'a0000000-0000-0000-0000-000000000012', action: 'View', fullKey: 'Department.View', createdAt: new Date() },
@@ -199,17 +212,28 @@ export class DatabaseRepository {
       { id: 'b0000000-0000-0000-0000-000000000133', moduleId: 'a0000000-0000-0000-0000-000000000013', action: 'Edit', fullKey: 'Profile.Edit', createdAt: new Date() },
       { id: 'b0000000-0000-0000-0000-000000000134', moduleId: 'a0000000-0000-0000-0000-000000000013', action: 'Delete', fullKey: 'Profile.Delete', createdAt: new Date() },
 
+      // Role
+      { id: 'b0000000-0000-0000-0000-000000000191', moduleId: 'a0000000-0000-0000-0000-000000000019', action: 'View', fullKey: 'Role.View', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000192', moduleId: 'a0000000-0000-0000-0000-000000000019', action: 'Add', fullKey: 'Role.Add', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000193', moduleId: 'a0000000-0000-0000-0000-000000000019', action: 'Edit', fullKey: 'Role.Edit', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000194', moduleId: 'a0000000-0000-0000-0000-000000000019', action: 'Delete', fullKey: 'Role.Delete', createdAt: new Date() },
+
       // UserRole
       { id: 'b0000000-0000-0000-0000-000000000141', moduleId: 'a0000000-0000-0000-0000-000000000014', action: 'View', fullKey: 'UserRole.View', createdAt: new Date() },
       { id: 'b0000000-0000-0000-0000-000000000142', moduleId: 'a0000000-0000-0000-0000-000000000014', action: 'Add', fullKey: 'UserRole.Add', createdAt: new Date() },
       { id: 'b0000000-0000-0000-0000-000000000143', moduleId: 'a0000000-0000-0000-0000-000000000014', action: 'Edit', fullKey: 'UserRole.Edit', createdAt: new Date() },
       { id: 'b0000000-0000-0000-0000-000000000144', moduleId: 'a0000000-0000-0000-0000-000000000014', action: 'Delete', fullKey: 'UserRole.Delete', createdAt: new Date() },
 
-      // TenantModule
-      { id: 'b0000000-0000-0000-0000-000000000151', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'View', fullKey: 'TenantModule.View', createdAt: new Date() },
-      { id: 'b0000000-0000-0000-0000-000000000152', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Add', fullKey: 'TenantModule.Add', createdAt: new Date() },
-      { id: 'b0000000-0000-0000-0000-000000000153', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Edit', fullKey: 'TenantModule.Edit', createdAt: new Date() },
-      { id: 'b0000000-0000-0000-0000-000000000154', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Delete', fullKey: 'TenantModule.Delete', createdAt: new Date() },
+      // OrganizationModule
+      { id: 'b0000000-0000-0000-0000-000000000151', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'View', fullKey: 'OrganizationModule.View', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000152', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Add', fullKey: 'OrganizationModule.Add', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000153', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Edit', fullKey: 'OrganizationModule.Edit', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000154', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Delete', fullKey: 'OrganizationModule.Delete', createdAt: new Date() },
+      // Backward-compatibility TenantModule actions
+      { id: 'b0000000-0000-0000-0000-000000000155', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'View', fullKey: 'TenantModule.View', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000156', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Add', fullKey: 'TenantModule.Add', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000157', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Edit', fullKey: 'TenantModule.Edit', createdAt: new Date() },
+      { id: 'b0000000-0000-0000-0000-000000000158', moduleId: 'a0000000-0000-0000-0000-000000000015', action: 'Delete', fullKey: 'TenantModule.Delete', createdAt: new Date() },
 
       // DepartmentModule
       { id: 'b0000000-0000-0000-0000-000000000161', moduleId: 'a0000000-0000-0000-0000-000000000016', action: 'View', fullKey: 'DepartmentModule.View', createdAt: new Date() },
@@ -259,7 +283,7 @@ export class DatabaseRepository {
 
     // 3. Permission Dependencies (Mutating Action -> View Access)
     this.permissionDependencies = [
-      // Tenant (Add/Edit/Delete -> View)
+      // Organization (Add/Edit/Delete -> View)
       { parentActionId: 'b0000000-0000-0000-0000-000000000112', impliedActionId: 'b0000000-0000-0000-0000-000000000111', createdAt: new Date() },
       { parentActionId: 'b0000000-0000-0000-0000-000000000113', impliedActionId: 'b0000000-0000-0000-0000-000000000111', createdAt: new Date() },
       { parentActionId: 'b0000000-0000-0000-0000-000000000114', impliedActionId: 'b0000000-0000-0000-0000-000000000111', createdAt: new Date() },
@@ -274,12 +298,17 @@ export class DatabaseRepository {
       { parentActionId: 'b0000000-0000-0000-0000-000000000133', impliedActionId: 'b0000000-0000-0000-0000-000000000131', createdAt: new Date() },
       { parentActionId: 'b0000000-0000-0000-0000-000000000134', impliedActionId: 'b0000000-0000-0000-0000-000000000131', createdAt: new Date() },
 
+      // Role (Add/Edit/Delete -> View)
+      { parentActionId: 'b0000000-0000-0000-0000-000000000192', impliedActionId: 'b0000000-0000-0000-0000-000000000191', createdAt: new Date() },
+      { parentActionId: 'b0000000-0000-0000-0000-000000000193', impliedActionId: 'b0000000-0000-0000-0000-000000000191', createdAt: new Date() },
+      { parentActionId: 'b0000000-0000-0000-0000-000000000194', impliedActionId: 'b0000000-0000-0000-0000-000000000191', createdAt: new Date() },
+
       // UserRole (Add/Edit/Delete -> View)
       { parentActionId: 'b0000000-0000-0000-0000-000000000142', impliedActionId: 'b0000000-0000-0000-0000-000000000141', createdAt: new Date() },
       { parentActionId: 'b0000000-0000-0000-0000-000000000143', impliedActionId: 'b0000000-0000-0000-0000-000000000141', createdAt: new Date() },
       { parentActionId: 'b0000000-0000-0000-0000-000000000144', impliedActionId: 'b0000000-0000-0000-0000-000000000141', createdAt: new Date() },
 
-      // TenantModule (Add/Edit/Delete -> View)
+      // OrganizationModule (Add/Edit/Delete -> View)
       { parentActionId: 'b0000000-0000-0000-0000-000000000152', impliedActionId: 'b0000000-0000-0000-0000-000000000151', createdAt: new Date() },
       { parentActionId: 'b0000000-0000-0000-0000-000000000153', impliedActionId: 'b0000000-0000-0000-0000-000000000151', createdAt: new Date() },
       { parentActionId: 'b0000000-0000-0000-0000-000000000154', impliedActionId: 'b0000000-0000-0000-0000-000000000151', createdAt: new Date() },

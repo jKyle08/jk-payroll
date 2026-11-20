@@ -21,6 +21,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { ModuleData, ModuleActionItem, ActionType } from '../types.js';
+import { Button, Badge, TableActionMenu } from '../../../client/components/ui/index.js';
 
 export interface PermissionMatrixProps {
   title: string;
@@ -240,9 +241,11 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
 
             {/* Custom Override Indicator Badge */}
             {isCustomUserOverride && (
-              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Custom Direct User Override Active (Supercedes Role Template)</span>
+              <div className="mt-3">
+                <Badge variant="warning" size="md">
+                  <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-500" />
+                  <span>Custom Direct User Override Active (Supercedes Role Template)</span>
+                </Badge>
               </div>
             )}
           </div>
@@ -250,53 +253,54 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
           {/* Action Buttons */}
           <div className="flex items-center space-x-3">
             {isCustomUserOverride && onResetToRoleDefault && (
-              <button
+              <Button
                 type="button"
+                variant="destructive"
+                size="md"
                 onClick={() => setShowResetModal(true)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/80 transition-colors inline-flex items-center space-x-2"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-4 h-4 mr-1.5" />
                 <span>Reset to Role Defaults</span>
-              </button>
+              </Button>
             )}
 
-            <button
+            <Button
               type="button"
+              variant="primary"
+              size="md"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
-              className={`px-5 py-2.5 rounded-xl text-xs font-semibold shadow-sm inline-flex items-center space-x-2 transition-all duration-150 ${
-                isDirty
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 cursor-pointer'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-              }`}
+              isLoading={isSaving}
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4 mr-1.5" />
               <span>{isSaving ? 'Saving...' : 'Save Matrix'}</span>
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Status Alerts */}
         {saveSuccess && (
-          <div className="mt-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center space-x-2">
-            <CheckCheck className="w-4 h-4 text-emerald-500" />
+          <div className="mt-4 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs flex items-center space-x-2">
+            <CheckCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Permissions saved successfully! Changes apply immediately.</span>
           </div>
         )}
 
         {isDirty && !saveSuccess && (
-          <div className="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between">
+          <div className="mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
               <span>You have unsaved changes in the permission matrix.</span>
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setSelectedIds(new Set(initialIds))}
               className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
             >
               Discard Changes
-            </button>
+            </Button>
           </div>
         )}
 
@@ -309,25 +313,22 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search module code or name..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 transition-all"
             />
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1">
             <Filter className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
             {categories.map((cat) => (
-              <button
+              <Button
                 key={cat}
                 type="button"
+                size="sm"
+                variant={categoryFilter === cat ? 'primary' : 'secondary'}
                 onClick={() => setCategoryFilter(cat)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                  categoryFilter === cat
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
               >
                 {cat}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -386,9 +387,9 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
 
                       {/* Category Badge */}
                       <td className="py-4 px-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        <Badge variant="neutral" size="sm">
                           {mod.category}
-                        </span>
+                        </Badge>
                       </td>
 
                       {/* Action Checkbox Columns */}
@@ -450,27 +451,25 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                         );
                       })}
 
-                      {/* Quick Actions (Grant All / Clear All) */}
+                      {/* Quick Actions (3-Dots Menu) */}
                       <td className="py-4 px-4 text-right">
-                        <div className="inline-flex items-center space-x-1">
-                          <button
-                            type="button"
-                            onClick={() => handleGrantAllForModule(mod)}
-                            title="Grant all actions for this module"
-                            className="px-2 py-1 rounded text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
-                          >
-                            All
-                          </button>
-                          <span className="text-slate-300 dark:text-slate-700">|</span>
-                          <button
-                            type="button"
-                            onClick={() => handleClearAllForModule(mod)}
-                            title="Clear all actions for this module"
-                            className="px-2 py-1 rounded text-[11px] font-medium text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                          >
-                            None
-                          </button>
-                        </div>
+                        <TableActionMenu
+                          actions={[
+                            {
+                              label: 'Grant All Actions',
+                              icon: <CheckCheck className="w-3.5 h-3.5 text-indigo-600" />,
+                              onClick: () => handleGrantAllForModule(mod),
+                            },
+                            {
+                              label: 'Clear All Actions',
+                              icon: <X className="w-3.5 h-3.5" />,
+                              variant: 'danger',
+                              divider: true,
+                              onClick: () => handleClearAllForModule(mod),
+                            },
+                          ]}
+                          title="Module Actions"
+                        />
                       </td>
                     </tr>
                   );
@@ -513,20 +512,22 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
             </p>
 
             <div className="flex items-center justify-end space-x-3 pt-2">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => setShowResetModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="destructive"
+                size="sm"
                 onClick={handleConfirmReset}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-colors"
               >
                 Yes, Reset Overrides
-              </button>
+              </Button>
             </div>
           </div>
         </div>

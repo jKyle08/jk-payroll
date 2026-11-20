@@ -17,8 +17,10 @@ import {
   ArrowRight,
   AlertCircle,
   Loader2,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth.js';
+import { consumeSessionTimeoutMessage } from '../../../client/lib/auth-session.js';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,9 +31,14 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sessionTimeoutMessage, setSessionTimeoutMessage] = useState<string | null>(null);
 
-  // Clear any existing or stale session when landing on the login page
+  // Check for session timeout notification and clear stale storage
   React.useEffect(() => {
+    const timeoutMsg = consumeSessionTimeoutMessage();
+    if (timeoutMsg) {
+      setSessionTimeoutMessage(timeoutMsg);
+    }
     logout();
   }, [logout]);
 
@@ -139,6 +146,13 @@ export const LoginPage: React.FC = () => {
 
         {/* Credentials Form Card */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-[#E5E7EB] dark:border-slate-800 shadow-sm space-y-5">
+          {sessionTimeoutMessage && (
+            <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-medium flex items-center gap-2">
+              <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
+              <span>{sessionTimeoutMessage}</span>
+            </div>
+          )}
+
           {errorMessage && (
             <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-medium flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />

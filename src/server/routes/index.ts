@@ -15,11 +15,8 @@ import { payrollRoutes } from '../../features/payroll/payroll.routes.js';
 import { accessControlRoutes } from '../../features/access-control/access-control.routes.js';
 import { auditLogsRoutes } from '../../features/audit-logs/audit-logs.routes.js';
 
-import { authMiddleware, requireSuperAdmin, requireTenantAdmin } from '../middleware/auth.middleware.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 import { requirePermission } from '../middleware/rbac.guard.js';
-import { departmentController } from '../../features/departments/department.controller.js';
-import { userController } from '../../features/users/user.controller.js';
-import { organizationController } from '../../features/organizations/organization.controller.js';
 import { leaveController } from '../../features/leave-management/leave.controller.js';
 
 export const apiRouter = Router();
@@ -34,7 +31,6 @@ apiRouter.get('/health', (_req, res) => {
 // ------------------------------------------------------------------------------
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/organizations', organizationRoutes);
-apiRouter.use('/tenants', organizationRoutes); // Backward-compatibility alias pointing to organizationRoutes
 apiRouter.use('/departments', departmentRoutes);
 apiRouter.use('/roles', roleRoutes);
 apiRouter.use('/user-roles', userRoleRoutes);
@@ -49,24 +45,7 @@ apiRouter.use('/audits', auditLogsRoutes);
 // Backward-Compatibility Aliases (for existing tests & integrations)
 // ------------------------------------------------------------------------------
 
-// 1. /api/super-admin
-const superAdminCompat = Router();
-superAdminCompat.use(authMiddleware, requireSuperAdmin);
-superAdminCompat.post('/tenants', (req, res) => organizationController.createOrganization(req, res));
-superAdminCompat.put('/tenants/:id/modules', (req, res) => organizationController.updateModules(req, res));
-apiRouter.use('/super-admin', superAdminCompat);
-
-// 2. /api/tenant
-const tenantCompat = Router();
-tenantCompat.use(authMiddleware, requireTenantAdmin);
-tenantCompat.post('/departments', (req, res) => departmentController.createDepartment(req, res));
-tenantCompat.get('/departments/tree', (req, res) => departmentController.getDepartmentTree(req, res));
-tenantCompat.put('/departments/:id/modules', (req, res) => departmentController.allocateDepartmentModules(req, res));
-tenantCompat.get('/users/:id/eligible-modules', (req, res) => userController.getUserEligibleModules(req, res));
-tenantCompat.put('/users/:id/permissions', (req, res) => userController.assignUserPermissions(req, res));
-apiRouter.use('/tenant', tenantCompat);
-
-// 3. /api/type-of-leave & /api/leave-requests
+// Transactional Leave Endpoints
 const transactionCompat = Router();
 transactionCompat.use(authMiddleware);
 transactionCompat.post('/type-of-leave', requirePermission('TypeOfLeave.Add'), (req, res) =>

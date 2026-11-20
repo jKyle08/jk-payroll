@@ -9,6 +9,7 @@ import React from 'react';
 import { ShieldAlert, Plus, Loader2 } from 'lucide-react';
 import { UserRoleItem } from '../types.js';
 import { UserRoleTableRow } from './UserRoleTableRow.js';
+import { Button } from '../../../client/components/ui/index.js';
 
 export interface UserRoleTableProps {
   userRoles: UserRoleItem[];
@@ -48,13 +49,16 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
         <p className="text-xs text-[#6B7280] mt-1 max-w-sm">
           No user roles match your current filter criteria.
         </p>
-        <button
-          onClick={onAddNew}
-          className="mt-4 h-9 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-none"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Assign User Role</span>
-        </button>
+        <div className="mt-4">
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onAddNew}
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            <span>Assign User Role</span>
+          </Button>
+        </div>
       </div>
     );
   }

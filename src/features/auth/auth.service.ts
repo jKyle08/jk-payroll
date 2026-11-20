@@ -287,10 +287,10 @@ export class AuthService {
         permissions = allActions.map((a: { full_key: string }) => a.full_key);
       } else {
         permissions = [
-          'Tenant.View',
-          'Tenant.Add',
-          'Tenant.Edit',
-          'Tenant.Delete',
+          'Organization.View',
+          'Organization.Add',
+          'Organization.Edit',
+          'Organization.Delete',
           'Department.View',
           'Department.Add',
           'Department.Edit',
@@ -299,14 +299,18 @@ export class AuthService {
           'Profile.Add',
           'Profile.Edit',
           'Profile.Delete',
+          'Role.View',
+          'Role.Add',
+          'Role.Edit',
+          'Role.Delete',
           'UserRole.View',
           'UserRole.Add',
           'UserRole.Edit',
           'UserRole.Delete',
-          'TenantModule.View',
-          'TenantModule.Add',
-          'TenantModule.Edit',
-          'TenantModule.Delete',
+          'OrganizationModule.View',
+          'OrganizationModule.Add',
+          'OrganizationModule.Edit',
+          'OrganizationModule.Delete',
           'DepartmentModule.View',
           'DepartmentModule.Add',
           'DepartmentModule.Edit',
@@ -319,6 +323,15 @@ export class AuthService {
           'UserPermission.Add',
           'UserPermission.Edit',
           'UserPermission.Delete',
+          // Backward-compatibility aliases
+          'Tenant.View',
+          'Tenant.Add',
+          'Tenant.Edit',
+          'Tenant.Delete',
+          'TenantModule.View',
+          'TenantModule.Add',
+          'TenantModule.Edit',
+          'TenantModule.Delete',
         ];
       }
     } else {

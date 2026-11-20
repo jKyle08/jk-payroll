@@ -1,11 +1,12 @@
 // ==============================================================================
 // JK-PAYROLL: REFACTORED TOPBAR COMPONENT
 // Design System: "Midnight & Champagne Steel" (Ramp / Linear / Stripe Aesthetic)
-// File: src/components/layout/topbar.tsx
+// File: src/client/components/layout/topbar.tsx
 // ==============================================================================
 
 import React, { useState } from 'react';
-import { PanelLeft, Search, Bell, Activity, Sun, Moon } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Search, Bell, Activity, Sun, Moon } from 'lucide-react';
+import { useSidebar } from './SidebarContext.js';
 import { NotificationPopover, NotificationItem } from './notification-popover.js';
 import { UserProfilePopover, UserProfileData } from './user-profile-popover.js';
 
@@ -73,12 +74,16 @@ export const Topbar: React.FC<TopbarProps> = ({
   onNotificationClick,
   onMarkAllAsRead,
   onToggleSidebar,
-  isSidebarCollapsed = false,
+  isSidebarCollapsed,
   onProfileClick,
   onSwitchDepartment,
   onToggleTheme,
   currentTheme = 'light',
 }) => {
+  const sidebarContext = useSidebar();
+  const isCollapsed = isSidebarCollapsed !== undefined ? isSidebarCollapsed : sidebarContext.isCollapsed;
+  const handleToggleSidebar = onToggleSidebar || sidebarContext.toggleSidebar;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -114,22 +119,28 @@ export const Topbar: React.FC<TopbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 left-0 right-0 h-14 bg-white border-b border-[#E5E7EB] z-40 select-none">
+    <header className="sticky top-0 left-0 right-0 h-14 bg-white dark:bg-slate-900 border-b border-[#E5E7EB] dark:border-slate-800 z-30 select-none transition-colors">
       <div className="h-full px-3 sm:px-4 flex items-center justify-between gap-2">
         
         {/* ==================================================================== */}
         {/* 1. LEFT SECTION: SIDEBAR TOGGLE & BRAND IDENTIFIER                  */}
         {/* ==================================================================== */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-          {/* Panel Toggle Button (PanelLeft icon) */}
+          {/* Panel Toggle Button (PanelLeftClose when expanded, PanelLeftOpen when collapsed) */}
           <button
+            id="topbar-sidebar-toggle"
             type="button"
-            onClick={onToggleSidebar}
-            title={isSidebarCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
-            aria-label="Toggle navigation sidebar"
-            className="p-1.5 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F1F5F9] border border-transparent hover:border-[#E5E7EB] transition-colors focus:outline-none focus:ring-1 focus:ring-[#0F172A]"
+            onClick={handleToggleSidebar}
+            title={isCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!isCollapsed}
+            className="p-1.5 rounded-lg text-[#6B7280] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F1F5F9] dark:hover:bg-slate-800 border border-transparent hover:border-[#E5E7EB] dark:hover:border-slate-700 transition-colors focus:outline-none focus:ring-1 focus:ring-[#0F172A] dark:focus:ring-blue-500 cursor-pointer"
           >
-            <PanelLeft className="w-4 h-4" />
+            {isCollapsed ? (
+              <PanelLeftOpen className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+            ) : (
+              <PanelLeftClose className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+            )}
           </button>
 
           {/* Brand Mark & App Name */}
@@ -141,9 +152,9 @@ export const Topbar: React.FC<TopbarProps> = ({
             <div className="w-7 h-7 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm transition-transform group-hover:scale-105">
               JK
             </div>
-            <span className="font-bold text-sm sm:text-base tracking-tight text-[#111827] flex items-center gap-1">
+            <span className="font-bold text-sm sm:text-base tracking-tight text-[#111827] dark:text-white flex items-center gap-1">
               <span>PayPulse</span>
-              <span className="text-[10px] font-mono text-[#6B7280] font-normal hidden sm:inline">RBAC</span>
+              <span className="text-[10px] font-mono text-[#6B7280] dark:text-slate-400 font-normal hidden sm:inline">RBAC</span>
             </span>
           </div>
         </div>
@@ -154,19 +165,19 @@ export const Topbar: React.FC<TopbarProps> = ({
         <div className="flex-1 max-w-md mx-2 sm:mx-4">
           <div
             onClick={handleSearchClick}
-            className="relative flex items-center justify-between w-full h-8 sm:h-9 px-3 rounded-full bg-[#FBFBFC] hover:bg-white border border-[#E5E7EB] hover:border-[#CBD5E1] transition-all cursor-pointer group shadow-2xs"
+            className="relative flex items-center justify-between w-full h-8 sm:h-9 px-3 rounded-full bg-[#FBFBFC] dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-[#E5E7EB] dark:border-slate-800 hover:border-[#CBD5E1] dark:hover:border-slate-700 transition-all cursor-pointer group shadow-2xs"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Search className="w-3.5 h-3.5 text-[#6B7280] group-hover:text-[#111827] transition-colors flex-shrink-0" />
+              <Search className="w-3.5 h-3.5 text-[#6B7280] dark:text-slate-400 group-hover:text-[#111827] dark:group-hover:text-white transition-colors flex-shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 placeholder="Search actions, employees, modules..."
-                className="w-full text-xs bg-transparent text-[#111827] placeholder-[#6B7280] outline-none border-none p-0 focus:ring-0 truncate"
+                className="w-full text-xs bg-transparent text-[#111827] dark:text-white placeholder-[#6B7280] dark:placeholder-slate-400 outline-none border-none p-0 focus:ring-0 truncate"
               />
             </div>
-            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-[#6B7280] bg-[#F1F5F9] border border-[#E5E7EB] rounded pointer-events-none flex-shrink-0">
+            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-[#6B7280] dark:text-slate-400 bg-[#F1F5F9] dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 rounded pointer-events-none flex-shrink-0">
               ⌘K
             </kbd>
           </div>
@@ -200,10 +211,10 @@ export const Topbar: React.FC<TopbarProps> = ({
               id="topbar-notifications-bell"
               type="button"
               onClick={handleToggleNotifications}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors relative focus:outline-none focus:ring-1 focus:ring-[#0F172A] ${
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors relative focus:outline-none focus:ring-1 focus:ring-[#0F172A] dark:focus:ring-blue-500 ${
                 isNotificationOpen
-                  ? 'bg-[#0F172A] text-white'
-                  : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0] hover:text-[#111827]'
+                  ? 'bg-[#0F172A] text-white dark:bg-blue-600'
+                  : 'bg-[#F1F5F9] dark:bg-slate-800 text-[#475569] dark:text-slate-300 hover:bg-[#E2E8F0] dark:hover:bg-slate-700 hover:text-[#111827] dark:hover:text-white'
               }`}
               aria-label="Notifications"
               aria-expanded={isNotificationOpen}
@@ -212,7 +223,7 @@ export const Topbar: React.FC<TopbarProps> = ({
 
               {/* Unread counter badge pill in midnight slate */}
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0F172A] text-white font-bold text-[10px] flex items-center justify-center border-2 border-white">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0F172A] text-white font-bold text-[10px] flex items-center justify-center border-2 border-white dark:border-slate-900">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -236,8 +247,8 @@ export const Topbar: React.FC<TopbarProps> = ({
               onClick={handleToggleProfile}
               className={`w-9 h-9 rounded-full flex items-center justify-center transition-all relative focus:outline-none cursor-pointer ring-2 ${
                 isProfileOpen
-                  ? 'ring-[#0F172A]'
-                  : 'ring-transparent hover:ring-[#E5E7EB]'
+                  ? 'ring-[#0F172A] dark:ring-blue-500'
+                  : 'ring-transparent hover:ring-[#E5E7EB] dark:hover:ring-slate-700'
               }`}
               aria-label="Account menu"
               aria-expanded={isProfileOpen}
@@ -256,8 +267,8 @@ export const Topbar: React.FC<TopbarProps> = ({
 
               {/* Presence indicator dot */}
               <span
-                className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white ${
-                  user.isActive ? 'bg-[#047857]' : 'bg-[#9CA3AF]'
+                className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-slate-900 ${
+                  user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
                 }`}
               />
             </button>

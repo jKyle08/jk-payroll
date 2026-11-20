@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { DepartmentNode } from '../types.js';
+import { Button, Badge } from '../../../client/components/ui/index.js';
 
 export interface DepartmentTreeProps {
   nodes: DepartmentNode[];
@@ -106,33 +107,25 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
         {/* Right: Meta & Actions */}
         <div className="flex items-center space-x-2 ml-2 flex-shrink-0">
           {hasChildren && (
-            <span
-              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                isSelected
-                  ? 'bg-white/20 text-white'
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-              }`}
-            >
+            <Badge variant="neutral" size="sm">
               {node.children.length} sub
-            </span>
+            </Badge>
           )}
 
           {onAddSub && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddSub(node);
               }}
               title={`Add child department under ${node.name}`}
-              className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${
-                isSelected
-                  ? 'bg-white/20 hover:bg-white/30 text-white'
-                  : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
-              }`}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <Plus className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -154,7 +154,11 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
         const supabase = getSupabaseClient();
         const { data: authData, error: authError } = await supabase.auth.getUser(token);
         if (authError || !authData.user) {
-          res.status(401).json({ error: 'Unauthorized: Invalid Supabase Auth token' });
+          res.status(401).json({
+            error: 'Unauthorized: Invalid Supabase Auth token',
+            code: 'SESSION_EXPIRED',
+            message: authError?.message || 'The authentication token has expired or is invalid. Please log in again.',
+          });
           return;
         }
         userId = authData.user.id;

@@ -63,9 +63,8 @@ export const OrganizationTableSkeleton: React.FC<OrganizationTableSkeletonProps>
 
                 {/* Actions */}
                 <td className="py-4 px-6 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <div className="h-8 w-16 bg-slate-100 rounded-lg" />
-                    <div className="h-8 w-8 bg-slate-100 rounded-lg" />
+                  <div className="flex items-center justify-end">
+                    <div className="h-7 w-7 bg-slate-100 dark:bg-slate-800 rounded-lg" />
                   </div>
                 </td>
               </tr>

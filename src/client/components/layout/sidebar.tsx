@@ -1,10 +1,10 @@
 // ==============================================================================
 // JK-PAYROLL: REFACTORED B2B ENTERPRISE SIDEBAR
 // Design System: "Midnight & Champagne Steel" (Ramp / Linear / Stripe Aesthetic)
-// File: src/components/layout/sidebar.tsx
+// File: src/client/components/layout/sidebar.tsx
 // ==============================================================================
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import {
   LayoutDashboard,
   CalendarCheck,
@@ -13,24 +13,15 @@ import {
   Building,
   Users2,
   ShieldCheck,
+  Shield,
   Globe2,
   Briefcase,
   Sliders,
   FileCheck2,
-  ChevronDown,
-  ChevronsUpDown,
-  Building2,
-  Sparkles,
-  ChevronRight,
-  ChevronLeft,
-  X,
-  Layers,
   Folder,
-  Search,
-  SearchX,
 } from 'lucide-react';
-import { usePermission } from '../../../features/access-control/hooks/use-permission.js';
 import { PERMISSIONS } from '../../../shared/constants/permissions.js';
+import { AppSidebar, AppSidebarProps } from './AppSidebar.js';
 
 export type OperationalScope = 'Tenant' | 'EntireDepartment' | 'SubDepartment' | 'Self';
 
@@ -73,32 +64,7 @@ export interface OrganizationContext {
   status?: string;
 }
 
-export interface SidebarProps {
-  userPermissions?: string[];
-  activePath?: string;
-  onNavigate?: (path: string) => void;
-  collapsed?: boolean;
-  onToggleCollapse?: () => void;
-  isMobileOpen?: boolean;
-  onCloseMobile?: () => void;
-  tenantCode?: string;
-  organization?: OrganizationContext;
-  onSwitchOrganization?: () => void;
-  activeScope?: OperationalScope;
-  onScopeChange?: (scope: OperationalScope) => void;
-  moduleSearchQuery?: string;
-  onModuleSearch?: (query: string) => void;
-  roleName?: string;
-  isSuperAdmin?: boolean;
-}
-
-const DEFAULT_ORGANIZATION: OrganizationContext = {
-  id: 'org-apex',
-  name: 'Apex Health Systems',
-  code: 'APEX-HLTH',
-  slug: 'org_apex',
-  domain: 'apexhealth.internal',
-};
+export interface SidebarProps extends AppSidebarProps {}
 
 /**
  * Clean Flattened B2B Navigation Schema (Linear / Ramp / Stripe Style)
@@ -122,10 +88,11 @@ export const FLATTENED_NAV_SECTIONS: NavSection[] = [
     title: 'ADMINISTRATION',
     items: [
       {
-        id: 'tenants',
+        id: 'organizations',
         label: 'Organizations',
-        path: '/admin/tenants',
-        requiredPermission: PERMISSIONS.TENANT.VIEW,
+        path: '/organizations',
+        requiredPermission: PERMISSIONS.ORGANIZATION.VIEW,
+        moduleCode: 'Organization',
         icon: Globe2,
       },
       {
@@ -145,12 +112,12 @@ export const FLATTENED_NAV_SECTIONS: NavSection[] = [
         icon: Users2,
       },
       {
-        id: 'employee-roles',
-        label: 'User Role',
+        id: 'roles-directory',
+        label: 'Role',
         path: '/admin/roles',
-        requiredPermission: PERMISSIONS.USER_ROLE.VIEW,
+        requiredPermission: PERMISSIONS.ROLE.VIEW,
         moduleCode: 'RolePermission',
-        icon: Briefcase,
+        icon: Shield,
       },
     ],
   },
@@ -242,10 +209,11 @@ export const MULTI_LEVEL_NAV_GROUPS: NavCategoryGroup[] = [
     defaultOpen: true,
     items: [
       {
-        id: 'tenants',
+        id: 'organizations',
         label: 'Organizations',
-        path: '/admin/tenants',
-        requiredPermission: PERMISSIONS.TENANT.VIEW,
+        path: '/organizations',
+        requiredPermission: PERMISSIONS.ORGANIZATION.VIEW,
+        moduleCode: 'Organization',
         icon: Globe2,
       },
       {
@@ -282,11 +250,11 @@ export const MULTI_LEVEL_NAV_GROUPS: NavCategoryGroup[] = [
             icon: Users2,
           },
           {
-            id: 'employee-roles',
-            label: 'User Role Assignments',
+            id: 'roles-directory',
+            label: 'Role',
             path: '/admin/roles',
-            requiredPermission: PERMISSIONS.USER_ROLE.VIEW,
-            icon: Briefcase,
+            requiredPermission: PERMISSIONS.ROLE.VIEW,
+            icon: Shield,
           },
         ],
       },
@@ -358,328 +326,9 @@ export const MULTI_LEVEL_NAV_GROUPS: NavCategoryGroup[] = [
 
 export const DEFAULT_NAV_ITEMS = FLATTENED_NAV_SECTIONS.flatMap((s) => s.items);
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  userPermissions = [],
-  activePath = '/dashboard',
-  onNavigate,
-  collapsed: controlledCollapsed,
-  onToggleCollapse,
-  isMobileOpen = false,
-  onCloseMobile,
-  tenantCode,
-  organization = DEFAULT_ORGANIZATION,
-  onSwitchOrganization,
-  activeScope = 'Tenant',
-  onScopeChange,
-  moduleSearchQuery,
-  onModuleSearch,
-  roleName,
-  isSuperAdmin = false,
-}) => {
-  const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
-
-  const [searchQuery, setSearchQuery] = useState(moduleSearchQuery || '');
-
-  const { hasPermission } = usePermission(userPermissions);
-
-  const activeOrg = {
-    ...organization,
-    code: tenantCode || organization.code,
-  };
-
-  const handleToggle = () => {
-    if (onToggleCollapse) {
-      onToggleCollapse();
-    } else {
-      setInternalCollapsed((prev) => !prev);
-    }
-  };
-
-  const handleLinkClick = (path?: string) => {
-    if (path && onNavigate) {
-      onNavigate(path);
-      if (onCloseMobile) onCloseMobile();
-    }
-  };
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-    onModuleSearch?.(query);
-  };
-
-  // Super admin can see all modules without individual permission grants
-  const isSuper = Boolean(
-    isSuperAdmin ||
-    roleName?.toLowerCase().includes('super') ||
-    userPermissions?.includes('*') ||
-    userPermissions?.includes('SUPER_ADMIN')
-  );
-
-  // Filter flattened sections by user permissions, organization allocated modules, and module search query
-  const visibleSections = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return FLATTENED_NAV_SECTIONS.map((section) => {
-      const filteredItems = section.items.filter((item) => {
-        // Module Allocation Check: If activeOrg has an allocated module list, respect tenant's active modules
-        if (item.moduleCode && activeOrg.modules && activeOrg.modules.length > 0) {
-          const hasModule = activeOrg.modules.includes(item.moduleCode);
-          if (!hasModule) return false;
-        }
-
-        // Permission Check: Super Admins bypass individual permission gates, regular users require explicit permissions
-        const hasPerm = isSuper || !item.requiredPermission || hasPermission(item.requiredPermission);
-        if (!hasPerm) return false;
-
-        // Search Query Filter
-        if (!q) return true;
-        return item.label.toLowerCase().includes(q);
-      });
-      return {
-        ...section,
-        items: filteredItems,
-      };
-    }).filter((section) => section.items.length > 0);
-  }, [userPermissions, hasPermission, searchQuery, isSuper, activeOrg.modules]);
-
-  return (
-    <>
-      {/* Mobile Backdrop Overlay (< lg) */}
-      {isMobileOpen && (
-        <div
-          onClick={onCloseMobile}
-          className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-xs z-40 lg:hidden transition-opacity"
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Main Sidebar Shell */}
-      <aside
-        aria-label="Application Navigation"
-        className={`fixed top-14 bottom-0 left-0 bg-[#FBFBFC] border-r border-[#E5E7EB] z-40 flex flex-col transition-all duration-200 select-none ${
-          isCollapsed ? 'w-16' : 'w-64'
-        } ${
-          isMobileOpen
-            ? 'translate-x-0'
-            : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        {/* ================================================================== */}
-        {/* 1. SIDEBAR HEADER: PROMOTED ORGANIZATION SWITCHER & SCOPE SELECTOR */}
-        {/* ================================================================== */}
-        <div className="p-3 border-b border-[#E5E7EB] bg-white space-y-2">
-          {!isCollapsed ? (
-            <>
-              {/* Interactive Organization Switcher (Super Admin Only) vs Static Badge (Regular Users) */}
-              {isSuper ? (
-                <button
-                  type="button"
-                  onClick={onSwitchOrganization}
-                  title="Switch active organization workspace"
-                  data-testid="sidebar-org-switcher-button"
-                  className="w-full flex items-center justify-between p-2 rounded-lg border border-[#E5E7EB] bg-[#FBFBFC] hover:bg-[#F1F5F9] text-left transition-colors group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 tracking-wider">
-                      {activeOrg.code.slice(0, 2)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-[#111827] truncate leading-tight group-hover:text-[#0F172A]">
-                        {activeOrg.name}
-                      </div>
-                      <div className="text-[10px] font-mono text-[#6B7280] truncate leading-tight mt-0.5">
-                        {activeOrg.slug}
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronsUpDown className="w-3.5 h-3.5 text-[#6B7280] group-hover:text-[#111827] transition-colors flex-shrink-0 ml-1" />
-                </button>
-              ) : (
-                <div
-                  title={`${activeOrg.name} (${activeOrg.slug})`}
-                  data-testid="sidebar-org-static-badge"
-                  className="w-full flex items-center justify-between p-2 rounded-lg border border-[#E5E7EB] bg-[#FBFBFC] text-left select-none cursor-default"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 tracking-wider">
-                      {activeOrg.code.slice(0, 2)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-[#111827] truncate leading-tight">
-                        {activeOrg.name}
-                      </div>
-                      <div className="text-[10px] font-mono text-[#6B7280] truncate leading-tight mt-0.5">
-                        {activeOrg.slug}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Search Modules Input */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-[#6B7280] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Search modules..."
-                  className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-[#E5E7EB] bg-[#FBFBFC] text-xs text-[#111827] placeholder-[#6B7280] focus:outline-none focus:border-[#0F172A] focus:ring-1 focus:ring-[#0F172A] transition-all font-sans"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => handleSearchChange('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#6B7280] hover:text-[#111827] rounded transition-colors"
-                    title="Clear search"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            </>
-          ) : (
-            /* Collapsed Organization Trigger: Interactive for Super Admin, Static for Regular Users */
-            <div className="flex justify-center py-1">
-              {isSuper ? (
-                <button
-                  type="button"
-                  onClick={onSwitchOrganization}
-                  title={`Switch workspace: ${activeOrg.name} (${activeOrg.slug})`}
-                  data-testid="sidebar-org-switcher-button-collapsed"
-                  className="w-9 h-9 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs shadow-sm hover:scale-105 transition-transform cursor-pointer"
-                >
-                  {activeOrg.code.slice(0, 2)}
-                </button>
-              ) : (
-                <div
-                  title={`${activeOrg.name} (${activeOrg.slug})`}
-                  data-testid="sidebar-org-static-badge-collapsed"
-                  className="w-9 h-9 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs shadow-sm select-none cursor-default"
-                >
-                  {activeOrg.code.slice(0, 2)}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* ================================================================== */}
-        {/* 2. NAVIGATION LINKS: FLATTENED UNDER STRUCTURED SECTION HEADERS     */}
-        {/* ================================================================== */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar text-xs">
-          {visibleSections.length === 0 ? (
-            <div className="text-center py-8 px-3">
-              <SearchX className="w-6 h-6 text-[#9CA3AF] mx-auto mb-2 stroke-[1.5]" />
-              <p className="text-xs font-medium text-[#475569]">No modules found</p>
-              <p className="text-[11px] text-[#9CA3AF] mt-0.5">Try a different search term</p>
-            </div>
-          ) : (
-            visibleSections.map((section) => (
-            <div key={section.id} className="space-y-0.5">
-              {/* Section Header */}
-              {!isCollapsed ? (
-                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6B7280] font-mono select-none">
-                  {section.title}
-                </div>
-              ) : (
-                <div className="w-full flex justify-center py-1.5">
-                  <div className="w-4 h-0.5 bg-[#E5E7EB] rounded" />
-                </div>
-              )}
-
-              {/* Section Links */}
-              <ul className="space-y-0.5">
-                {section.items.map((item) => {
-                  const Icon = item.icon || Layers;
-                  const isActive = activePath === item.path;
-
-                  return (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        onClick={() => handleLinkClick(item.path)}
-                        title={isCollapsed ? item.label : undefined}
-                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-all group relative cursor-pointer ${
-                          isActive
-                            ? 'bg-[#0F172A]/5 dark:bg-blue-500/15 text-[#0F172A] dark:text-blue-400 font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#0F172A] dark:before:bg-blue-500 before:rounded-r'
-                            : 'text-[#475569] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F1F5F9]/70 dark:hover:bg-slate-800/70 font-medium'
-                        }`}
-                      >
-                        <Icon
-                          className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                            isActive
-                              ? 'text-[#0F172A] dark:text-blue-400'
-                              : 'text-[#6B7280] dark:text-slate-400 group-hover:text-[#111827] dark:group-hover:text-white'
-                          }`}
-                        />
-
-                        {!isCollapsed && (
-                          <span className="truncate flex-1 text-left">{item.label}</span>
-                        )}
-
-                        {!isCollapsed && item.badge && (
-                          <span
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider font-mono ${
-                              isActive
-                                ? 'bg-[#0F172A] text-white'
-                                : 'bg-[#F1F5F9] text-[#475569] border border-[#E5E7EB]'
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-
-                        {/* Collapsed Tooltip */}
-                        {isCollapsed && (
-                          <div className="absolute left-full ml-2 px-2.5 py-1 bg-[#111827] text-white text-xs rounded-md whitespace-nowrap shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
-                            {item.label}
-                            {item.badge && ` (${item.badge})`}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )))}
-        </div>
-
-        {/* ================================================================== */}
-        {/* 3. SIDEBAR FOOTER: VERSION STAMP, LIVE PILL & COLLAPSE TOGGLE       */}
-        {/* ================================================================== */}
-        <div className="p-3 border-t border-[#E5E7EB] bg-white flex items-center justify-between">
-          {!isCollapsed ? (
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[11px] font-medium text-[#6B7280]">v2.4.0</span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-[#047857] bg-[#ECFDF5] border border-[#A7F3D0]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#047857]" />
-                <span>LIVE</span>
-              </span>
-            </div>
-          ) : (
-            <span className="w-2 h-2 rounded-full bg-[#047857] mx-auto" title="System LIVE" />
-          )}
-
-          <button
-            type="button"
-            onClick={handleToggle}
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={`p-1.5 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#111827] hover:bg-[#F8FAFC] transition-colors ${
-              isCollapsed ? 'hidden lg:flex' : ''
-            }`}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronLeft className="w-3.5 h-3.5" />
-            )}
-          </button>
-        </div>
-      </aside>
-    </>
-  );
+export const Sidebar: React.FC<SidebarProps> = (props) => {
+  return <AppSidebar {...props} />;
 };
 
+export { AppSidebar };
 export default Sidebar;

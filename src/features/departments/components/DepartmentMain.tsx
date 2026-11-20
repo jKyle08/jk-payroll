@@ -20,6 +20,7 @@ import { DepartmentTable } from './DepartmentTable.js';
 import { DepartmentTree } from './department-tree.js';
 import { DepartmentFormPage } from './DepartmentFormPage.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
+import { Button } from '../../../client/components/ui/index.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 
 export interface DepartmentMainProps {
@@ -129,13 +130,16 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
           </p>
         </div>
 
-        <button
+        <Button
+          type="button"
+          variant="primary"
+          size="lg"
           onClick={() => handleOpenCreate()}
-          className="h-10 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer self-start sm:self-auto"
+          leftIcon={<Plus className="w-4 h-4" />}
+          className="self-start sm:self-auto"
         >
-          <Plus className="w-4 h-4" />
-          <span>New Department</span>
-        </button>
+          New Department
+        </Button>
       </div>
 
       {/* Success Banner */}

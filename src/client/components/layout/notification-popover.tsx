@@ -14,6 +14,7 @@ import {
   Inbox,
   ChevronRight,
 } from 'lucide-react';
+import { Button, Badge } from '../ui/index.js';
 
 export type NotificationType = 'leave_request' | 'payroll_run' | 'approval' | 'system';
 export type NotificationStatus = 'Pending' | 'Approved' | 'Rejected' | 'Info';
@@ -90,44 +91,23 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
 
   const getStatusBadge = (status?: NotificationStatus) => {
     if (!status) return null;
-    switch (status) {
-      case 'Pending':
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800">
-            Pending Approval
-          </span>
-        );
-      case 'Approved':
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800">
-            Approved
-          </span>
-        );
-      case 'Rejected':
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800">
-            Rejected
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-            {status}
-          </span>
-        );
-    }
+    return (
+      <Badge variant="neutral" size="sm">
+        {status === 'Pending' ? 'Pending Approval' : status}
+      </Badge>
+    );
   };
 
   const getEventIcon = (type: NotificationType) => {
     switch (type) {
       case 'leave_request':
-        return <CalendarDays className="w-4 h-4 text-blue-500" />;
+        return <CalendarDays className="w-4 h-4 text-slate-600 dark:text-slate-300" />;
       case 'approval':
-        return <FileCheck2 className="w-4 h-4 text-emerald-500" />;
+        return <FileCheck2 className="w-4 h-4 text-slate-600 dark:text-slate-300" />;
       case 'payroll_run':
-        return <DollarSign className="w-4 h-4 text-amber-500" />;
+        return <DollarSign className="w-4 h-4 text-slate-600 dark:text-slate-300" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-slate-500" />;
+        return <AlertCircle className="w-4 h-4 text-slate-600 dark:text-slate-300" />;
     }
   };
 
@@ -146,44 +126,42 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
               Notifications
             </h3>
             {unreadCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-rose-500 text-white">
+              <Badge variant="neutral" size="sm">
                 {unreadCount}
-              </span>
+              </Badge>
             )}
           </div>
           {unreadCount > 0 && onMarkAllAsRead && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onMarkAllAsRead}
-              className="text-xs text-[#0F172A] hover:underline font-medium inline-flex items-center space-x-1 transition-colors"
+              className="h-7 text-xs"
             >
-              <CheckCheck className="w-3.5 h-3.5" />
+              <CheckCheck className="w-3.5 h-3.5 mr-1" />
               <span>Mark all as read</span>
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Filter Pills */}
         <div className="flex space-x-2">
-          <button
+          <Button
+            type="button"
+            size="sm"
+            variant={filter === 'All' ? 'primary' : 'secondary'}
             onClick={() => setFilter('All')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              filter === 'All'
-                ? 'bg-[#0F172A] text-white'
-                : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'
-            }`}
           >
             All
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={filter === 'Unread' ? 'primary' : 'secondary'}
             onClick={() => setFilter('Unread')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              filter === 'Unread'
-                ? 'bg-[#0F172A] text-white'
-                : 'bg-[#F1F5F9] text-[#475569] hover:bg-[#E2E8F0]'
-            }`}
           >
             Unread ({unreadCount})
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -253,13 +231,16 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-2.5 bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 text-center">
-        <button
+      <div className="p-2 bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800">
+        <Button
+          variant="ghost"
+          size="sm"
+          fullWidth
           onClick={onClose}
-          className="text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+          className="text-xs text-slate-600 dark:text-slate-400"
         >
           Close Notifications
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -18,10 +18,10 @@ Status: `IMPLEMENTED`
 
 ---
 
-## 2. Backwards-Compatibility Aliases
-For backward compatibility with legacy scripts and older integration tests:
-- `/api/tenants` -> routes to `/api/organizations`
-- `/api/super-admin/tenants` -> calls `organizationController.createOrganization`
-- `/api/tenant/departments` -> calls `departmentController.createDepartment`
-- `/api/tenant/departments/tree` -> calls `departmentController.getDepartmentTree`
-- `/api/type-of-leave` & `/api/leave-requests` -> routes to leave controllers
+## 2. Canonical Domain Routes
+All APIs are organized strictly under canonical domain routes:
+- `/api/organizations` -> Organization lifecycle and module allocations (`organizationController`)
+- `/api/departments` -> Department hierarchy, tree, and module allocation (`departmentController`)
+- `/api/users` -> User management, eligible modules, and permission assignment (`userController`)
+- `/api/leaves` -> Leave types and requests
+- Transactional aliases for legacy leave endpoints (`/api/type-of-leave` & `/api/leave-requests`) are preserved.

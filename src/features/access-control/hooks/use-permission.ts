@@ -28,17 +28,48 @@ export function evaluatePermission(
     return true;
   }
 
-  // 2. Implicit fallback for .View
+  // 2. Organization <-> Tenant alias equivalence
+  if (key.startsWith('Organization.')) {
+    const legacyKey = 'Tenant.' + key.slice(13);
+    if (set.has(legacyKey)) return true;
+  } else if (key.startsWith('Tenant.')) {
+    const canonicalKey = 'Organization.' + key.slice(7);
+    if (set.has(canonicalKey)) return true;
+  } else if (key.startsWith('OrganizationModule.')) {
+    const legacyKey = 'TenantModule.' + key.slice(19);
+    if (set.has(legacyKey)) return true;
+  } else if (key.startsWith('TenantModule.')) {
+    const canonicalKey = 'OrganizationModule.' + key.slice(13);
+    if (set.has(canonicalKey)) return true;
+  } else if (
+    (key === 'Role.View' || key === 'UserRole.View') &&
+    (set.has('RolePermission.View') ||
+      set.has('RolePermission.Add') ||
+      set.has('RolePermission.Edit'))
+  ) {
+    return true;
+  }
+
+  // 3. Implicit fallback for .View
   if (key.endsWith('.View')) {
     const modulePrefix = key.slice(0, -5); // Extract 'TypeOfLeave' from 'TypeOfLeave.View'
 
     // Check if user possesses any mutating action for this module
-    return (
+    if (
       set.has(`${modulePrefix}.Add`) ||
       set.has(`${modulePrefix}.Edit`) ||
       set.has(`${modulePrefix}.Delete`) ||
       set.has(`${modulePrefix}.Approval.Create`)
-    );
+    ) {
+      return true;
+    }
+
+    // Check mutating alias for Organization <-> Tenant
+    if (modulePrefix === 'Organization') {
+      if (set.has('Tenant.Add') || set.has('Tenant.Edit') || set.has('Tenant.Delete')) return true;
+    } else if (modulePrefix === 'Tenant') {
+      if (set.has('Organization.Add') || set.has('Organization.Edit') || set.has('Organization.Delete')) return true;
+    }
   }
 
   return false;

@@ -5,11 +5,12 @@
 
 export const MODULE_KEYS = {
   // Administrative Modules
-  TENANT: 'Tenant',
+  ORGANIZATION: 'Organization',
   DEPARTMENT: 'Department',
   PROFILE: 'Profile',
+  ROLE: 'Role',
   USER_ROLE: 'UserRole',
-  TENANT_MODULE: 'TenantModule',
+  ORGANIZATION_MODULE: 'OrganizationModule',
   DEPARTMENT_MODULE: 'DepartmentModule',
   ROLE_PERMISSION: 'RolePermission',
   USER_PERMISSION: 'UserPermission',
@@ -18,16 +19,27 @@ export const MODULE_KEYS = {
   TYPE_OF_LEAVE: 'TypeOfLeave',
   REQUEST_FOR_LEAVE: 'RequestForLeave',
   PAYROLL_COMPUTATION: 'PayrollComputation',
+
+  // Backward-compatibility aliases
+  TENANT: 'Organization',
+  TENANT_MODULE: 'OrganizationModule',
 } as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[keyof typeof MODULE_KEYS];
 
 export const PERMISSIONS = {
+  ORGANIZATION: {
+    VIEW: 'Organization.View',
+    ADD: 'Organization.Add',
+    EDIT: 'Organization.Edit',
+    DELETE: 'Organization.Delete',
+  },
+  // Backward-compatibility alias
   TENANT: {
-    VIEW: 'Tenant.View',
-    ADD: 'Tenant.Add',
-    EDIT: 'Tenant.Edit',
-    DELETE: 'Tenant.Delete',
+    VIEW: 'Organization.View',
+    ADD: 'Organization.Add',
+    EDIT: 'Organization.Edit',
+    DELETE: 'Organization.Delete',
   },
   DEPARTMENT: {
     VIEW: 'Department.View',
@@ -41,17 +53,30 @@ export const PERMISSIONS = {
     EDIT: 'Profile.Edit',
     DELETE: 'Profile.Delete',
   },
+  ROLE: {
+    VIEW: 'Role.View',
+    ADD: 'Role.Add',
+    EDIT: 'Role.Edit',
+    DELETE: 'Role.Delete',
+  },
   USER_ROLE: {
     VIEW: 'UserRole.View',
     ADD: 'UserRole.Add',
     EDIT: 'UserRole.Edit',
     DELETE: 'UserRole.Delete',
   },
+  ORGANIZATION_MODULE: {
+    VIEW: 'OrganizationModule.View',
+    ADD: 'OrganizationModule.Add',
+    EDIT: 'OrganizationModule.Edit',
+    DELETE: 'OrganizationModule.Delete',
+  },
+  // Backward-compatibility alias
   TENANT_MODULE: {
-    VIEW: 'TenantModule.View',
-    ADD: 'TenantModule.Add',
-    EDIT: 'TenantModule.Edit',
-    DELETE: 'TenantModule.Delete',
+    VIEW: 'OrganizationModule.View',
+    ADD: 'OrganizationModule.Add',
+    EDIT: 'OrganizationModule.Edit',
+    DELETE: 'OrganizationModule.Delete',
   },
   DEPARTMENT_MODULE: {
     VIEW: 'DepartmentModule.View',
@@ -93,17 +118,20 @@ export const PERMISSIONS = {
 } as const;
 
 export type PermissionKey =
-  | (typeof PERMISSIONS.TENANT)[keyof typeof PERMISSIONS.TENANT]
+  | (typeof PERMISSIONS.ORGANIZATION)[keyof typeof PERMISSIONS.ORGANIZATION]
   | (typeof PERMISSIONS.DEPARTMENT)[keyof typeof PERMISSIONS.DEPARTMENT]
   | (typeof PERMISSIONS.PROFILE)[keyof typeof PERMISSIONS.PROFILE]
+  | (typeof PERMISSIONS.ROLE)[keyof typeof PERMISSIONS.ROLE]
   | (typeof PERMISSIONS.USER_ROLE)[keyof typeof PERMISSIONS.USER_ROLE]
-  | (typeof PERMISSIONS.TENANT_MODULE)[keyof typeof PERMISSIONS.TENANT_MODULE]
+  | (typeof PERMISSIONS.ORGANIZATION_MODULE)[keyof typeof PERMISSIONS.ORGANIZATION_MODULE]
   | (typeof PERMISSIONS.DEPARTMENT_MODULE)[keyof typeof PERMISSIONS.DEPARTMENT_MODULE]
   | (typeof PERMISSIONS.ROLE_PERMISSION)[keyof typeof PERMISSIONS.ROLE_PERMISSION]
   | (typeof PERMISSIONS.USER_PERMISSION)[keyof typeof PERMISSIONS.USER_PERMISSION]
   | (typeof PERMISSIONS.TYPE_OF_LEAVE)[keyof typeof PERMISSIONS.TYPE_OF_LEAVE]
   | (typeof PERMISSIONS.REQUEST_FOR_LEAVE)[keyof typeof PERMISSIONS.REQUEST_FOR_LEAVE]
   | (typeof PERMISSIONS.PAYROLL_COMPUTATION)[keyof typeof PERMISSIONS.PAYROLL_COMPUTATION]
+  | (typeof PERMISSIONS.TENANT)[keyof typeof PERMISSIONS.TENANT]
+  | (typeof PERMISSIONS.TENANT_MODULE)[keyof typeof PERMISSIONS.TENANT_MODULE]
   | (string & {});
 
 export const MUTATING_ACTIONS = [

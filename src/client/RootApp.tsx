@@ -139,7 +139,7 @@ export const RootApp: React.FC = () => {
         }
       />
       <Route
-        path="/admin/tenants"
+        path="/admin/organizations"
         element={
           <ProtectedDashboardLayout>
             <OrganizationMain />
@@ -206,11 +206,36 @@ export const RootApp: React.FC = () => {
           </ProtectedDashboardLayout>
         }
       />
+      {/* User Roles (Multiple Assigning of Users to Roles) */}
       <Route
         path="/admin/user-roles"
         element={
           <ProtectedDashboardLayout>
             <UserRoleMain />
+          </ProtectedDashboardLayout>
+        }
+      />
+      <Route
+        path="/admin/user-roles/assign"
+        element={
+          <ProtectedDashboardLayout>
+            <UserRoleFormPage />
+          </ProtectedDashboardLayout>
+        }
+      />
+      <Route
+        path="/admin/user-roles/new"
+        element={
+          <ProtectedDashboardLayout>
+            <UserRoleFormPage />
+          </ProtectedDashboardLayout>
+        }
+      />
+      <Route
+        path="/admin/user-roles/:id/edit"
+        element={
+          <ProtectedDashboardLayout>
+            <UserRoleFormPage />
           </ProtectedDashboardLayout>
         }
       />
@@ -236,11 +261,11 @@ export const RootApp: React.FC = () => {
       {/* Error & Gating Pages */}
       <Route
         path="/unauthorized"
-        element={
-          <ProtectedDashboardLayout>
-            <UnauthorizedPage />
-          </ProtectedDashboardLayout>
-        }
+        element={<UnauthorizedPage />}
+      />
+      <Route
+        path="/401"
+        element={<UnauthorizedPage />}
       />
       <Route
         path="/maintenance"

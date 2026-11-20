@@ -6,7 +6,8 @@
 // ==============================================================================
 
 import React, { useEffect, useCallback } from 'react';
-import { AlertTriangle, Info, Loader2, X } from 'lucide-react';
+import { AlertTriangle, Info, X } from 'lucide-react';
+import { Button } from './Button.js';
 
 export interface ConfirmDialogProps {
   isOpen: boolean;
@@ -115,7 +116,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             type="button"
             disabled={isLoading}
             onClick={onClose}
-            className="flex-shrink-0 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-[#F8FAFC] transition-colors disabled:opacity-40"
+            className="flex-shrink-0 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-[#F8FAFC] dark:hover:bg-slate-800 transition-colors disabled:opacity-40 cursor-pointer"
             aria-label="Close dialog"
           >
             <X className="w-4 h-4" />
@@ -123,29 +124,26 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
-          <button
+        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB] dark:border-slate-800">
+          <Button
             type="button"
+            variant="secondary"
+            size="md"
             disabled={isLoading}
             onClick={onClose}
-            className="h-9 px-4 rounded-lg border border-[#E5E7EB] bg-white text-xs font-semibold text-[#475569] hover:text-[#111827] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {resolvedCancelLabel}
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
-            disabled={isLoading}
+            variant={isDestructive ? 'destructive' : 'primary'}
+            size="md"
+            isLoading={isLoading}
             onClick={onConfirm}
-            className={`h-9 px-4 rounded-lg text-xs font-semibold text-white flex items-center gap-1.5 transition-colors shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed ${
-              isDestructive
-                ? 'bg-rose-600 hover:bg-rose-700 focus:ring-2 focus:ring-rose-500/20'
-                : 'bg-[#0F172A] hover:bg-[#1E293B] focus:ring-2 focus:ring-[#0F172A]/20'
-            }`}
           >
-            {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            <span>{resolvedConfirmLabel}</span>
-          </button>
+            {resolvedConfirmLabel}
+          </Button>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
 import { SearchableSelect } from '../../../client/components/ui/SearchableSelect.js';
 import { SearchButton } from '../../../client/components/ui/SearchButton.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
+import { Button, Badge, TableActionMenu } from '../../../client/components/ui/index.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 import React, { useState, useEffect } from 'react';
 import { Plus, UserPlus, Shield, Globe2, Building2, Search, X, Filter, Lock, Pencil, Trash2, Eye, AlertCircle } from 'lucide-react';
@@ -60,8 +61,14 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
     else if (navigate) navigate('/admin/roles/new');
   };
 
-  const handleAssignUserRole = () => {
-    if (navigate) navigate('/admin/roles/assign');
+  const handleAssignUserRole = (roleId?: string) => {
+    if (navigate) {
+      if (roleId) {
+        navigate(`/admin/roles/assign?roleId=${roleId}`);
+      } else {
+        navigate('/admin/roles/assign');
+      }
+    }
   };
 
   const handleOpenRole = (r: RoleItem) => {
@@ -141,31 +148,33 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB]">
         <div>
           <div className="flex items-center space-x-2 mb-1.5">
-            <span className="text-xs font-semibold text-[#6B7280]">User Roles</span>
+            <span className="text-xs font-semibold text-[#6B7280]">Roles</span>
             <span className="text-xs text-[#E5E7EB]">/</span>
-            <span className="text-xs font-semibold text-[#111827]">User Role Directory</span>
+            <span className="text-xs font-semibold text-[#111827]">Role Directory</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">User Role</h1>
-          <p className="text-xs text-[#6B7280] mt-0.5">Manage user roles, tenant authorization scopes, and access boundaries.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Role Directory</h1>
+          <p className="text-xs text-[#6B7280] mt-0.5">Directory of system and custom authorization roles, access tiers, and operational permissions.</p>
         </div>
 
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="lg"
             onClick={handleCreateRole}
-            className="h-10 px-4 rounded-xl border border-[#E5E7EB] hover:bg-[#F8FAFC] bg-white text-[#111827] text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+            leftIcon={<Plus className="w-4 h-4" />}
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Role</span>
-          </button>
-          <button
+            Add Role
+          </Button>
+          <Button
             type="button"
-            onClick={handleAssignUserRole}
-            className="h-10 px-4 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+            variant="outline"
+            size="lg"
+            onClick={() => handleAssignUserRole()}
+            leftIcon={<UserPlus className="w-4 h-4" />}
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Assign User Role</span>
-          </button>
+            Assign Users to Role
+          </Button>
         </div>
       </div>
 
@@ -428,7 +437,7 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{r.name}</span>
                       {r.isDefault && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">DEFAULT</span>
+                        <Badge variant="neutral" size="sm">DEFAULT</Badge>
                       )}
                       {!r.isMutable && <Lock className="w-3 h-3 text-[#9CA3AF]" />}
                     </div>
@@ -436,36 +445,38 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
                   </td>
                   <td className="py-3 px-4">{r.organizationName}</td>
                   <td className="py-3 px-4">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        r.roleType === 'SYSTEM' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-700 border-slate-200'
-                      }`}
-                    >
+                    <Badge variant="neutral" size="sm">
                       {r.roleType}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="py-3 px-4 text-right tabular-nums">{r.assignedUsers}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenRole(r)}
-                        className="p-1.5 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F1F5F9] cursor-pointer"
-                        title={r.isEditable ? 'Edit role' : 'View role'}
-                      >
-                        {r.isEditable ? <Pencil className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                      {r.isEditable && (
-                        <button
-                          type="button"
-                          onClick={() => setPendingDelete(r)}
-                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50"
-                          title="Delete role"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
+                  <td className="py-3 px-4 text-right">
+                    <TableActionMenu
+                      actions={[
+                        {
+                          label: r.isEditable ? 'Edit Role' : 'View Role Details',
+                          icon: r.isEditable ? <Pencil className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />,
+                          onClick: () => handleOpenRole(r),
+                        },
+                        {
+                          label: 'Assign Users to Role',
+                          icon: <UserPlus className="w-3.5 h-3.5 text-indigo-600" />,
+                          onClick: () => handleAssignUserRole(r.id),
+                        },
+                        ...(r.isEditable
+                          ? [
+                              {
+                                label: 'Delete Role',
+                                icon: <Trash2 className="w-3.5 h-3.5" />,
+                                variant: 'danger' as const,
+                                divider: true,
+                                onClick: () => setPendingDelete(r),
+                              },
+                            ]
+                          : []),
+                      ]}
+                      title="Role Actions"
+                    />
                   </td>
                 </tr>
               ))}

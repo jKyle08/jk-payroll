@@ -34,6 +34,7 @@ VALUES
     ('a0000000-0000-0000-0000-000000000011', 'Tenant', 'Tenants & Organizations', 'Administration', true),
     ('a0000000-0000-0000-0000-000000000012', 'Department', 'Department Hierarchy', 'Administration', true),
     ('a0000000-0000-0000-0000-000000000013', 'Profile', 'Staff & User Profiles', 'Administration', true),
+    ('a0000000-0000-0000-0000-000000000019', 'Role', 'Security Roles', 'Administration', true),
     ('a0000000-0000-0000-0000-000000000014', 'UserRole', 'User Role Assignment', 'Administration', true),
     ('a0000000-0000-0000-0000-000000000015', 'TenantModule', 'Tenant Module Allocation', 'Administration', true),
     ('a0000000-0000-0000-0000-000000000016', 'DepartmentModule', 'Department Module Allocation', 'Administration', true),
@@ -74,6 +75,15 @@ VALUES
     ('b0000000-0000-0000-0000-000000000132', 'a0000000-0000-0000-0000-000000000013', 'Add', 'Profile.Add'),
     ('b0000000-0000-0000-0000-000000000133', 'a0000000-0000-0000-0000-000000000013', 'Edit', 'Profile.Edit'),
     ('b0000000-0000-0000-0000-000000000134', 'a0000000-0000-0000-0000-000000000013', 'Delete', 'Profile.Delete')
+ON CONFLICT (full_key) DO UPDATE SET action = EXCLUDED.action, module_id = EXCLUDED.module_id;
+
+-- Administrative Actions: Role
+INSERT INTO public.module_actions (id, module_id, action, full_key)
+VALUES
+    ('b0000000-0000-0000-0000-000000000191', 'a0000000-0000-0000-0000-000000000019', 'View', 'Role.View'),
+    ('b0000000-0000-0000-0000-000000000192', 'a0000000-0000-0000-0000-000000000019', 'Add', 'Role.Add'),
+    ('b0000000-0000-0000-0000-000000000193', 'a0000000-0000-0000-0000-000000000019', 'Edit', 'Role.Edit'),
+    ('b0000000-0000-0000-0000-000000000194', 'a0000000-0000-0000-0000-000000000019', 'Delete', 'Role.Delete')
 ON CONFLICT (full_key) DO UPDATE SET action = EXCLUDED.action, module_id = EXCLUDED.module_id;
 
 -- Administrative Actions: UserRole

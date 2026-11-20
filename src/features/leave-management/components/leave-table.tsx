@@ -15,9 +15,12 @@ import {
   Search,
   ChevronRight,
   User,
+  Check,
+  X,
 } from 'lucide-react';
 import { LeaveRequest, LeaveStatus } from '../types.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
+import { Button, Badge, TableActionMenu } from '../../../client/components/ui/index.js';
 
 export interface LeaveTableProps {
   records: LeaveRequest[];
@@ -48,35 +51,11 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
   const pagination = usePagination(filteredRecords, 10);
 
   const getStatusBadge = (status: LeaveStatus) => {
-    switch (status) {
-      case 'Pending':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-            <Clock className="w-3 h-3" />
-            <span>Pending</span>
-          </span>
-        );
-      case 'Approved':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            <CheckCircle2 className="w-3 h-3" />
-            <span>Approved</span>
-          </span>
-        );
-      case 'Rejected':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-            <XCircle className="w-3 h-3" />
-            <span>Rejected</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-            {status}
-          </span>
-        );
-    }
+    return (
+      <Badge variant="neutral" dot size="sm">
+        {status}
+      </Badge>
+    );
   };
 
   return (
@@ -99,18 +78,15 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
         {/* Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto">
           {(['All', 'Pending', 'Approved', 'Rejected'] as const).map((st) => (
-            <button
+            <Button
               key={st}
               type="button"
+              size="sm"
+              variant={statusFilter === st ? 'primary' : 'secondary'}
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                statusFilter === st
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
             >
               {st}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -153,7 +129,7 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
                   </td>
                   <td className="py-3.5 px-4">
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs ring-1 ring-blue-500/20">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs ring-1 ring-slate-200 dark:ring-slate-700">
                         <User className="w-4 h-4" />
                       </div>
                       <div>
@@ -190,22 +166,23 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({
                   {canApprove && (
                     <td className="py-3.5 px-4 text-right">
                       {item.status === 'Pending' ? (
-                        <div className="inline-flex items-center space-x-2">
-                          <button
-                            type="button"
-                            onClick={() => onApprove?.(item)}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onReject?.(item)}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300 transition-colors"
-                          >
-                            Reject
-                          </button>
-                        </div>
+                        <TableActionMenu
+                          actions={[
+                            {
+                              label: 'Approve Request',
+                              icon: <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />,
+                              onClick: () => onApprove?.(item),
+                            },
+                            {
+                              label: 'Reject Request',
+                              icon: <X className="w-3.5 h-3.5" />,
+                              variant: 'danger',
+                              divider: true,
+                              onClick: () => onReject?.(item),
+                            },
+                          ]}
+                          title="Leave Request Actions"
+                        />
                       ) : (
                         <span className="text-[11px] text-slate-400 font-medium">Completed</span>
                       )}
