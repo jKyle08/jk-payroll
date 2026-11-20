@@ -1,5 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: REUSABLE APP LAYOUT WITH FIXED COLLAPSIBLE SIDEBAR
+// Design System: "Midnight & Champagne Steel"
 // File: src/client/layouts/AppLayout.tsx
 // ==============================================================================
 
@@ -7,15 +8,14 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SidebarProvider, useSidebar } from '../components/layout/SidebarContext.js';
 import { AppSidebar } from '../components/layout/AppSidebar.js';
-import { Topbar } from '../components/layout/topbar.js';
-import { Footer } from '../components/layout/footer.js';
+import { AppTopbar } from '../components/layout/AppTopbar.js';
+import { AppFooter } from '../components/layout/AppFooter.js';
 import { UserProfileData } from '../components/layout/user-profile-popover.js';
 import { NotificationItem } from '../components/layout/notification-popover.js';
 import { OrganizationSwitcherModal } from '../components/layout/OrganizationSwitcherModal.js';
 import { Organization } from '../../features/organizations/types.js';
 import { OrganizationContext } from '../components/layout/sidebar.js';
 import { PERMISSIONS } from '../../shared/constants/permissions.js';
-import { authFetch } from '../lib/auth-session.js';
 
 export interface AppLayoutProps {
   children?: React.ReactNode;
@@ -91,9 +91,6 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
 
   const activePath = initialPath || location.pathname;
 
-  // Search state
-  const [, setSearchQuery] = useState('');
-
   // Topbar Notification State
   const [notifications, setNotifications] = useState<NotificationItem[]>(DEFAULT_NOTIFICATIONS);
 
@@ -104,10 +101,6 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
   // Tenant / Organization Context
   const [activeTenantCode, setActiveTenantCode] = useState(initialTenantCode);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-
-  // Organization List for Switcher Modal
-  const [, setOrganizations] = useState<Organization[]>([]);
-  const [, setIsOrgsLoading] = useState(false);
 
   // Theme state
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
@@ -150,39 +143,6 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
     }
   }, [initialTenantCode]);
 
-  // Lazy-load organizations list when switcher opens
-  useEffect(() => {
-    if (!isSwitcherOpen) return;
-
-    let isMounted = true;
-    setIsOrgsLoading(true);
-
-    authFetch('/api/organizations', {
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load organizations');
-        return res.json();
-      })
-      .then((data) => {
-        if (isMounted) {
-          setOrganizations(Array.isArray(data) ? data : data.organizations || []);
-        }
-      })
-      .catch((err) => {
-        console.warn('Could not load organizations for switcher:', err);
-      })
-      .finally(() => {
-        if (isMounted) setIsOrgsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isSwitcherOpen]);
-
   // Handlers for Notifications
   const handleMarkAllAsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -204,6 +164,13 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
     navigate('/login');
   }, [navigate]);
 
+  const isSuperAdmin = Boolean(
+    currentUser.role === 'Super Admin' ||
+    currentUser.role?.toLowerCase().includes('super') ||
+    userPermissions.includes('*') ||
+    userPermissions.includes('SUPER_ADMIN')
+  );
+
   // Convert organization context for Sidebar
   const orgContext: OrganizationContext = useMemo(
     () => ({
@@ -220,13 +187,21 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
   );
 
   return (
-    <div className="min-h-screen w-screen overflow-x-hidden bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased relative">
-      {/* 1. Left Fixed Primary Navigation Sidebar */}
+    <div className="min-h-screen w-full min-w-0 bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased flex relative">
+      {/* 1. Reserved Sidebar Shell Column (Desktop): Reserves exact width in document flow without margin-calc hacks */}
+      <div
+        className={`hidden lg:block flex-shrink-0 transition-[width] duration-300 ease-in-out ${
+          isCollapsed ? 'w-[72px]' : 'w-[260px]'
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* 2. Fixed Desktop Sidebar / Slide-in Mobile Drawer */}
       <AppSidebar
         user={currentUser}
         activePath={activePath}
         userPermissions={userPermissions}
-        isSuperAdmin={currentUser.role === 'Super Admin'}
+        isSuperAdmin={isSuperAdmin}
         roleName={currentUser.role}
         organization={orgContext}
         tenantCode={activeTenantCode}
@@ -234,17 +209,10 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
         onSwitchOrganization={() => setIsSwitcherOpen(true)}
       />
 
-      {/* 2. Main Content Layout: Dynamically adjusts position and width based on sidebar state */}
-      <div
-        className={`min-h-screen flex flex-col transition-[margin,width] duration-300 ease-in-out ${
-          isCollapsed
-            ? 'ml-0 w-full'
-            : 'ml-0 w-full lg:ml-[260px] lg:w-[calc(100%-260px)]'
-        }`}
-      >
+      {/* 3. Main Workspace Column: Automatically fills 100% of the remaining available viewport width */}
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen max-w-full">
         {/* Top Header with Accessible Sidebar Toggle Button */}
-        <Topbar
-          onSearch={setSearchQuery}
+        <AppTopbar
           notifications={notifications}
           onMarkAllAsRead={handleMarkAllAsRead}
           user={currentUser}
@@ -254,20 +222,25 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
           onToggleSidebar={toggleSidebar}
           onToggleTheme={handleToggleTheme}
           currentTheme={currentTheme}
+          onNavigate={(path) => navigate(path)}
+          onSwitchOrganization={() => setIsSwitcherOpen(true)}
+          onProfileClick={() => navigate('/admin/profiles')}
+          onSwitchDepartment={() => navigate('/admin/departments')}
+          isSuperAdmin={isSuperAdmin}
         />
 
         {/* Dynamic Main Content Viewport */}
         <main
-          className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 focus:outline-none"
+          className="flex-1 min-w-0 w-full px-4 py-6 sm:px-6 lg:px-8 focus:outline-none"
           id="main-content"
           role="region"
           aria-label="Main Application Content"
         >
-          <div className="mx-auto max-w-7xl">{children}</div>
+          <div className="mx-auto max-w-7xl w-full min-w-0">{children}</div>
         </main>
 
-        {/* Persistent Branding Footer */}
-        <Footer />
+        {/* Normal-flow Legal Footer */}
+        <AppFooter />
       </div>
 
       {/* Scope / Account Switcher Modal */}

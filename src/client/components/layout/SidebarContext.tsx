@@ -12,6 +12,10 @@ import React, {
   useMemo,
 } from 'react';
 
+export const SIDEBAR_EXPANDED_WIDTH = 260;
+export const SIDEBAR_COLLAPSED_WIDTH = 72;
+export const STORAGE_KEY = 'paypulse_sidebar_collapsed';
+
 export interface SidebarContextValue {
   isCollapsed: boolean;
   isMobileOpen: boolean;
@@ -21,15 +25,14 @@ export interface SidebarContextValue {
   openMobile: () => void;
   closeMobile: () => void;
   width: number;
+  expandedWidth: number;
+  collapsedWidth: number;
 }
 
 export interface SidebarProviderProps {
   children: React.ReactNode;
   defaultCollapsed?: boolean;
 }
-
-const STORAGE_KEY = 'paypulse_sidebar_collapsed';
-const SIDEBAR_WIDTH = 260;
 
 const defaultContextValue: SidebarContextValue = {
   isCollapsed: false,
@@ -39,7 +42,9 @@ const defaultContextValue: SidebarContextValue = {
   toggleMobile: () => {},
   openMobile: () => {},
   closeMobile: () => {},
-  width: SIDEBAR_WIDTH,
+  width: SIDEBAR_EXPANDED_WIDTH,
+  expandedWidth: SIDEBAR_EXPANDED_WIDTH,
+  collapsedWidth: SIDEBAR_COLLAPSED_WIDTH,
 };
 
 export const SidebarContext = createContext<SidebarContextValue>(defaultContextValue);
@@ -50,9 +55,13 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
 }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored !== null) {
-        return stored === 'true';
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored !== null) {
+          return stored === 'true';
+        }
+      } catch {
+        // ignore localStorage access errors
       }
     }
     return defaultCollapsed;
@@ -138,7 +147,9 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
       toggleMobile,
       openMobile,
       closeMobile,
-      width: SIDEBAR_WIDTH,
+      width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH,
+      expandedWidth: SIDEBAR_EXPANDED_WIDTH,
+      collapsedWidth: SIDEBAR_COLLAPSED_WIDTH,
     }),
     [
       isCollapsed,

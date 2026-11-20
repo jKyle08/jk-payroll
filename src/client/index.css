@@ -75,8 +75,11 @@
   border-color: #1e293b;
 }
 
-.dark .text-\[\#111827\],
-.dark .text-\[\#0F172A\] {
+.dark .text-\[\#111827\] {
+  color: #f8fafc;
+}
+
+.dark .text-\[\#0F172A\]:not(button):not([data-variant="primary"]):not([data-variant="primary"] *) {
   color: #f8fafc;
 }
 
@@ -91,21 +94,33 @@
 }
 
 .dark .hover\:text-\[\#111827\]:hover,
-.dark .hover\:text-\[\#0F172A\]:hover,
+.dark .hover\:text-\[\#0F172A\]:not(button):hover,
 .dark .group:hover .group-hover\:text-\[\#111827\],
-.dark .group:hover .group-hover\:text-\[\#0F172A\] {
+.dark .group:hover .group-hover\:text-\[\#0F172A\]:not(button) {
   color: #ffffff;
 }
 
-/* Primary action buttons and active badges in dark mode */
-.dark button.bg-\[\#0F172A\],
-.dark a.bg-\[\#0F172A\] {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;
+/* ============================================================================
+   MONOCHROMATIC PRIMARY BUTTONS IN DARK MODE (Platinum Slate)
+   Replaces saturated blues (#3B82F6 / #2563EB) with clean Platinum Slate tokens.
+   ============================================================================ */
+.dark button[data-variant="primary"],
+.dark .btn-primary {
+  background-color: #cbd5e1;
+  border-color: #cbd5e1;
+  color: #0f172a;
 }
 
-.dark button.bg-\[\#0F172A\]:hover,
-.dark a.bg-\[\#0F172A\]:hover {
-  background-color: #2563eb;
+.dark button[data-variant="primary"]:hover,
+.dark .btn-primary:hover {
+  background-color: #e2e8f0;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.dark button[data-variant="primary"]:active,
+.dark .btn-primary:active {
+  background-color: #94a3b8;
+  border-color: #94a3b8;
+  color: #0f172a;
 }

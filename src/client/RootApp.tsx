@@ -291,7 +291,7 @@ export const RootApp: React.FC = () => {
               <button
                 type="button"
                 onClick={() => window.history.back()}
-                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] active:bg-[#020617] text-white border border-[#0F172A] dark:bg-[#CBD5E1] dark:hover:bg-[#E2E8F0] dark:active:bg-[#94A3B8] dark:text-[#0F172A] dark:border-[#CBD5E1] px-4 py-2 text-sm font-semibold shadow-2xs transition-colors cursor-pointer"
               >
                 Go Back
               </button>

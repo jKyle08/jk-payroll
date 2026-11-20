@@ -173,7 +173,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 aria-current={p === page ? 'page' : undefined}
                 className={`h-8 min-w-8 px-2.5 rounded-lg border text-xs font-semibold font-mono tabular-nums flex items-center justify-center transition-colors cursor-pointer ${
                   p === page
-                    ? 'bg-[#0F172A] text-white border-[#0F172A] dark:bg-blue-600 dark:border-blue-600 shadow-2xs'
+                    ? 'bg-[#0F172A] text-white border-[#0F172A] dark:bg-[#CBD5E1] dark:text-[#0F172A] dark:border-[#CBD5E1] shadow-2xs'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >

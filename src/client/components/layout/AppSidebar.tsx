@@ -148,46 +148,52 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         className={`fixed top-0 bottom-0 left-0 z-40 flex flex-col bg-[#FBFBFC] dark:bg-slate-900 border-r border-[#E5E7EB] dark:border-slate-800 transition-all duration-300 ease-in-out select-none overflow-hidden ${
           isMobileOpen
             ? 'translate-x-0 w-[260px] shadow-2xl z-50'
-            : isCollapsed
-            ? '-translate-x-full lg:-translate-x-full w-0 lg:w-0 border-r-0 pointer-events-none'
-            : '-translate-x-full lg:translate-x-0 lg:w-[260px]'
+            : `-translate-x-full lg:translate-x-0 ${
+                isCollapsed ? 'lg:w-[72px]' : 'lg:w-[260px]'
+              }`
         }`}
       >
-        {/* Fixed Width Inner Wrapper to prevent contents squishing during transition */}
-        <div className="w-[260px] min-w-[260px] h-full flex flex-col">
+        <div className="h-full flex flex-col w-full">
           {/* ================================================================== */}
           {/* A. BRAND HEADER: APPLICATION LOGO & CLOSE BUTTON (MOBILE)          */}
           {/* ================================================================== */}
           <div className="h-14 px-3 flex items-center justify-between border-b border-[#E5E7EB] dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm flex-shrink-0">
+            {isCollapsed ? (
+              <div
+                title="PayPulse Enterprise Payroll"
+                className="w-8 h-8 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm mx-auto cursor-pointer"
+                onClick={propToggleCollapse || sidebarContext.toggleSidebar}
+              >
                 JK
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1.5 leading-tight">
-                  <span className="font-bold text-sm tracking-tight text-[#111827] dark:text-white">
-                    PayPulse
-                  </span>
-                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded bg-[#F1F5F9] dark:bg-slate-800 text-[#475569] dark:text-slate-400 border border-[#E5E7EB] dark:border-slate-700">
-                    RBAC
-                  </span>
+            ) : (
+              <>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm flex-shrink-0">
+                    JK
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-sm tracking-tight text-[#111827] dark:text-white leading-tight">
+                      PayPulse
+                    </span>
+                    <span className="text-[10px] text-[#6B7280] dark:text-slate-400 truncate mt-0.5 font-medium leading-tight">
+                      Enterprise Payroll
+                    </span>
+                  </div>
                 </div>
-                <span className="text-[10px] text-[#6B7280] dark:text-slate-400 truncate mt-0.5 font-medium">
-                  Enterprise Payroll
-                </span>
-              </div>
-            </div>
 
-            {/* Mobile Drawer Close Button */}
-            <button
-              type="button"
-              onClick={handleCloseMobile}
-              title="Close navigation drawer"
-              aria-label="Close navigation drawer"
-              className="p-1 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-slate-800 dark:hover:text-white transition-colors lg:hidden cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+                {/* Mobile Drawer Close Button */}
+                <button
+                  type="button"
+                  onClick={handleCloseMobile}
+                  title="Close navigation drawer"
+                  aria-label="Close navigation drawer"
+                  className="p-1 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-slate-800 dark:hover:text-white transition-colors lg:hidden cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </>
+            )}
           </div>
 
           {/* ================================================================== */}
@@ -195,11 +201,35 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           {/* ================================================================== */}
           <div className="p-3 border-b border-[#E5E7EB] dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 flex-shrink-0">
             {/* Interactive Organization Switcher (Super Admin) vs Static Badge */}
-            {isSuper ? (
+            {isCollapsed ? (
+              isSuper ? (
+                <button
+                  type="button"
+                  onClick={onSwitchOrganization}
+                  title={`Switch organization: ${activeOrg.name} (${activeOrg.code})`}
+                  data-testid="sidebar-org-switcher-button"
+                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/60 hover:bg-[#F1F5F9] dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider">
+                    {activeOrg.code.slice(0, 2)}
+                  </div>
+                </button>
+              ) : (
+                <div
+                  title={`${activeOrg.name} (${activeOrg.code})`}
+                  data-testid="sidebar-org-static-badge"
+                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/60 cursor-default"
+                >
+                  <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider">
+                    {activeOrg.code.slice(0, 2)}
+                  </div>
+                </div>
+              )
+            ) : isSuper ? (
               <button
                 type="button"
                 onClick={onSwitchOrganization}
-                title="Switch active organization workspace"
+                title={`Switch active organization: ${activeOrg.name} (${activeOrg.code})`}
                 data-testid="sidebar-org-switcher-button"
                 className="w-full flex items-center justify-between p-2 rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/60 hover:bg-[#F1F5F9] dark:hover:bg-slate-800 text-left transition-colors group cursor-pointer"
               >
@@ -208,11 +238,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     {activeOrg.code.slice(0, 2)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold text-[#111827] dark:text-white truncate leading-tight group-hover:text-[#0F172A]">
+                    <div className="text-xs font-semibold text-[#111827] dark:text-white truncate leading-tight group-hover:text-[#0F172A] dark:group-hover:text-white">
                       {activeOrg.name}
                     </div>
                     <div className="text-[10px] font-mono text-[#6B7280] dark:text-slate-400 truncate leading-tight mt-0.5">
-                      {activeOrg.slug}
+                      {activeOrg.code}
                     </div>
                   </div>
                 </div>
@@ -220,7 +250,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               </button>
             ) : (
               <div
-                title={`${activeOrg.name} (${activeOrg.slug})`}
+                title={`${activeOrg.name} (${activeOrg.code})`}
                 data-testid="sidebar-org-static-badge"
                 className="w-full flex items-center justify-between p-2 rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/60 text-left select-none cursor-default"
               >
@@ -233,91 +263,112 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       {activeOrg.name}
                     </div>
                     <div className="text-[10px] font-mono text-[#6B7280] dark:text-slate-400 truncate leading-tight mt-0.5">
-                      {activeOrg.slug}
+                      {activeOrg.code}
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Search Modules Input */}
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-[#6B7280] dark:text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search modules..."
-                className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/50 text-xs text-[#111827] dark:text-white placeholder-[#6B7280] dark:placeholder-slate-400 focus:outline-none focus:border-[#0F172A] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#0F172A] dark:focus:ring-blue-500 transition-all font-sans"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => handleSearchChange('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#6B7280] hover:text-[#111827] dark:text-slate-400 dark:hover:text-white rounded transition-colors"
-                  title="Clear search"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
+            {/* Navigation Search Input (Expanded only) */}
+            {!isCollapsed && (
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-[#6B7280] dark:text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Search modules..."
+                  className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/50 text-xs text-[#111827] dark:text-white placeholder-[#6B7280] dark:placeholder-slate-400 focus:outline-none focus:border-[#0F172A] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#0F172A] dark:focus:ring-blue-500 transition-all font-sans"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => handleSearchChange('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#6B7280] hover:text-[#111827] dark:text-slate-400 dark:hover:text-white rounded transition-colors"
+                    title="Clear search"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ================================================================== */}
-          {/* C. NAVIGATION LINKS: STRUCTURED SECTIONS                           */}
+          {/* C. NAVIGATION LINKS: STRUCTURED SECTIONS (INDEPENDENT SCROLL)      */}
           {/* ================================================================== */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar text-xs">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4 custom-scrollbar text-xs">
             {visibleSections.length === 0 ? (
-              <div className="text-center py-8 px-3">
-                <SearchX className="w-6 h-6 text-[#9CA3AF] mx-auto mb-2 stroke-[1.5]" />
-                <p className="text-xs font-medium text-[#475569] dark:text-slate-300">No modules found</p>
-                <p className="text-[11px] text-[#9CA3AF] mt-0.5">Try a different search term</p>
+              <div className="text-center py-8 px-2">
+                <SearchX className="w-5 h-5 text-[#9CA3AF] mx-auto mb-2 stroke-[1.5]" />
+                {!isCollapsed && (
+                  <>
+                    <p className="text-xs font-medium text-[#475569] dark:text-slate-300">No modules found</p>
+                    <p className="text-[11px] text-[#9CA3AF] mt-0.5">Try another search</p>
+                  </>
+                )}
               </div>
             ) : (
               visibleSections.map((section) => (
                 <div key={section.id} className="space-y-0.5">
-                  {/* Section Title */}
-                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400 font-mono select-none">
-                    {section.title}
-                  </div>
+                  {/* Section Title (Hidden in collapsed mode) */}
+                  {!isCollapsed ? (
+                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400 font-mono select-none">
+                      {section.title}
+                    </div>
+                  ) : (
+                    <div className="w-6 h-px bg-slate-200 dark:bg-slate-800 mx-auto my-1.5" />
+                  )}
 
                   {/* Section Items */}
                   <ul className="space-y-0.5">
                     {section.items.map((item) => {
                       const Icon = item.icon || Layers;
                       const isActive = activePath === item.path;
+                      const tooltipText = item.badge ? `${item.label} (${item.badge})` : item.label;
 
                       return (
                         <li key={item.id}>
                           <button
                             type="button"
                             onClick={() => handleLinkClick(item.path)}
-                            className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-all group relative cursor-pointer ${
+                            title={isCollapsed ? tooltipText : undefined}
+                            aria-label={item.label}
+                            className={`w-full flex items-center rounded-lg text-xs transition-all group relative cursor-pointer ${
+                              isCollapsed
+                                ? 'justify-center p-2.5'
+                                : 'gap-2.5 px-2.5 py-2'
+                            } ${
                               isActive
-                                ? 'bg-[#0F172A]/5 dark:bg-blue-500/15 text-[#0F172A] dark:text-blue-400 font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#0F172A] dark:before:bg-blue-500 before:rounded-r'
+                                ? 'bg-[#0F172A]/5 dark:bg-slate-800 text-[#0F172A] dark:text-slate-100 font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#0F172A] dark:before:bg-[#CBD5E1] before:rounded-r'
                                 : 'text-[#475569] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F1F5F9]/70 dark:hover:bg-slate-800/70 font-medium'
                             }`}
                           >
                             <Icon
                               className={`w-4 h-4 flex-shrink-0 transition-colors ${
                                 isActive
-                                  ? 'text-[#0F172A] dark:text-blue-400'
+                                  ? 'text-[#0F172A] dark:text-slate-200'
                                   : 'text-[#6B7280] dark:text-slate-400 group-hover:text-[#111827] dark:group-hover:text-white'
                               }`}
                             />
 
-                            <span className="truncate flex-1 text-left">{item.label}</span>
+                            {!isCollapsed && (
+                              <>
+                                <span className="truncate flex-1 text-left">{item.label}</span>
 
-                            {item.badge && (
-                              <span
-                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider font-mono ${
-                                  isActive
-                                    ? 'bg-[#0F172A] text-white dark:bg-blue-600'
-                                    : 'bg-[#F1F5F9] dark:bg-slate-800 text-[#475569] dark:text-slate-300 border border-[#E5E7EB] dark:border-slate-700'
-                                }`}
-                              >
-                                {item.badge}
-                              </span>
+                                {item.badge && (
+                                  <span
+                                    className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider font-mono ${
+                                      isActive
+                                        ? 'bg-[#0F172A] text-white dark:bg-[#CBD5E1] dark:text-[#0F172A]'
+                                        : 'bg-[#F1F5F9] dark:bg-slate-800 text-[#475569] dark:text-slate-300 border border-[#E5E7EB] dark:border-slate-700'
+                                    }`}
+                                  >
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </>
                             )}
                           </button>
                         </li>
@@ -330,49 +381,65 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           </div>
 
           {/* ================================================================== */}
-          {/* D. SIDEBAR FOOTER: USER PROFILE CARD & SYSTEM VERSION               */}
+          {/* D. SIDEBAR FOOTER: COMPACT USER MINI CARD                          */}
           {/* ================================================================== */}
-          <div className="p-3 border-t border-[#E5E7EB] dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5 flex-shrink-0">
-            {/* User Profile Mini Badge (if user supplied) */}
+          <div className="p-3 border-t border-[#E5E7EB] dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
             {user && (
-              <div className="flex items-center gap-2.5 p-1.5 rounded-lg bg-[#FBFBFC] dark:bg-slate-800/50 border border-[#E5E7EB] dark:border-slate-800">
-                <div className="relative flex-shrink-0">
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={user.fullName}
-                      className="w-7 h-7 rounded-full object-cover"
+              isCollapsed ? (
+                <div
+                  title={`${user.fullName} (${user.role || 'User'})`}
+                  className="flex items-center justify-center p-1"
+                >
+                  <div className="relative flex-shrink-0">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.fullName}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white font-bold text-xs flex items-center justify-center tracking-wide">
+                        {user.initials}
+                      </div>
+                    )}
+                    <span
+                      className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-1 ring-white ${
+                        user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
+                      }`}
                     />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-[#0F172A] text-white font-bold text-xs flex items-center justify-center tracking-wide">
-                      {user.initials}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 p-1.5 rounded-lg bg-[#FBFBFC] dark:bg-slate-800/50 border border-[#E5E7EB] dark:border-slate-800">
+                  <div className="relative flex-shrink-0">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.fullName}
+                        className="w-7 h-7 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#0F172A] text-white font-bold text-xs flex items-center justify-center tracking-wide">
+                        {user.initials}
+                      </div>
+                    )}
+                    <span
+                      className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-1 ring-white ${
+                        user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
+                      }`}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-[#111827] dark:text-white truncate leading-tight">
+                      {user.fullName}
                     </div>
-                  )}
-                  <span
-                    className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-1 ring-white ${
-                      user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
-                    }`}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-semibold text-[#111827] dark:text-white truncate leading-tight">
-                    {user.fullName}
-                  </div>
-                  <div className="text-[10px] text-[#6B7280] dark:text-slate-400 truncate leading-tight mt-0.5">
-                    {user.role || user.departmentName || user.email}
+                    <div className="text-[10px] text-[#6B7280] dark:text-slate-400 truncate leading-tight mt-0.5">
+                      {user.role || 'User'}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )
             )}
-
-            {/* Version & Status Pill */}
-            <div className="flex items-center justify-between text-[11px] text-[#6B7280] dark:text-slate-400">
-              <span className="font-mono font-medium">v2.4.0</span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-[#047857] bg-[#ECFDF5] dark:bg-emerald-950/60 dark:text-emerald-400 border border-[#A7F3D0] dark:border-emerald-800">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#047857] dark:bg-emerald-400" />
-                <span>LIVE</span>
-              </span>
-            </div>
           </div>
         </div>
       </aside>

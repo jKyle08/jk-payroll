@@ -27,23 +27,23 @@ export interface ButtonProps
 }
 
 const VARIANT_STYLES: Record<ButtonVariant, string> = {
-  // Solid primary background, high-contrast text, subtle hover state
+  // Primary: Midnight Slate (#0F172A) in Light mode, Platinum Slate (#CBD5E1) in Dark mode
   primary:
-    'bg-[#0F172A] hover:bg-[#1E293B] active:bg-[#020617] text-white border border-[#0F172A] dark:bg-slate-100 dark:hover:bg-white dark:active:bg-slate-200 dark:text-slate-900 dark:border-slate-100 shadow-2xs',
+    'bg-[#0F172A] hover:bg-[#1E293B] active:bg-[#020617] text-white border border-[#0F172A] focus:ring-[#0F172A]/15 focus-visible:ring-[#0F172A]/15 dark:bg-[#CBD5E1] dark:hover:bg-[#E2E8F0] dark:active:bg-[#94A3B8] dark:text-[#0F172A] dark:border-[#CBD5E1] dark:focus:ring-slate-400/20 dark:focus-visible:ring-slate-400/20 shadow-2xs',
 
-  // Neutral surface background, subtle neutral border, default foreground text
+  // Secondary: Neutral surface background, subtle neutral border, default foreground text
   secondary:
     'bg-white dark:bg-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-700/80 active:bg-[#F1F5F9] dark:active:bg-slate-700 text-[#334155] dark:text-slate-200 border border-[#E2E8F0] dark:border-slate-700 shadow-2xs',
 
-  // Transparent background, subtle neutral border, neutral foreground, minimal hover background
+  // Outline: Transparent background, subtle neutral border, neutral foreground, minimal hover background
   outline:
     'bg-transparent hover:bg-[#F8FAFC] dark:hover:bg-slate-800 active:bg-[#F1F5F9] dark:active:bg-slate-700/80 text-[#475569] dark:text-slate-300 border border-[#E2E8F0] dark:border-slate-700',
 
-  // Transparent background, no visible border, muted foreground, subtle neutral hover background
+  // Ghost: Transparent background, no visible border, muted foreground, subtle neutral hover background
   ghost:
     'bg-transparent hover:bg-[#F1F5F9] dark:hover:bg-slate-800 active:bg-[#E2E8F0] dark:active:bg-slate-700 text-[#64748B] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white border-transparent',
 
-  // Muted red treatment, reserved strictly for destructive actions
+  // Destructive: Muted red treatment, reserved strictly for destructive actions
   destructive:
     'bg-rose-50 hover:bg-rose-100/90 active:bg-rose-200/80 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:active:bg-rose-900/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 shadow-2xs',
 };
@@ -79,6 +79,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        data-variant={variant}
         disabled={disabled || isLoading}
         className={`inline-flex items-center select-none font-sans transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F172A]/15 dark:focus:ring-slate-400/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none flex-shrink-0 ${variantClass} ${sizeClass} ${widthClass} ${className}`}
         {...props}

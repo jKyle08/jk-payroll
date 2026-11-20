@@ -1,18 +1,16 @@
 // ==============================================================================
-// JK-PAYROLL: USER PROFILE POPOVER COMPONENT (FACEBOOK STYLE)
-// File: src/components/layout/user-profile-popover.tsx
+// JK-PAYROLL: USER PROFILE POPOVER COMPONENT (SAAS USER MENU)
+// File: src/client/components/layout/user-profile-popover.tsx
 // ==============================================================================
 
 import React, { useRef, useEffect } from 'react';
 import {
   User,
   Building2,
-  ShieldCheck,
-  Moon,
-  Sun,
   LogOut,
   ChevronRight,
-  Sparkles,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 export interface UserProfileData {
@@ -85,7 +83,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
   return (
     <div
       ref={popoverRef}
-      className="absolute right-0 top-14 mt-2 w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+      className="absolute right-0 top-14 mt-2 w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150 select-none"
       role="dialog"
       aria-label="User Account Menu"
     >
@@ -94,7 +92,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
         <div className="flex items-center space-x-3">
           {/* Avatar with Status Dot */}
           <div className="relative flex-shrink-0">
-            <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white font-bold flex items-center justify-center text-base border border-[#E5E7EB]">
+            <div className="w-12 h-12 rounded-full bg-[#0F172A] text-white font-bold flex items-center justify-center text-base border border-[#E5E7EB] dark:border-slate-700">
               {user.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -106,7 +104,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
               )}
             </div>
             <span
-              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ring-2 ring-white ${
+              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ring-2 ring-white dark:ring-slate-900 ${
                 user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
               }`}
             />
@@ -114,14 +112,12 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
 
           {/* User Details */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-1.5">
-              <h3 className="font-semibold text-sm text-[#111827] truncate">
-                {user.fullName}
-              </h3>
-            </div>
-            <p className="text-xs text-[#6B7280] truncate">{user.email}</p>
+            <h3 className="font-semibold text-sm text-[#111827] dark:text-white truncate">
+              {user.fullName}
+            </h3>
+            <p className="text-xs text-[#6B7280] dark:text-slate-400 truncate">{user.email}</p>
             {user.role && (
-              <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F1F5F9] text-[#475569] border border-[#E5E7EB]">
+              <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F1F5F9] dark:bg-slate-800 text-[#475569] dark:text-slate-300 border border-[#E5E7EB] dark:border-slate-700">
                 {user.role}
               </span>
             )}
@@ -129,16 +125,16 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
         </div>
 
         {/* Organization & Department Context */}
-        <div className="mt-3.5 p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E5E7EB] space-y-1 text-xs">
+        <div className="mt-3.5 p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-slate-800/60 border border-[#E5E7EB] dark:border-slate-800 space-y-1 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[#6B7280]">Workspace:</span>
-            <span className="font-semibold text-[#0F172A] font-mono text-[11px]">
+            <span className="text-[#6B7280] dark:text-slate-400">Organization:</span>
+            <span className="font-semibold text-[#0F172A] dark:text-slate-200 font-mono text-[11px] truncate max-w-[160px]">
               [{user.tenantCode}] {user.tenantName}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[#6B7280]">Department:</span>
-            <span className="font-semibold text-[#111827] truncate max-w-[150px]">
+            <span className="text-[#6B7280] dark:text-slate-400">Department:</span>
+            <span className="font-semibold text-[#111827] dark:text-white truncate max-w-[160px]">
               {user.departmentName}
               {user.subDepartmentName ? ` > ${user.subDepartmentName}` : ''}
             </span>
@@ -148,72 +144,46 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
 
       {/* 2. Action Menu Items */}
       <div className="p-2 space-y-1">
-        {/* Profile Link */}
+        {/* Profile Settings */}
         <button
+          type="button"
           onClick={() => {
             onProfileClick?.();
             onClose();
           }}
-          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
         >
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/60 group-hover:text-blue-600 transition-colors">
               <User className="w-4 h-4" />
             </div>
             <div className="text-left">
-              <p className="font-medium">My Profile & Account</p>
-              <p className="text-[11px] text-slate-400">View personal details</p>
+              <p className="font-medium text-slate-800 dark:text-slate-200">Profile Settings</p>
+              <p className="text-[11px] text-slate-400">View personal details & account</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
         </button>
 
-        {/* Switch Department / Scope */}
+        {/* Switch Department */}
         <button
+          type="button"
           onClick={() => {
             onSwitchDepartment?.();
             onClose();
           }}
-          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
         >
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/60 group-hover:text-blue-600 transition-colors">
               <Building2 className="w-4 h-4" />
             </div>
             <div className="text-left">
-              <p className="font-medium">Switch Department / Scope</p>
-              <p className="text-[11px] text-slate-400">Change operational branch</p>
+              <p className="font-medium text-slate-800 dark:text-slate-200">Switch Department</p>
+              <p className="text-[11px] text-slate-400">Change operational division</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-        </button>
-
-        {/* Display Theme Toggle */}
-        <button
-          onClick={() => {
-            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            onToggleTheme?.(nextTheme);
-          }}
-          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:text-amber-500 transition-colors">
-              {currentTheme === 'dark' ? (
-                <Moon className="w-4 h-4" />
-              ) : (
-                <Sun className="w-4 h-4 text-amber-500" />
-              )}
-            </div>
-            <div className="text-left">
-              <p className="font-medium">Display & Theme</p>
-              <p className="text-[11px] text-slate-400">
-                {currentTheme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-              </p>
-            </div>
-          </div>
-          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-            {currentTheme === 'dark' ? 'Dark' : 'Light'}
-          </span>
         </button>
       </div>
 
@@ -222,18 +192,19 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
       {/* 3. Sign Out Button */}
       <div className="p-2">
         <button
+          type="button"
           onClick={() => {
             onSignOut?.();
             onClose();
           }}
-          className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors group"
+          className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors group cursor-pointer"
         >
           <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400 group-hover:scale-105 transition-transform">
             <LogOut className="w-4 h-4" />
           </div>
           <div className="text-left">
-            <p>Log Out</p>
-            <p className="text-[10px] text-rose-400 font-normal">Terminate active session</p>
+            <p>Sign Out</p>
+            <p className="text-[10px] text-rose-400 font-normal">Terminate active session safely</p>
           </div>
         </button>
       </div>
