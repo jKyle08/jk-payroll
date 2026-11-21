@@ -1,6 +1,6 @@
 # Migration Standards & Canonical History
 
-Status: `IMPLEMENTED`
+Implementation guidance. The current phase status and deployment approval live in [the security master tracker](../../docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md). This file is not a phase tracker; migration files do not prove migrations are applied.
 
 ## 1. Canonical Migration Sequence (`supabase/migrations/`)
 
@@ -13,6 +13,14 @@ Status: `IMPLEMENTED`
 7. `20261104000007_audit_logs_superadmin_policy.sql`: Superadmin cross-tenant audit access RLS policies.
 8. `20261104000008_align_organizations_schema.sql`: Enterprise organization entity alignment (slugs, contact, pay frequency).
 9. `20261104000009_expand_organizations_sector_settings.sql`: Multi-sector profile configuration and immutable payroll run snapshot.
+10. `20261119000010_remediate_database_rls.sql`: Initial RLS remediation.
+11. `20261119000011_harden_audit_attribution_and_integrity.sql`: Audit attribution and integrity hardening.
+
+Subsequent security and configuration migrations:
+- `20261121000012` through `20261121000017`: Phase 1 containment, authorization corrections, organization configuration, and profile audit-field protection.
+- `20261121000018` and `20261121000019`: SuperAdmin organization onboarding and constrained member invitations.
+
+The sequence above describes files in the repository, not a verified live migration ledger. Do not claim these migrations are applied without checking the target database.
 
 ---
 

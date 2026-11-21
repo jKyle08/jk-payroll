@@ -7,6 +7,7 @@ import { getSupabaseAnonClient, getSupabaseClient } from '../../server/db/supaba
 import { db } from '../../server/db/repository.js';
 import { generateTestToken } from '../../server/middleware/auth.middleware.js';
 import { ENV } from '../../server/config/env.js';
+import { createHash } from 'node:crypto';
 import {
   fetchOrganizationById,
   validateOrganizationEligibility,
@@ -49,125 +50,77 @@ export class AuthService {
     }
   }
 
-  /**
-   * Registers a new tenant and administrator profile in Supabase Auth and database
-   */
+  /** Register an invited organization member; org, department and role come only from the token. */
   public async register(input: RegisterInput): Promise<UserSessionData> {
+    const email = input.email.trim().toLowerCase();
+    const tokenHash = createHash('sha256').update(input.invitationToken).digest('hex');
     const adminClient = getSupabaseClient();
+    const anonClient = getSupabaseAnonClient();
 
-    // 1. Create Supabase Auth user
-    const { data: createData, error: createError } = await adminClient.auth.admin.createUser({
-      email: input.email,
-      password: input.password,
-      email_confirm: true,
-      user_metadata: { full_name: input.fullName },
-    });
+    const { data: invitation, error: invitationError } = await adminClient
+      .from('organization_member_invitations')
+      .select('invited_email,expires_at,redeemed_at,redeemed_by')
+      .eq('token_hash', tokenHash)
+      .maybeSingle();
+    if (invitationError || !invitation || invitation.invited_email.toLowerCase() !== email) {
+      throw new Error('Invalid invitation or invited email mismatch');
+    }
+    if (!invitation.redeemed_at && new Date(invitation.expires_at).getTime() <= Date.now()) {
+      throw new Error('Invitation has expired');
+    }
 
-    let userId: string;
-    if (createError) {
-      if (createError.message.includes('already registered')) {
-        throw new Error('User with this email is already registered. Please log in.');
-      }
-      throw new Error(`Auth registration error: ${createError.message}`);
+    let userId: string | undefined;
+    let createdAuthUser = false;
+    let databaseCommitted = false;
+    let authSession: any = null;
+
+    // Existing invited accounts may accept an invitation by authenticating normally.
+    const existingLogin = await anonClient.auth.signInWithPassword({ email, password: input.password });
+    if (!existingLogin.error && existingLogin.data.user) {
+      userId = existingLogin.data.user.id;
+      authSession = existingLogin.data.session;
     } else {
-      userId = createData.user.id;
+      if (invitation.redeemed_at) throw new Error('Invitation has already been used');
+      const { data, error } = await adminClient.auth.admin.createUser({
+        email,
+        password: input.password,
+        email_confirm: true,
+        user_metadata: { full_name: input.fullName },
+      });
+      if (error || !data.user) throw new Error(error?.message || 'Could not create the invited account');
+      userId = data.user.id;
+      createdAuthUser = true;
+    }
+    if (invitation.redeemed_at && invitation.redeemed_by !== userId) {
+      throw new Error('Invitation has already been used');
     }
 
-    const tenantName = input.tenantName || 'Apex Health Systems';
-    const tenantCode = input.tenantCode || 'APEX-HLTH';
-    const deptName = input.departmentName || 'Human Resources';
-    const deptCode = input.departmentCode || 'HR';
+    try {
+      const { error } = await adminClient.rpc('provision_organization_member_from_invitation', {
+        p_token_hash: tokenHash,
+        p_user_id: userId,
+        p_full_name: input.fullName,
+      });
+      if (error) throw new Error(error.message || 'Membership provisioning failed');
+      databaseCommitted = true;
 
-    // 2. Insert or fetch tenant
-    const { data: tenantData, error: tenantError } = await adminClient
-      .from('organizations')
-      .insert({ name: tenantName, code: tenantCode, is_active: true })
-      .select('id, name, code')
-      .single();
-
-    let tenantId = tenantData?.id;
-    if (tenantError) {
-      const { data: existingTenant } = await adminClient
-        .from('organizations')
-        .select('id, name, code')
-        .eq('code', tenantCode)
-        .single();
-      if (existingTenant) tenantId = existingTenant.id;
+      if (!authSession) {
+        const signIn = await anonClient.auth.signInWithPassword({ email, password: input.password });
+        if (signIn.error || !signIn.data.user || !signIn.data.session) {
+          throw new Error(signIn.error?.message || 'Membership was created but a session could not be started');
+        }
+        authSession = signIn.data.session;
+      }
+      return await this.resolveUserSession(userId, authSession.access_token);
+    } catch (error) {
+      // Supabase Auth and PostgreSQL are separate services. The membership RPC is
+      // transactional; remove a new Auth identity if that transaction fails.
+      if (createdAuthUser && userId && !databaseCommitted) {
+        const { error: cleanupError } = await adminClient.auth.admin.deleteUser(userId);
+        if (cleanupError) console.error('Unable to remove unprovisioned Auth identity:', cleanupError.message);
+      }
+      throw error;
     }
-
-    if (!tenantId) {
-      throw new Error('Failed to create or associate organization tenant');
-    }
-
-    // 3. Insert or fetch department
-    const { data: deptData } = await adminClient
-      .from('departments')
-      .insert({
-        organization_id: tenantId,
-        name: deptName,
-        code: deptCode,
-        is_active: true,
-      })
-      .select('id')
-      .single();
-
-    let departmentId = deptData?.id;
-    if (!departmentId) {
-      const { data: existingDept } = await adminClient
-        .from('departments')
-        .select('id')
-        .eq('organization_id', tenantId)
-        .eq('code', deptCode)
-        .single();
-      if (existingDept) departmentId = existingDept.id;
-    }
-
-    // 4. Upsert Profile
-    await adminClient.from('profiles').upsert({
-      id: userId,
-      organization_id: tenantId,
-      department_id: departmentId,
-      full_name: input.fullName,
-      email: input.email,
-      is_active: true,
-      is_organization_admin: true,
-      is_super_admin: false,
-    });
-
-    // 5. Generate session token
-    const token = generateTestToken({
-      userId,
-      tenantId,
-      departmentId,
-      isTenantAdmin: true,
-      isSuperAdmin: false,
-    });
-
-    return {
-      userId,
-      email: input.email,
-      fullName: input.fullName,
-      tenantId,
-      tenantName,
-      tenantCode,
-      departmentId,
-      departmentName: deptName,
-      isTenantAdmin: true,
-      isSuperAdmin: false,
-      token,
-      effectivePermissions: [
-        'TypeOfLeave.View',
-        'TypeOfLeave.Add',
-        'TypeOfLeave.Edit',
-        'TypeOfLeave.Delete',
-        'RequestForLeave.View',
-        'RequestForLeave.Add',
-        'RequestForLeave.Edit',
-        'RequestForLeave.Delete',
-        'RequestForLeave.Approval.Create',
-        'PayrollComputation.View',
-      ],
-    };
   }
 
   /**
@@ -177,7 +130,7 @@ export class AuthService {
     const adminClient = getSupabaseClient();
 
     // 1. Fetch Profile (Check in-memory db repository first, then remote Supabase)
-    const localProfile = db.getProfileById(userId);
+    const localProfile = ENV.NODE_ENV === 'production' ? undefined : db.getProfileById(userId);
     let profile = localProfile
       ? {
           id: localProfile.id,
@@ -544,6 +497,49 @@ export class AuthService {
         effectivePermissions: permissions,
       },
     };
+  }
+
+  /**
+   * Refreshes an active authentication session.
+   * If a Supabase refresh token is provided, uses Supabase Auth to rotate tokens.
+   * Otherwise validates that the user and tenant remain active and unexpired before reissuing.
+   */
+  public async refreshToken(token?: string, refreshToken?: string): Promise<{ token: string; user: UserSessionData }> {
+    if (refreshToken) {
+      const supabaseAnon = getSupabaseAnonClient();
+      const { data, error } = await supabaseAnon.auth.refreshSession({ refresh_token: refreshToken });
+      if (error || !data.user || !data.session) {
+        throw new Error('Invalid or expired refresh token');
+      }
+      const user = await this.resolveUserSession(data.user.id, data.session.access_token);
+      return { token: data.session.access_token, user };
+    }
+
+    if (!token) {
+      throw new Error('Authentication token required for refresh');
+    }
+
+    // Inspect token payload safely
+    let userId: string | null = null;
+    try {
+      const parts = token.split('.');
+      if (parts.length >= 2) {
+        const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const decodedStr = Buffer.from(payloadBase64, 'base64').toString('utf-8');
+        const payload = JSON.parse(decodedStr);
+        userId = payload.sub || payload.userId || null;
+      }
+    } catch {
+      throw new Error('Malformed token provided for refresh');
+    }
+
+    if (!userId) {
+      throw new Error('Unable to extract user identity from token');
+    }
+
+    // Validate that profile and organization still exist and are eligible
+    const user = await this.resolveUserSession(userId);
+    return { token: user.token, user };
   }
 }
 

@@ -47,6 +47,7 @@ import {
   DEFAULT_ORGANIZATION_SETTINGS,
 } from '../../../features/organizations/types.js';
 import { useOrganizationMutations } from '../../../features/organizations/hooks/useOrganizationMutations.js';
+import { useFormDraft } from '../../hooks/useFormDraft.js';
 
 export interface OrganizationOnboardingWizardProps {
   mode?: 'standalone' | 'internal';
@@ -124,16 +125,7 @@ export const OrganizationOnboardingWizard: React.FC<OrganizationOnboardingWizard
 
   const { onboardOrg, isSubmitting, mutationError, clearError } = useOrganizationMutations();
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    watch,
-    setValue,
-    setError,
-    trigger,
-    formState: { errors },
-  } = useForm<OrganizationOnboardingFormInput, any, OrganizationOnboardingInput>({
+  const form = useForm<OrganizationOnboardingFormInput, any, OrganizationOnboardingInput>({
     resolver: zodResolver(organizationOnboardingSchema) as any,
     mode: 'onTouched',
     defaultValues: {
@@ -142,7 +134,7 @@ export const OrganizationOnboardingWizard: React.FC<OrganizationOnboardingWizard
       slug: '',
       sector: 'Private',
       tier: 'Enterprise',
-      status: mode === 'standalone' ? 'Onboarding' : 'Active',
+      status: 'Active',
       currency: 'PHP',
       timezone: 'Asia/Manila',
       countryCode: 'PH',
@@ -159,6 +151,28 @@ export const OrganizationOnboardingWizard: React.FC<OrganizationOnboardingWizard
       statutoryIds: {},
       settings: DEFAULT_ORGANIZATION_SETTINGS,
       modules: ['Department', 'EmployeeProfile', 'RolePermission'],
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    setError,
+    trigger,
+    formState: { errors },
+  } = form;
+
+  const { isRestored, clearDraft, discardDraft } = useFormDraft<OrganizationOnboardingFormInput>({
+    formId: `organization-onboarding-${mode}`,
+    form,
+    currentStep,
+    onRestored: (draft) => {
+      if (draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 4) {
+        setCurrentStep(draft.currentStep);
+      }
     },
   });
 
@@ -263,20 +277,26 @@ export const OrganizationOnboardingWizard: React.FC<OrganizationOnboardingWizard
 
   const onFinalSubmit = async (data: OrganizationOnboardingInput) => {
     clearError();
+    if (mode === 'standalone' && !initialToken) {
+      setLaunchProgress(null);
+      setError('admin.email', { type: 'manual', message: 'Open this page using a valid SuperAdmin onboarding link.' });
+      return;
+    }
     const finalData: OrganizationOnboardingInput = {
       ...data,
-      status: mode === 'standalone' ? 'Onboarding' : (data.status || 'Active'),
+      status: 'Active',
     };
     setLaunchProgress(
       mode === 'standalone'
-        ? 'Registering organization in Onboarding mode...'
+        ? 'Registering the invited organization administrator...'
         : 'Provisioning organization database record...'
     );
     try {
-      const result = await onboardOrg(finalData);
+      const result = await onboardOrg(finalData, initialToken);
+      clearDraft();
       setLaunchProgress(
         mode === 'standalone'
-          ? 'Workspace registered. Redirecting to workspace setup...'
+          ? 'Organization and administrator registered. Continue to sign in...'
           : 'Workspace successfully activated. Redirecting...'
       );
 
@@ -313,7 +333,7 @@ export const OrganizationOnboardingWizard: React.FC<OrganizationOnboardingWizard
                   JK Payroll Platform
                 </span>
                 <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-white/10 text-slate-300 border border-white/10">
-                  {mode === 'standalone' ? 'Self-Service Onboarding' : 'Super Admin Provisioning'}
+                  {mode === 'standalone' ? 'SuperAdmin Invitation' : 'Super Admin Provisioning'}
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-0.5">
@@ -380,6 +400,28 @@ export const OrganizationOnboardingWizard: React.FC<OrganizationOnboardingWizard
           </div>
         </div>
       </div>
+
+      {/* RESTORED DRAFT RECOVERY BANNER */}
+      {isRestored && (
+        <div className="mx-6 sm:mx-8 mt-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <span>
+              <strong>Draft Recovered:</strong> Unsaved onboarding progress was restored for this tab.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              discardDraft();
+              setCurrentStep(1);
+            }}
+            className="text-xs font-semibold text-amber-900 dark:text-amber-200 underline hover:no-underline cursor-pointer flex-shrink-0"
+          >
+            Discard Draft
+          </button>
+        </div>
+      )}
 
       {/* ERROR & STATUS BANNERS */}
       {mutationError && (

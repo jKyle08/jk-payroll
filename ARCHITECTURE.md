@@ -293,9 +293,9 @@ Through this architecture, runtime permission checking overhead is bounded to $O
 
 ---
 
-## 4. Security Test Cases Verified
+## 4. Security Test Cases
 
-Automated tests in [tests/rbac.test.ts](file:///c:/Users/HP_06/.gemini/antigravity-ide/scratch/jk-payroll/tests/rbac.test.ts) verify all required security constraints:
+Automated tests in [tests/rbac.test.ts](tests/rbac.test.ts) cover these constraints. Current results and database-verification limits are tracked in the [security production readiness record](docs/security/SECURITY_PRODUCTION_READINESS.md); this architecture document does not grant phase completion or production approval.
 
 | Test Case | Description | Result |
 | :--- | :--- | :--- |

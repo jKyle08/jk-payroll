@@ -129,11 +129,19 @@ export async function createOrganization(
  * Returns created organization with dashboard redirectUrl
  */
 export async function createOrganizationOnboarding(
-  data: OrganizationOnboardingInput | OrganizationOnboardingFormInput
+  data: OrganizationOnboardingInput | OrganizationOnboardingFormInput,
+  onboardingToken: string,
 ): Promise<OrganizationOnboardingResult> {
   return apiRequest<OrganizationOnboardingResult>(`${BASE_URL}/onboarding`, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, onboardingToken }),
+  });
+}
+
+export async function createOrganizationOnboardingInvitation(email: string): Promise<{ onboardingUrl: string; expiresAt: string }> {
+  return apiRequest<{ success: boolean; onboardingUrl: string; expiresAt: string }>(`${BASE_URL}/onboarding-invitations`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
   });
 }
 

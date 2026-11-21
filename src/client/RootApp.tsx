@@ -1,14 +1,17 @@
 import React from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout } from './layouts/DashboardLayout.js';
 import { useAuth } from '../features/auth/hooks/use-auth.js';
 import { LoginPage } from '../features/auth/components/LoginPage.js';
 import { UnauthorizedPage, MaintenancePage } from './components/ui/StatusPages.js';
+import { saveCurrentRoute } from './core/auth/RouteRestoration.js';
+import { getTabId } from './core/persistence/TabIdentity.js';
 import {
   OrganizationMain,
   OrganizationFormPage,
 } from '../features/organizations/index.js';
 import { StandaloneOnboardPage } from './pages/onboarding/StandaloneOnboardPage.js';
+import { InvitationRegistrationPage } from '../features/auth/components/InvitationRegistrationPage.js';
 import { TokenOnboardPage } from './pages/onboarding/TokenOnboardPage.js';
 import { NewOrganizationPage } from './pages/organizations/NewOrganizationPage.js';
 import {
@@ -50,8 +53,16 @@ const DepartmentEditPage: React.FC = () => {
  */
 const ProtectedDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
 
   if (!isAuthenticated) {
+    saveCurrentRoute({
+      tabId: getTabId(),
+      userId: user?.userId,
+      tenantId: user?.tenantId,
+      customPath: `${location.pathname}${location.search}`,
+      reason: 'unauthenticated_route_access',
+    });
     return <Navigate to="/login" replace />;
   }
 
@@ -81,9 +92,17 @@ const ProtectedDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ chi
  * Route protection wrapper requiring active session but without Dashboard Chrome (Sidebar/Topbar)
  */
 const ProtectedOnboardingRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
 
   if (!isAuthenticated) {
+    saveCurrentRoute({
+      tabId: getTabId(),
+      userId: user?.userId,
+      tenantId: user?.tenantId,
+      customPath: `${location.pathname}${location.search}`,
+      reason: 'unauthenticated_route_access',
+    });
     return <Navigate to="/login" replace />;
   }
 
@@ -101,6 +120,7 @@ export const RootApp: React.FC = () => {
       {/* 2. Standalone Client Onboarding Routes (No sidebar or dashboard chrome) */}
       <Route path="/onboard" element={<StandaloneOnboardPage />} />
       <Route path="/onboarding" element={<StandaloneOnboardPage />} />
+      <Route path="/register" element={<InvitationRegistrationPage />} />
       <Route path="/onboarding/:token" element={<TokenOnboardPage />} />
 
       {/* 3. Root Entry: Navigate to /organizations if authenticated, otherwise to /login */}

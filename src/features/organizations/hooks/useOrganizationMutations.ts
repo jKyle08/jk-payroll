@@ -15,6 +15,7 @@ import {
 import {
   createOrganization,
   createOrganizationOnboarding,
+  createOrganizationOnboardingInvitation,
   updateOrganization,
   updateOrganizationSettings,
   deleteOrganization,
@@ -61,11 +62,13 @@ export function useOrganizationMutations() {
   );
 
   const onboardOrg = useCallback(
-    async (data: OrganizationOnboardingInput): Promise<OrganizationOnboardingResult> => {
+    async (data: OrganizationOnboardingInput, onboardingToken?: string): Promise<OrganizationOnboardingResult> => {
       setIsSubmitting(true);
       setMutationError(null);
       try {
-        const result = await createOrganizationOnboarding(data);
+        const result = onboardingToken
+          ? await createOrganizationOnboarding(data, onboardingToken)
+          : { organization: await createOrganization(data), redirectUrl: '/organizations' };
         return result;
       } catch (err: any) {
         const msg = err.message || 'Failed to onboard organization';
@@ -77,6 +80,20 @@ export function useOrganizationMutations() {
     },
     []
   );
+
+  const createOnboardingInvitation = useCallback(async (email: string) => {
+    setIsSubmitting(true);
+    setMutationError(null);
+    try {
+      return await createOrganizationOnboardingInvitation(email);
+    } catch (err: any) {
+      const msg = err.message || 'Failed to create onboarding link';
+      setMutationError(msg);
+      throw err;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
 
   const updateOrgSettings = useCallback(
     async (id: string, data: UpdateOrganizationSettingsInput): Promise<Organization> => {
@@ -117,6 +134,7 @@ export function useOrganizationMutations() {
   return {
     createOrg,
     onboardOrg,
+    createOnboardingInvitation,
     updateOrg,
     updateOrgSettings,
     deleteOrg,

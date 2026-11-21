@@ -13,8 +13,9 @@ import {
 } from '../../server/middleware/auth.middleware.js';
 import { validate } from '../../server/middleware/validate.middleware.js';
 import {
-  createOrganizationSchema,
-  organizationOnboardingSchema,
+  organizationProvisioningSchema,
+  organizationOnboardingSubmissionSchema,
+  createOnboardingInvitationSchema,
   updateOrganizationSchema,
   updateOrganizationSettingsSchema,
   updateModulesSchema,
@@ -24,7 +25,15 @@ import {
 
 export const organizationRoutes = Router();
 
-// Global auth barrier for all organization endpoints
+// Public endpoint: authorization is a short-lived, single-use onboarding token.
+// It is declared before the authenticated route barrier intentionally.
+organizationRoutes.post(
+  '/onboarding',
+  validate({ body: organizationOnboardingSubmissionSchema }),
+  (req, res) => organizationController.createOrganizationOnboarding(req, res)
+);
+
+// All remaining organization endpoints require a current authenticated session.
 organizationRoutes.use(authMiddleware);
 
 /**
@@ -57,19 +66,16 @@ organizationRoutes.get(
 organizationRoutes.post(
   '/',
   requireSuperAdmin,
-  validate({ body: createOrganizationSchema }),
+  validate({ body: organizationProvisioningSchema }),
   (req, res) => organizationController.createOrganization(req, res)
 );
 
-/**
- * @route   POST /api/organizations/onboarding
- * @desc    Onboarding wizard registration for new tenant
- * @access  SuperAdmin or Authenticated User
- */
+/** SuperAdmin issues a one-use, 24-hour onboarding link bound to an email. */
 organizationRoutes.post(
-  '/onboarding',
-  validate({ body: organizationOnboardingSchema }),
-  (req, res) => organizationController.createOrganizationOnboarding(req, res)
+  '/onboarding-invitations',
+  requireSuperAdmin,
+  validate({ body: createOnboardingInvitationSchema }),
+  (req, res) => organizationController.createOnboardingInvitation(req, res)
 );
 
 /**

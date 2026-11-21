@@ -1,6 +1,6 @@
 # Supabase Security & Recursive CTE Procedures
 
-Status: `IMPLEMENTED`
+Implementation guidance. Database verification and production approval are tracked in [the security master tracker](../../docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md) and [readiness record](../../docs/security/SECURITY_PRODUCTION_READINESS.md). This file is not a phase tracker; repository SQL does not prove deployed state.
 
 ## 1. Recursive CTE Procedures
 

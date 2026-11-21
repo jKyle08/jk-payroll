@@ -1158,6 +1158,13 @@ export class DatabaseRepository {
     isTenantAdmin?: boolean;
     isSuperAdmin?: boolean;
     isActive?: boolean;
+    /**
+     * Phase 1.1.1: when false, creating the in-memory profile does NOT manufacture an
+     * organization membership. Used when hydrating a profile from Supabase, where
+     * organization_members is the only membership authority.
+     * Default (true) preserves legacy seed/test behaviour.
+     */
+    syncMembership?: boolean;
   }): Profile {
     const profile: Profile = {
       id: data.id || randomUUID(),
@@ -1176,7 +1183,7 @@ export class DatabaseRepository {
     this.profiles.set(profile.id, profile);
 
     // Synchronize default organization membership for profile
-    if (profile.tenantId) {
+    if (profile.tenantId && data.syncMembership !== false) {
       const memberKey = `${profile.tenantId}:${profile.id}`;
       if (!this.organizationMembers.has(memberKey)) {
         this.organizationMembers.set(memberKey, {
@@ -1417,12 +1424,23 @@ export class DatabaseRepository {
     }
 
     const profile = this.getProfileById(userId);
-    if (!profile || profile.tenantId !== tenantId || !profile.isActive) {
+    if (!profile || !profile.isActive) {
+      return [];
+    }
+
+    // Phase 1.1.1: organization_members is the authoritative membership source.
+    // profiles.tenantId is NOT membership proof (multi-organization users).
+    const member = this.getOrganizationMember(tenantId, userId);
+    if (!member || member.isActive === false) {
       return [];
     }
 
     // Super Admin & Tenant Admin have full access to all tenant-enabled modules
-    if (profile.isSuperAdmin || profile.isTenantAdmin) {
+    if (
+      profile.isSuperAdmin ||
+      member.isOwner ||
+      (profile.isTenantAdmin && profile.tenantId === tenantId)
+    ) {
       const activeTenantModules = this.getTenantModules(tenantId);
       const activeModuleIds = new Set(activeTenantModules.map((m) => m.id));
       return Array.from(this.moduleActions.values())
@@ -1430,12 +1448,19 @@ export class DatabaseRepository {
         .map((ma) => ma.fullKey);
     }
 
-    if (!profile.departmentId) {
+    // Phase 1.1.1: resolve the department from the membership record for THIS organization
+    // and validate that the department belongs to that organization.
+    const departmentId = member.departmentId || null;
+    if (!departmentId) {
+      return [];
+    }
+    const department = this.getDepartmentById(departmentId);
+    if (!department || department.organizationId !== tenantId) {
       return [];
     }
 
-    // 1. Get modules effective for user's department (with ancestor inheritance)
-    const effectiveModules = this.getDepartmentEffectiveModules(tenantId, profile.departmentId);
+    // 1. Modules effective for the membership department (with ancestor inheritance)
+    const effectiveModules = this.getDepartmentEffectiveModules(tenantId, departmentId);
     const effectiveModuleIds = new Set(effectiveModules.map((m) => m.id));
 
     // 2. Direct user permissions that belong to allowed modules
@@ -1449,9 +1474,28 @@ export class DatabaseRepository {
       }
     }
 
-    // 3. Expand implicit dependencies (e.g. Add -> View, Edit -> View, Delete -> View)
-    const expandedActionIds = new Set<string>(directActionIds);
-    for (const actionId of directActionIds) {
+    // 3. Role-derived permissions (active assignment, active role, role scoped to this org or SYSTEM)
+    //    ADDITIVE with direct permissions: effective = RoleActions UNION DirectActions.
+    const roleActionIds = new Set<string>();
+    for (const ur of this.userRoles.values()) {
+      if (ur.tenantId !== tenantId || ur.userId !== userId || ur.isActive === false) continue;
+      const role = this.roles.get(ur.roleId);
+      if (!role || !role.isActive) continue;
+      if (role.organizationId !== null && role.organizationId !== tenantId) continue;
+      for (const rp of this.rolePermissions.values()) {
+        if (rp.roleId !== ur.roleId) continue;
+        const action = this.moduleActions.get(rp.actionId);
+        if (action && effectiveModuleIds.has(action.moduleId)) {
+          roleActionIds.add(action.id);
+        }
+      }
+    }
+
+    const candidateActionIds = new Set<string>([...roleActionIds, ...directActionIds]);
+
+    // 4. Expand implicit dependencies (e.g. Add -> View, Edit -> View, Delete -> View)
+    const expandedActionIds = new Set<string>(candidateActionIds);
+    for (const actionId of candidateActionIds) {
       for (const dep of this.permissionDependencies) {
         if (dep.parentActionId === actionId) {
           expandedActionIds.add(dep.impliedActionId);
@@ -1459,7 +1503,7 @@ export class DatabaseRepository {
       }
     }
 
-    // 4. Return distinct list of full_key strings
+    // 5. Return distinct list of full_key strings
     const effectiveKeys: string[] = [];
     for (const aId of expandedActionIds) {
       const action = this.moduleActions.get(aId);

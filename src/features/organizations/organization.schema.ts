@@ -65,7 +65,7 @@ export const organizationSettingsSchema = z.object({
     allowNegativeBalance: false,
     requireApprovalLevels: 1,
     carryOverLimitDays: 5,
-  }).optional(),
+  }),
   security: securitySettingsSchema.default({
     enforce2FA: false,
     protectPayslipWithPassword: true,
@@ -91,7 +91,7 @@ const updateDateField = z.preprocess(
  * Validation schema for initial tenant registration / onboarding wizard
  * Target Audience: Public signup / Super Admin onboarding a brand new tenant
  */
-export const organizationOnboardingSchema = z.object({
+const organizationOnboardingBaseSchema = z.object({
   name: z.string().min(2, 'Organization name must be at least 2 characters').max(150, 'Organization name cannot exceed 150 characters'),
   code: z
     .string()
@@ -168,7 +168,9 @@ export const organizationOnboardingSchema = z.object({
 
   startDate: createDateField,
   endDate: createDateField,
-}).refine(
+});
+
+export const organizationOnboardingSchema = organizationOnboardingBaseSchema.refine(
   (data) => {
     if (data.admin.confirmPassword) {
       return data.admin.password === data.admin.confirmPassword;
@@ -180,6 +182,37 @@ export const organizationOnboardingSchema = z.object({
     path: ['admin', 'confirmPassword'],
   }
 );
+
+// Public onboarding is permitted only with a SuperAdmin-issued, one-use link.
+// The token is transport authorization, not an organization/department/role selector.
+export const organizationOnboardingSubmissionSchema = organizationOnboardingBaseSchema.extend({
+  onboardingToken: z.string().min(40).max(200),
+  admin: organizationOnboardingBaseSchema.shape.admin.extend({
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(8, 'Password confirmation is required'),
+  }).refine((admin) => admin.password === admin.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  }),
+});
+
+// Same trusted first-owner payload, used when a SuperAdmin provisions directly
+// instead of sending a registration link.
+export const organizationProvisioningSchema = organizationOnboardingBaseSchema.extend({
+  admin: organizationOnboardingBaseSchema.shape.admin.extend({
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(8, 'Password confirmation is required'),
+  }).refine((admin) => admin.password === admin.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  }),
+});
+
+export const createOnboardingInvitationSchema = z.object({
+  email: z.string().email().max(255),
+});
+
+export type OrganizationOnboardingSubmission = z.infer<typeof organizationOnboardingSubmissionSchema>;
 
 export type OrganizationOnboardingInput = z.infer<typeof organizationOnboardingSchema>;
 export type OrganizationOnboardingFormInput = z.input<typeof organizationOnboardingSchema>;

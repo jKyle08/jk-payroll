@@ -176,7 +176,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
     // 4. Resolve user profile (Check in-memory db first, fallback to Supabase PostgreSQL)
-    let profile = db.getProfileById(userId);
+    // In production, local repository entries are caches only and cannot establish
+    // active status or platform-admin authority.
+    let profile = ENV.NODE_ENV === 'production' ? undefined : db.getProfileById(userId);
 
     if (!profile) {
       try {
@@ -197,6 +199,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
             isTenantAdmin: remoteProfile.is_organization_admin,
             isSuperAdmin: remoteProfile.is_super_admin,
             isActive: remoteProfile.is_active,
+            // Phase 1.1.1: profiles.organization_id must never manufacture membership.
+            // Membership is resolved from organization_members by validateUserOrganizationMembership().
+            syncMembership: false,
           });
 
           // Also ensure tenant exists locally
@@ -288,10 +293,23 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     req.tenant = validatedTenant;
 
     // Preload effective permissions for fast evaluation against validated tenant
-    req.effectivePermissions = permissionService.getUserEffectivePermissions(
-      userContext.tenantId,
-      userContext.userId
-    );
+    if (ENV.NODE_ENV === 'production') {
+      try {
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase.rpc('get_user_effective_permissions', {
+          p_organization_id: userContext.organizationId,
+          p_user_id: userContext.userId,
+        });
+        req.effectivePermissions = !error && Array.isArray(data) ? data : [];
+      } catch {
+        req.effectivePermissions = [];
+      }
+    } else {
+      req.effectivePermissions = permissionService.getUserEffectivePermissions(
+        userContext.tenantId,
+        userContext.userId
+      );
+    }
 
     next();
   } catch (error: any) {

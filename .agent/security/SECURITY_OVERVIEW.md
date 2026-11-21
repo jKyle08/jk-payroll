@@ -1,6 +1,8 @@
 # Security Architecture Overview
 
-Status: `IMPLEMENTED`
+Status: Implementation guidance; see current phase state in [the security master tracker](../../docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md). This file does not indicate verification or production approval.
+
+Architecture baseline: [SECURITY_ARCHITECTURE_BASELINE.md](../../docs/security/SECURITY_ARCHITECTURE_BASELINE.md). This `.agent` file remains subsystem guidance, not a phase tracker.
 
 ## 1. Security Defense-in-Depth Model
 JK Payroll implements a multi-layered security model:

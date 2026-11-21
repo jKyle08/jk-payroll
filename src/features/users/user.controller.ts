@@ -7,14 +7,15 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { userService } from './user.service.js';
 import { auditLogsService, extractTrustedActor } from '../audit-logs/audit-logs.service.js';
+import { organizationService } from '../organizations/organization.service.js';
+import { ENV } from '../../server/config/env.js';
 
 const CreateUserSchema = z.object({
   fullName: z.string().min(2),
-  email: z.string().email().optional(),
-  departmentId: z.string().uuid().nullable().optional(),
-  isTenantAdmin: z.boolean().optional(),
-  isSuperAdmin: z.boolean().optional(),
-});
+  email: z.string().email(),
+  departmentId: z.string().uuid().nullable(),
+  roleId: z.string().uuid(),
+}).strict();
 
 const AssignUserPermissionsSchema = z.object({
   actionIds: z.array(z.string().uuid()),
@@ -29,46 +30,29 @@ export class UserController {
         return;
       }
 
-      const isSuper = Boolean(req.user?.isSuperAdmin);
-      const isSuperAdmin = isSuper ? Boolean(parsed.data.isSuperAdmin) : false;
-      const tenantId = isSuper && (req.body.tenantId || req.body.organizationId)
-        ? (req.body.tenantId || req.body.organizationId)
-        : req.user!.tenantId;
-
-      const actor = req.user
-        ? {
-            isSuperAdmin: isSuper,
-            tenantId: req.user.tenantId,
-          }
-        : undefined;
-
-      const profile = userService.createUser(
-        {
-          tenantId,
-          departmentId: parsed.data.departmentId,
-          fullName: parsed.data.fullName,
-          email: parsed.data.email,
-          isTenantAdmin: parsed.data.isTenantAdmin,
-          isSuperAdmin,
-        },
-        actor
+      const actor = req.user;
+      if (!actor?.userId || !actor.tenantId) {
+        res.status(401).json({ error: 'Authenticated organization context is required' });
+        return;
+      }
+      const invitation = await organizationService.createMemberInvitation(
+        actor.userId,
+        actor.tenantId,
+        parsed.data.email,
+        parsed.data.departmentId,
+        parsed.data.roleId,
       );
-
-      const trustedActor = extractTrustedActor(req);
-      auditLogsService
-        .recordAuditLog({
-          organizationId: profile.tenantId,
-          actor: trustedActor,
-          module: 'PROFILES',
-          entityType: 'profiles',
-          entityId: profile.id,
-          action: 'CREATE',
-          oldValues: null,
-          newValues: { ...profile },
-        })
-        .catch(() => {});
-
-      res.status(201).json({ message: 'User created successfully', user: profile });
+      const requestOrigin = req.get('origin');
+      const base = requestOrigin && ENV.ALLOWED_ORIGINS.includes(requestOrigin)
+        ? requestOrigin
+        : ENV.ALLOWED_ORIGINS[0];
+      if (!base) throw new Error('No approved frontend origin is configured for invitations');
+      const invitationUrl = `${base.replace(/\/$/, '')}/register?token=${encodeURIComponent(invitation.token)}`;
+      res.status(201).json({
+        message: 'Single-use membership invitation created. No user was provisioned until the recipient accepts it.',
+        invitationUrl,
+        expiresAt: invitation.expiresAt,
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

@@ -12,10 +12,7 @@ export interface RegisterInput {
   email: string;
   password: string;
   fullName: string;
-  tenantName?: string;
-  tenantCode?: string;
-  departmentName?: string;
-  departmentCode?: string;
+  invitationToken: string;
 }
 
 export interface UserSessionData {

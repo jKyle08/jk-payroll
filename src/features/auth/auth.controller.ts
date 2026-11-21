@@ -15,13 +15,10 @@ const LoginSchema = z.object({
 
 const RegisterSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
-  fullName: z.string().min(2),
-  tenantName: z.string().min(2).optional(),
-  tenantCode: z.string().min(2).optional(),
-  departmentName: z.string().min(2).optional(),
-  departmentCode: z.string().min(2).optional(),
-});
+  password: z.string().min(8),
+  fullName: z.string().min(2).max(100),
+  invitationToken: z.string().min(40).max(200),
+}).strict();
 
 export class AuthController {
   /**
@@ -52,18 +49,13 @@ export class AuthController {
     try {
       const parsed = RegisterSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ error: 'Validation Error', details: parsed.error.format() });
+        res.status(400).json({ error: 'Invitation token, email, full name, and password are required.' });
         return;
       }
-
       const session = await authService.register(parsed.data as RegisterInput);
-      res.status(201).json({
-        message: 'Account registered successfully',
-        token: session.token,
-        user: session,
-      });
+      res.status(201).json({ message: 'Account registered and organization membership activated.', token: session.token, user: session });
     } catch (error: any) {
-      res.status(400).json({ error: error.message || 'Registration failed' });
+      res.status(400).json({ error: error.message || 'Registration failed', code: 'INVITATION_REGISTRATION_FAILED' });
     }
   }
 
@@ -90,6 +82,31 @@ export class AuthController {
    */
   public async logout(_req: Request, res: Response): Promise<void> {
     res.status(200).json({ message: 'Signed out successfully' });
+  }
+
+  /**
+   * POST /api/auth/refresh
+   */
+  public async refresh(req: Request, res: Response): Promise<void> {
+    try {
+      const authHeader = req.headers.authorization;
+      const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : undefined;
+      const refreshToken = req.body?.refreshToken;
+      const token = bearerToken || req.body?.token;
+
+      if (!token && !refreshToken) {
+        res.status(401).json({ error: 'Unauthorized: Missing token for refresh' });
+        return;
+      }
+
+      const result = await authService.refreshToken(token, refreshToken);
+      res.status(200).json({
+        token: result.token,
+        user: result.user,
+      });
+    } catch (error: any) {
+      res.status(401).json({ error: error.message || 'Session refresh failed' });
+    }
   }
 
   /**

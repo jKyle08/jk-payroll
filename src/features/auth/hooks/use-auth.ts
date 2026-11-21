@@ -12,6 +12,7 @@ import {
   getTokenRemainingTime,
   handleSessionTimeout,
 } from '../../../client/lib/auth-session.js';
+import { authSessionManager } from '../../../client/core/auth/AuthSessionManager.js';
 
 function readStoredToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -48,6 +49,11 @@ export function useAuth() {
   const [token, setToken] = useState<string | null>(readStoredToken);
   const [user, setUser] = useState<AuthUser | null>(readStoredUser);
 
+  // Initialize session manager once
+  useEffect(() => {
+    authSessionManager.init();
+  }, []);
+
   // Sync state with storage and auth-change events
   useEffect(() => {
     const syncAuth = () => {
@@ -73,7 +79,7 @@ export function useAuth() {
 
     const remainingMs = getTokenRemainingTime(token);
     // If we have a known expiration time, schedule auto-timeout
-    let timer: NodeJS.Timeout | undefined;
+    let timer: any;
     if (remainingMs !== null && remainingMs > 0) {
       timer = setTimeout(() => {
         handleSessionTimeout('Your session has timed out. Please sign in again to continue.');
@@ -111,6 +117,7 @@ export function useAuth() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', newToken);
       localStorage.setItem('currentUser', JSON.stringify(newUser));
+      authSessionManager.notifyLoginSuccess(newUser.userId, newUser.tenantId);
       window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
     }
     setToken(newToken);
@@ -131,7 +138,7 @@ export function useAuth() {
     return data;
   }, [loginWithData]);
 
-  const logout = useCallback((reason?: string) => {
+  const logout = useCallback((reason?: string, intentional: boolean = true) => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('currentUser');
@@ -139,6 +146,7 @@ export function useAuth() {
         handleSessionTimeout(reason);
         return;
       }
+      authSessionManager.notifyLogout(intentional);
       window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
     }
     setToken(null);

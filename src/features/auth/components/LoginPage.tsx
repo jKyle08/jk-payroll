@@ -21,10 +21,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth.js';
 import { consumeSessionTimeoutMessage } from '../../../client/lib/auth-session.js';
+import { resolvePostLoginRedirect } from '../../../client/core/auth/RouteRestoration.js';
+import { getTabId } from '../../../client/core/persistence/TabIdentity.js';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,14 +35,13 @@ export const LoginPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionTimeoutMessage, setSessionTimeoutMessage] = useState<string | null>(null);
 
-  // Check for session timeout notification and clear stale storage
+  // Check for session timeout notification
   React.useEffect(() => {
     const timeoutMsg = consumeSessionTimeoutMessage();
     if (timeoutMsg) {
       setSessionTimeoutMessage(timeoutMsg);
     }
-    logout();
-  }, [logout]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +54,13 @@ export const LoginPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      await login(email, password);
-      navigate('/organizations');
+      const data = await login(email, password);
+      const targetRoute = resolvePostLoginRedirect(
+        data.user?.userId || data.user?.id,
+        data.user?.tenantId,
+        getTabId()
+      );
+      navigate(targetRoute, { replace: true });
     } catch (err: any) {
       setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
@@ -69,8 +75,13 @@ export const LoginPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      await login(quickEmail, quickPass);
-      navigate('/organizations');
+      const data = await login(quickEmail, quickPass);
+      const targetRoute = resolvePostLoginRedirect(
+        data.user?.userId || data.user?.id,
+        data.user?.tenantId,
+        getTabId()
+      );
+      navigate(targetRoute, { replace: true });
     } catch (err: any) {
       setErrorMessage(err.message || 'Quick login failed');
     } finally {

@@ -5,7 +5,7 @@ Welcome to the JK Payroll (PayPulse) codebase. All AI coding agents operating wi
 ---
 
 ## 1. Core Architecture Principles
-1. **Canonical Reference:** [ARCHITECTURE.md](./ARCHITECTURE.md) is the canonical reference for the multi-tenant RBAC architecture. Refer to [.agent/INDEX.md](./.agent/INDEX.md) for detailed subsystem documentation.
+1. **Canonical Reference:** [ARCHITECTURE.md](./ARCHITECTURE.md) is the canonical reference for the multi-tenant RBAC architecture. Refer to [.agent/security/SECURITY_OVERVIEW.md](./.agent/security/SECURITY_OVERVIEW.md) and subsystem guidance under `.agent/` for implementation details. Security phase status is tracked only in [docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md](./docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md).
 2. **Strict Multi-Tenancy:** Every operational table, record, and query must be bound to an `organization_id` (or `tenant_id`). Cross-tenant operations are strictly forbidden.
 3. **Three-Tier Cascading RBAC:**
    - Tier 1: Organization Licensing (`organization_modules`).

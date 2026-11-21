@@ -1,117 +1,60 @@
 // ==============================================================================
 // JK-PAYROLL: CLIENT AUTHENTICATION SESSION & TIMEOUT MANAGEMENT
+// Re-exports and integrates centralized AuthSessionManager with backward compatibility.
 // File: src/client/lib/auth-session.ts
 // ==============================================================================
 
-export const AUTH_CHANGE_EVENT = 'paypulse-auth-change';
-export const SESSION_TIMEOUT_KEY = 'paypulse_session_timeout';
+import {
+  authSessionManager,
+  AUTH_CHANGE_EVENT,
+  SESSION_TIMEOUT_KEY,
+  DEFAULT_TIMEOUT_MESSAGE,
+} from '../core/auth/AuthSessionManager.js';
+
+export { AUTH_CHANGE_EVENT, SESSION_TIMEOUT_KEY };
 
 /**
  * Decodes the payload portion of a JWT token safely in browser or node environments.
  */
 export function decodeJwtPayload(token: string): Record<string, any> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return null;
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-
-    if (typeof window !== 'undefined' && typeof window.atob === 'function') {
-      const decoded = atob(padded);
-      return JSON.parse(decoded);
-    }
-    return JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
-  } catch {
-    return null;
-  }
+  return authSessionManager.decodeJwtPayload(token);
 }
 
 /**
  * Checks whether a given JWT token has already expired.
  */
 export function isTokenExpired(token: string | null): boolean {
-  if (!token) return true;
-  const payload = decodeJwtPayload(token);
-  if (!payload || typeof payload.exp !== 'number') {
-    // If token has no expiration claim, do not proactively expire it
-    return false;
-  }
-  // payload.exp is in seconds; compare against current time with a 5-second skew window
-  return payload.exp * 1000 <= Date.now() + 5000;
+  return authSessionManager.isTokenExpired(token);
 }
 
 /**
  * Gets remaining milliseconds before the token expires, or null if no exp claim.
  */
 export function getTokenRemainingTime(token: string | null): number | null {
-  if (!token) return 0;
-  const payload = decodeJwtPayload(token);
-  if (!payload || typeof payload.exp !== 'number') return null;
-  return Math.max(0, payload.exp * 1000 - Date.now());
+  return authSessionManager.getTokenRemainingTime(token);
 }
 
 /**
  * Centralized session timeout and invalid token handler.
- * Clears stale credentials from localStorage, records a user-facing timeout message,
- * notifies reactive hooks, and smoothly navigates the user to /login.
+ * Preserves tab route, flushes drafts, cleans credentials, broadcasts event,
+ * and navigates to /login.
  */
 export function handleSessionTimeout(
-  customMessage: string = 'Your session has timed out. Please sign in again to continue.'
+  customMessage: string = DEFAULT_TIMEOUT_MESSAGE
 ): void {
-  if (typeof window === 'undefined') return;
-
-  try {
-    localStorage.removeItem('token');
-    localStorage.removeItem('currentUser');
-    sessionStorage.setItem(SESSION_TIMEOUT_KEY, customMessage);
-  } catch {
-    // Ignore storage quota/permission exceptions
-  }
-
-  // Notify active listeners (useAuth hooks, active components)
-  window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
-
-  // Redirect to login if not already on an unauthenticated entry page
-  const currentPath = window.location.pathname;
-  if (currentPath !== '/login') {
-    const searchParams = new URLSearchParams(window.location.search);
-    searchParams.set('timeout', 'true');
-    window.location.href = `/login?${searchParams.toString()}`;
-  }
+  authSessionManager.handleSessionExpired('Session Expired', customMessage);
 }
 
 /**
  * Consumes and clears any pending session timeout message.
  */
 export function consumeSessionTimeoutMessage(): string | null {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    const msg = sessionStorage.getItem(SESSION_TIMEOUT_KEY);
-    if (msg) {
-      sessionStorage.removeItem(SESSION_TIMEOUT_KEY);
-      return msg;
-    }
-  } catch {
-    // Ignore
-  }
-
-  // Fallback to URL query parameter (?timeout=true)
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('timeout') === 'true') {
-      return 'Your session has timed out. Please sign in again to continue.';
-    }
-  } catch {
-    // Ignore
-  }
-
-  return null;
+  return authSessionManager.consumeSessionTimeoutMessage();
 }
 
 /**
- * Authenticated fetch helper with automatic 401 session-timeout handling.
+ * Authenticated fetch helper with automatic single-flight token refresh
+ * and fail-closed 401 session-timeout handling.
  */
 export async function authFetch(
   input: RequestInfo | URL,
@@ -119,14 +62,21 @@ export async function authFetch(
 ): Promise<Response> {
   const headers = new Headers(init?.headers || {});
 
-  if (!headers.has('Authorization') && typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // If token is already expired locally, trigger timeout immediately without a wasteful network roundtrip
-      if (isTokenExpired(token)) {
+  let token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  if (token) {
+    // If token is about to expire, attempt single-flight proactive refresh
+    if (isTokenExpired(token)) {
+      const refreshed = await authSessionManager.refreshToken();
+      if (refreshed?.token) {
+        token = refreshed.token;
+      } else {
         handleSessionTimeout('Your session has timed out. Please sign in again to continue.');
         throw new Error('Unauthorized: Session has expired');
       }
+    }
+
+    if (!headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${token}`);
     }
   }
@@ -135,14 +85,28 @@ export async function authFetch(
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(input, {
+  let response = await fetch(input, {
     ...init,
     headers,
   });
 
-  // Handle 401 Unauthorized across all API responses
-  if (response.status === 401) {
-    let errorMessage = 'Your session has timed out. Please sign in again to continue.';
+  // Handle 401 Unauthorized: Attempt token refresh once before expiring
+  if (response.status === 401 && token) {
+    const refreshed = await authSessionManager.refreshToken();
+    if (refreshed?.token) {
+      // Retry original request once with fresh token
+      headers.set('Authorization', `Bearer ${refreshed.token}`);
+      response = await fetch(input, {
+        ...init,
+        headers,
+      });
+      if (response.ok) {
+        return response;
+      }
+    }
+
+    // Refresh failed or second attempt still unauthorized
+    let errorMessage = DEFAULT_TIMEOUT_MESSAGE;
     try {
       const cloned = response.clone();
       const body = await cloned.json();

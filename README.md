@@ -3,7 +3,7 @@
 Core foundation for the JK Payroll System built with **Node.js (TypeScript)** and **Supabase (PostgreSQL + Auth + Row Level Security)**.
 
 ## Architecture Overview
-For detailed documentation on the architecture, recursive CTE procedures, 3-tier cascade, and implicit permissions, see [ARCHITECTURE.md](file:///c:/Users/HP_06/.gemini/antigravity-ide/scratch/jk-payroll/ARCHITECTURE.md).
+For detailed documentation on the architecture, recursive CTE procedures, 3-tier cascade, and implicit permissions, see [ARCHITECTURE.md](ARCHITECTURE.md). For current security phase status and release evidence, see the [security master tracker](docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md) and [production readiness record](docs/security/SECURITY_PRODUCTION_READINESS.md).
 
 ## Tech Stack Overview
 
@@ -66,6 +66,4 @@ npm run dev
 ```
 
 ## Database Migrations (Supabase / PostgreSQL)
-- [01_multi_tenant_cascading_rbac.sql](file:///c:/Users/HP_06/.gemini/antigravity-ide/scratch/jk-payroll/supabase/migrations/20261101000001_multi_tenant_cascading_rbac.sql)
-- [02_functions_and_procedures.sql](file:///c:/Users/HP_06/.gemini/antigravity-ide/scratch/jk-payroll/supabase/migrations/20261101000002_functions_and_procedures.sql)
-- [03_seed_data.sql](file:///c:/Users/HP_06/.gemini/antigravity-ide/scratch/jk-payroll/supabase/migrations/20261101000003_seed_data.sql)
+Migration files are maintained in [`supabase/migrations/`](supabase/migrations/). The repository currently contains migrations through `20261121000019`; this does not establish which migrations are applied to any remote database. See the [security master tracker](docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md) for phase evidence.

@@ -118,6 +118,8 @@ describe('Organization Module Architecture & Entitlement Specifications', () => 
     expect(created.id).toBeDefined();
     expect(created.name).toBe('Vanguard Logistics Corp');
     expect(created.code).toBe(code);
+    expect(created.currency).toBe('PHP');
+    expect(created.timezone).toBe('Asia/Manila');
 
     // Verify it was stored directly in the database repository
     const dbTenant = db.getTenantById(created.id);

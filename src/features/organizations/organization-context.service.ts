@@ -141,7 +141,9 @@ async function withSupabaseTimeout<T = any>(
  * Retrieves an organization record from in-memory DB or Supabase.
  */
 export async function fetchOrganizationById(orgId: string): Promise<Tenant | undefined> {
-  const localTenant = db.getTenantById(orgId);
+  // Production authorization reads lifecycle state from PostgreSQL on every request;
+  // this process-local mirror is only a development/test convenience.
+  const localTenant = process.env.NODE_ENV === 'production' ? undefined : db.getTenantById(orgId);
   if (localTenant) return localTenant;
 
   try {
@@ -187,7 +189,9 @@ export async function validateUserOrganizationMembership(
   userId: string
 ): Promise<OrganizationMembershipResult> {
   // 1. Check in-memory repository
-  const localMember = db.getOrganizationMember(organizationId, userId);
+  const localMember = process.env.NODE_ENV === 'production'
+    ? undefined
+    : db.getOrganizationMember(organizationId, userId);
   if (localMember) {
     if (localMember.isActive === false) {
       return {
@@ -241,18 +245,8 @@ export async function validateUserOrganizationMembership(
     // Supabase query error
   }
 
-  // 3. Fallback: Check if profile primary organization matches
-  const profile = db.getProfileById(userId);
-  if (profile && profile.tenantId === organizationId && profile.isActive) {
-    const syncedMember = db.createOrganizationMember({
-      organizationId,
-      userId,
-      departmentId: profile.departmentId,
-      isOwner: Boolean(profile.isTenantAdmin || profile.isSuperAdmin),
-      isActive: true,
-    });
-    return { valid: true, member: syncedMember };
-  }
+  // 3. Phase 1.1.1: NO profile-based fallback. profiles.organization_id / token claims are not
+  //    membership proof; only an active organization_members record authorizes access.
 
   return {
     valid: false,

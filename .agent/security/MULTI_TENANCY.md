@@ -1,6 +1,6 @@
 # Multi-Tenancy Architecture & IDOR Mitigations
 
-Status: `IMPLEMENTED`
+Implementation guidance. Phase status and production approval are tracked in [the security master tracker](../../docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md); see the [architecture baseline](../../docs/security/SECURITY_ARCHITECTURE_BASELINE.md) for current constraints. This file is not a phase tracker.
 
 ## 1. Invariable Tenant Filtering
 Every database lookup, repository filter, and SQL query is scoped by the authenticated user's `tenantId`:

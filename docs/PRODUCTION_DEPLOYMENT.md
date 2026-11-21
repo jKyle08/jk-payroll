@@ -2,6 +2,8 @@
 
 This guide establishes the canonical deployment architecture, environment configurations, migration procedures, database security testing, and release runbook for PayPulse (JK Payroll).
 
+Security phase status and release evidence live in [the master tracker](security/SECURITY_REMEDIATION_MASTER_TRACKER.md) and [production readiness record](security/SECURITY_PRODUCTION_READINESS.md). This runbook is not a phase tracker or production security approval.
+
 ---
 
 ## 1. Required Tools & Prerequisites

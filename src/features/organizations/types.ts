@@ -43,7 +43,7 @@ export interface SecuritySettings {
 export interface OrganizationSettings {
   payroll: PayrollSettings;
   timeAndAttendance: TimeAndAttendanceSettings;
-  leaves?: LeavesSettings;
+  leaves: LeavesSettings;
   security: SecuritySettings;
 }
 

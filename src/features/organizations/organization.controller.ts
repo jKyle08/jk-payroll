@@ -9,6 +9,7 @@ import { db } from '../../server/db/repository.js';
 import { isSuperAdmin } from '../../server/middleware/rbac.guard.js';
 import { organizationService } from './organization.service.js';
 import { auditLogsService, extractTrustedActor } from '../audit-logs/audit-logs.service.js';
+import { ENV } from '../../server/config/env.js';
 import {
   CreateOrganizationInput,
   UpdateOrganizationInput,
@@ -113,7 +114,11 @@ export class OrganizationController {
   public async createOrganization(req: Request, res: Response): Promise<void> {
     try {
       const input: CreateOrganizationInput = req.body;
-      const created = await organizationService.createOrganization(input);
+      if (!req.user?.userId || !isSuperAdmin(req.user)) {
+        res.status(403).json({ success: false, error: 'Active SuperAdmin authorization is required' });
+        return;
+      }
+      const created = await organizationService.createOrganizationForSuperAdmin(input, req.user.userId);
 
       const trustedActor = extractTrustedActor(req);
       auditLogsService
@@ -149,8 +154,9 @@ export class OrganizationController {
    */
   public async createOrganizationOnboarding(req: Request, res: Response): Promise<void> {
     try {
-      const input: OrganizationOnboardingInput = req.body;
-      const result = await organizationService.createOrganizationOnboarding(input);
+      const input = req.body as OrganizationOnboardingInput & { onboardingToken: string };
+      const { onboardingToken, ...organizationInput } = input;
+      const result = await organizationService.completeInvitedOrganizationOnboarding(organizationInput, onboardingToken);
 
       res.status(201).json({
         success: true,
@@ -164,6 +170,29 @@ export class OrganizationController {
         success: false,
         error: error.message || 'Failed to onboard organization',
       });
+    }
+  }
+
+  /** SuperAdmin issues a one-use link bound to the recipient email for 24 hours. */
+  public async createOnboardingInvitation(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user?.userId || !isSuperAdmin(req.user)) {
+        res.status(403).json({ success: false, error: 'Active SuperAdmin authorization is required' });
+        return;
+      }
+      const { token, expiresAt } = await organizationService.createOnboardingInvitation(
+        req.user.userId,
+        String(req.body.email),
+      );
+      const requestOrigin = req.get('origin');
+      const base = requestOrigin && ENV.ALLOWED_ORIGINS.includes(requestOrigin)
+        ? requestOrigin
+        : ENV.ALLOWED_ORIGINS[0];
+      if (!base) throw new Error('No approved frontend origin is configured for onboarding links');
+      const onboardingUrl = `${base.replace(/\/$/, '')}/onboard?token=${encodeURIComponent(token)}`;
+      res.status(201).json({ success: true, onboardingUrl, expiresAt });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message || 'Failed to issue onboarding link' });
     }
   }
 

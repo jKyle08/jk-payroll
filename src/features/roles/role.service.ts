@@ -373,7 +373,7 @@ export class RoleService {
       roleId?: string;
       status?: string;
     },
-    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; userId?: string }
   ): { items: any[]; total: number; activeCount: number; rolesCount: number; tenantsCount: number } {
     let all = db.getUserRoles().map((ur) => this.mapUserRoleToItem(ur));
 
@@ -426,7 +426,7 @@ export class RoleService {
 
   public getUserRoleById(
     id: string,
-    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; userId?: string }
   ): any | undefined {
     const ur = db.getUserRoleById(id);
     if (!ur) return undefined;
@@ -444,7 +444,7 @@ export class RoleService {
       roleId: string;
       isActive?: boolean;
     },
-    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; userId?: string }
   ): any {
     const isSuper = Boolean(actor?.isSuperAdmin);
     const effectiveTenantId = actor && !isSuper && actor.tenantId ? actor.tenantId : data.tenantId;
@@ -477,6 +477,12 @@ export class RoleService {
       if (targetRole.organizationId !== effectiveTenantId) {
         throw new Error('Role belongs to another organization and cannot be assigned');
       }
+      if (actor.userId === data.userId) {
+        throw new Error('Organization administrators cannot assign a role to themselves');
+      }
+      if (['TENANT_ADMIN', 'ORGANIZATION_ADMIN', 'ORG_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(targetRole.code.toUpperCase())) {
+        throw new Error('Organization administrators cannot assign privileged roles');
+      }
     }
 
     const created = db.assignUserRole({
@@ -489,7 +495,7 @@ export class RoleService {
   public updateUserRole(
     id: string,
     data: { tenantId?: string; userId?: string; roleId?: string; isActive?: boolean },
-    actor?: { isSuperAdmin?: boolean; tenantId?: string }
+    actor?: { isSuperAdmin?: boolean; tenantId?: string; userId?: string }
   ): any | undefined {
     const existing = db.getUserRoleById(id);
     if (!existing) return undefined;
@@ -519,6 +525,12 @@ export class RoleService {
         }
         if (targetRole.organizationId !== effectiveTenantId) {
           throw new Error('Role belongs to another organization and cannot be assigned');
+        }
+        if ((data.userId || existing.userId) === actor.userId) {
+          throw new Error('Organization administrators cannot assign a role to themselves');
+        }
+        if (['TENANT_ADMIN', 'ORGANIZATION_ADMIN', 'ORG_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(targetRole.code.toUpperCase())) {
+          throw new Error('Organization administrators cannot assign privileged roles');
         }
       }
     }

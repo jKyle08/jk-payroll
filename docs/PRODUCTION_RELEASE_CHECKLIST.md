@@ -2,19 +2,19 @@
 
 Use this checklist prior to authorizing and triggering production deployment. Every item must be verified and checked off.
 
+Security phase status and the security release decision are maintained in [SECURITY_REMEDIATION_MASTER_TRACKER.md](security/SECURITY_REMEDIATION_MASTER_TRACKER.md) and [SECURITY_PRODUCTION_READINESS.md](security/SECURITY_PRODUCTION_READINESS.md). This checklist is operational and does not itself grant security approval. Last reviewed: 2026-11-21 (Asia/Manila).
+
 ---
 
 ## 1. Pre-Deployment Infrastructure & Database
 - [ ] **Supabase CLI Authentication:** Verified active session (`npx supabase login`).
 - [ ] **Target Project Reference Confirmed:** Linked to designated production project (`fsnfqnbixitmmjmeogml`).
 - [ ] **Pending Migrations Audited:**
-  - [ ] `20261104000008_align_organizations_schema.sql`
-  - [ ] `20261104000009_expand_organizations_sector_settings.sql`
-  - [ ] `20261119000010_remediate_database_rls.sql`
-  - [ ] `20261119000011_harden_audit_attribution_and_integrity.sql`
+  - [ ] Review the repository migration sequence, including migrations `20261121000012` through `20261121000019`.
+  - [ ] Compare repository files with the target database migration ledger; repository presence does not mean a migration was applied.
 - [ ] **Migration Dry-Run Succeeded:** `npx supabase db push --dry-run --remote` exited with code 0.
 - [ ] **Database Backup Verified:** PITR active or manual backup taken (`npx supabase db dump`).
-- [ ] **Real PostgreSQL Security Tests:** Executed against live database (`tests/integration/security-postgres.integration.test.ts`).
+- [ ] **Real PostgreSQL Security Tests:** Executed against a disposable staging database; preserve exact output and distinguish it from PGlite evidence.
 
 ---
 
@@ -44,7 +44,7 @@ Use this checklist prior to authorizing and triggering production deployment. Ev
 ## 4. Build & Compilation Verification
 - [ ] **TypeScript Build:** `npm run build` (`tsc`) compiled with 0 errors.
 - [ ] **Vite Client Build:** `npm run build:client` compiled successfully with static assets in `dist/client/`.
-- [ ] **Automated Test Suite:** All 18 test suites and 285 tests passed (`npm test`).
+- [ ] **Automated Test Suite:** Current complete test suite passes (`npm test`); record current file and test totals. At the last review, 478/482 passed and four legacy behavior expectations failed.
 
 ---
 
@@ -62,7 +62,7 @@ Use this checklist prior to authorizing and triggering production deployment. Ev
 
 | Role | Name | Status | Timestamp |
 |---|---|---|---|
-| Database Architect | AI Lead Architect | Verified | 2026-11-19 |
-| Application Security Engineer | AppSec Lead | Verified | 2026-11-19 |
-| DevOps & Release Lead | DevOps Lead | Verified | 2026-11-19 |
-| Lead Developer / Product Owner | [Awaiting User Confirmation] | Pending Final Push Approval | Pending |
+| Database Architect |  | Pending evidence review |  |
+| Application Security Engineer |  | Pending evidence review |  |
+| DevOps & Release Lead |  | Pending evidence review |  |
+| Lead Developer / Product Owner |  | Pending explicit release approval |  |

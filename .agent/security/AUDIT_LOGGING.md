@@ -1,6 +1,6 @@
 # Audit Logging Architecture
 
-Status: `IMPLEMENTED`
+Implementation guidance. Phase status and production approval are tracked in [the security master tracker](../../docs/security/SECURITY_REMEDIATION_MASTER_TRACKER.md); see the [architecture baseline](../../docs/security/SECURITY_ARCHITECTURE_BASELINE.md) for current constraints. This file is not a phase tracker.
 
 ## 1. Architecture
 Audit logging operates through a hybrid trigger and application architecture:

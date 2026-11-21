@@ -268,6 +268,8 @@ describe('Phase 5 — Audit Log Attribution & Administrative Mutation Integrity 
           admin: {
             fullName: 'Gary Gamma',
             email: 'gary@gamma.test',
+            password: 'Password123!',
+            confirmPassword: 'Password123!',
           },
         });
 

@@ -14,6 +14,8 @@ import {
   AlertCircle,
   RefreshCw,
   Plus,
+  Copy,
+  X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Organization } from '../types.js';
@@ -30,6 +32,7 @@ import { ConfirmDialog } from '../../../client/components/ui/ConfirmDialog.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
 import { Button } from '../../../client/components/ui/index.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
+import { useAuth } from '../../auth/hooks/use-auth.js';
 
 export interface OrganizationMainProps {
   onNavigateToCreate?: () => void;
@@ -83,7 +86,9 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
     removeOrganizationFromState,
   } = useOrganizations();
 
-  const { deleteOrg, isSubmitting: isDeleting } = useOrganizationMutations();
+  const { deleteOrg, createOnboardingInvitation, isSubmitting: isIssuingInvite } = useOrganizationMutations();
+  const isDeleting = isIssuingInvite;
+  const { user } = useAuth();
 
   const pagination = usePagination(filteredOrganizations, serverPageSize, totalCount);
 
@@ -100,6 +105,20 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
   // State for universal ConfirmDialog
   const [targetOrgToDelete, setTargetOrgToDelete] = useState<Organization | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteUrl, setInviteUrl] = useState('');
+  const [inviteError, setInviteError] = useState('');
+
+  const handleIssueInvitation = async () => {
+    setInviteError('');
+    try {
+      const result = await createOnboardingInvitation(inviteEmail);
+      setInviteUrl(result.onboardingUrl);
+    } catch (err: any) {
+      setInviteError(err.message || 'Could not issue onboarding link');
+    }
+  };
 
   const handleDeletePrompt = (org: Organization) => {
     setDeleteError(null);
@@ -152,6 +171,16 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
 
         {/* Header CTA */}
         <div className="flex items-center gap-2.5">
+          {user?.isSuperAdmin && (
+            <Button type="button" variant="secondary" size="lg" onClick={() => {
+              setInviteEmail('');
+              setInviteUrl('');
+              setInviteError('');
+              setShowInviteDialog(true);
+            }}>
+              Create onboarding link
+            </Button>
+          )}
           <Button
             type="button"
             variant="primary"
@@ -279,6 +308,35 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
           if (!isDeleting) setTargetOrgToDelete(null);
         }}
       />
+      {showInviteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <section role="dialog" aria-modal="true" aria-labelledby="onboarding-link-title" className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h2 id="onboarding-link-title" className="text-lg font-semibold">Create organization onboarding link</h2>
+                <p className="mt-1 text-sm text-slate-500">The link is single-use, bound to this email, and expires after 24 hours.</p>
+              </div>
+              <button type="button" aria-label="Close" onClick={() => setShowInviteDialog(false)}><X className="h-4 w-4" /></button>
+            </div>
+            <label htmlFor="onboarding-invite-email" className="mb-1 block text-sm font-medium">Administrator email</label>
+            <input id="onboarding-invite-email" type="email" autoComplete="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm dark:border-slate-700 dark:bg-slate-800" />
+            {inviteError && <p role="alert" className="mt-2 text-sm text-rose-600">{inviteError}</p>}
+            {inviteUrl && (
+              <div className="mt-4">
+                <label htmlFor="onboarding-invite-link" className="mb-1 block text-sm font-medium">Copy and send this link</label>
+                <div className="flex gap-2">
+                  <input id="onboarding-invite-link" readOnly value={inviteUrl} className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-xs dark:border-slate-700 dark:bg-slate-800" />
+                  <Button type="button" variant="secondary" size="md" leftIcon={<Copy className="h-4 w-4" />} onClick={() => void navigator.clipboard?.writeText(inviteUrl)}>Copy</Button>
+                </div>
+              </div>
+            )}
+            <div className="mt-5 flex justify-end gap-2">
+              <Button type="button" variant="secondary" size="md" onClick={() => setShowInviteDialog(false)}>Close</Button>
+              {!inviteUrl && <Button type="button" variant="primary" size="md" disabled={!inviteEmail || isIssuingInvite} onClick={() => void handleIssueInvitation()}>{isIssuingInvite ? 'Creating…' : 'Create link'}</Button>}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 };

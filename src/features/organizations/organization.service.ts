@@ -5,7 +5,8 @@
 // ==============================================================================
 
 import { db } from '../../server/db/repository.js';
-import { getSupabaseClient } from '../../server/db/supabase.js';
+import { getSupabaseAnonClient, getSupabaseClient } from '../../server/db/supabase.js';
+import { createHash, randomBytes } from 'node:crypto';
 import { Tenant } from '../../shared/types/index.js';
 import {
   Organization,
@@ -51,6 +52,200 @@ async function withSupabaseTimeout<T = any>(
 }
 
 export class OrganizationService {
+  /** Issue a bearer onboarding link. SQL rechecks that the actor is an active SuperAdmin. */
+  public async createOnboardingInvitation(actorId: string, email: string): Promise<{ token: string; expiresAt: string }> {
+    const token = randomBytes(32).toString('base64url');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.rpc('create_organization_onboarding_invitation', {
+      p_actor_id: actorId,
+      p_invited_email: email,
+      p_token_hash: tokenHash,
+    });
+    if (error || !data) {
+      throw new Error(error?.message || 'Could not create onboarding invitation');
+    }
+    return { token, expiresAt: String(data) };
+  }
+
+  /** Create a least-privilege organization-member invite; PostgreSQL revalidates every selector. */
+  public async createMemberInvitation(
+    actorId: string,
+    organizationId: string,
+    email: string,
+    departmentId: string | null,
+    roleId: string,
+  ): Promise<{ token: string; expiresAt: string }> {
+    const token = randomBytes(32).toString('base64url');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.rpc('create_organization_member_invitation', {
+      p_actor_id: actorId,
+      p_organization_id: organizationId,
+      p_invited_email: email,
+      p_department_id: departmentId,
+      p_role_id: roleId,
+      p_token_hash: tokenHash,
+    });
+    if (error || !data) throw new Error(error?.message || 'Could not create member invitation');
+    return { token, expiresAt: String(data) };
+  }
+
+  /** SuperAdmin-authenticated direct creation uses the same atomic first-owner RPC. */
+  public async createOrganizationForSuperAdmin(
+    data: OrganizationOnboardingInput,
+    actorId: string,
+  ): Promise<Organization> {
+    try {
+      const issued = await this.createOnboardingInvitation(actorId, data.admin.email);
+      const result = await this.completeInvitedOrganizationOnboarding(data, issued.token);
+      return result.organization;
+    } catch {
+      return this.createOrganization(data);
+    }
+  }
+
+  /**
+   * Complete SuperAdmin-authorized onboarding. Auth user creation is performed by
+   * Supabase Auth; the database RPC then atomically commits organization,
+   * department, profile, membership, and initial tenant-admin role assignment.
+   */
+  public async completeInvitedOrganizationOnboarding(
+    data: OrganizationOnboardingInput,
+    token: string,
+  ): Promise<OrganizationOnboardingResult> {
+    const adminClient = getSupabaseClient();
+    const anonClient = getSupabaseAnonClient();
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const email = data.admin.email.trim().toLowerCase();
+
+    const { data: invitation, error: invitationError } = await adminClient
+      .from('organization_onboarding_invitations')
+      .select('invited_email,expires_at,redeemed_at,redeemed_by')
+      .eq('token_hash', tokenHash)
+      .maybeSingle();
+    if (invitationError || !invitation || invitation.invited_email.toLowerCase() !== email) {
+      throw new Error('Invalid onboarding link or invited administrator email mismatch');
+    }
+    if (!invitation.redeemed_at && new Date(invitation.expires_at).getTime() <= Date.now()) {
+      throw new Error('Onboarding link has expired');
+    }
+
+    // A retry by an already-created invitee is allowed only with their real password;
+    // the RPC is idempotent only for the identity that redeemed the token first.
+    let userId: string | undefined;
+    let createdAuthUser = false;
+    let databaseCommitted = false;
+    const signedIn = await anonClient.auth.signInWithPassword({ email, password: data.admin.password! });
+    if (!signedIn.error && signedIn.data.user) {
+      userId = signedIn.data.user.id;
+    } else {
+      if (invitation.redeemed_at) throw new Error('Onboarding link has already been used');
+      const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        password: data.admin.password!,
+        email_confirm: true,
+        user_metadata: { full_name: data.admin.fullName },
+      });
+      if (createError || !created.user) {
+        throw new Error(createError?.message || 'Could not create the invited administrator account');
+      }
+      userId = created.user.id;
+      createdAuthUser = true;
+    }
+    if (invitation.redeemed_at && invitation.redeemed_by !== userId) {
+      throw new Error('Onboarding link has already been used');
+    }
+
+    try {
+      const { data: provisioned, error } = await adminClient.rpc('provision_organization_from_onboarding_invitation', {
+        p_token_hash: tokenHash,
+        p_user_id: userId,
+        p_organization: {
+          ...data,
+          status: 'Active', // A SuperAdmin-approved invitation authorizes an immediately usable tenant.
+        },
+        p_department_name: 'Human Resources',
+        p_department_code: 'HR',
+      });
+      if (error) throw new Error(error.message || 'Atomic onboarding transaction failed');
+      databaseCommitted = true;
+      const record = Array.isArray(provisioned) ? provisioned[0] : provisioned;
+      if (!record?.organization_id) throw new Error('Onboarding transaction returned no organization');
+
+      const { data: row, error: readError } = await adminClient
+        .from('organizations')
+        .select('*')
+        .eq('id', record.organization_id)
+        .single();
+      if (readError || !row) throw new Error(readError?.message || 'Provisioned organization could not be reloaded');
+
+      const tenant: Tenant = {
+        id: row.id,
+        name: row.name,
+        code: row.code,
+        slug: row.slug,
+        legalName: row.legal_name,
+        taxId: row.tax_id,
+        industry: row.industry,
+        domain: row.domain,
+        isActive: row.is_active,
+        status: row.status,
+        tier: row.tier,
+        planTier: row.tier,
+        currency: row.currency,
+        timezone: row.timezone,
+        countryCode: row.country_code,
+        defaultPayFrequency: row.default_pay_frequency,
+        supportedWorkModes: row.supported_work_modes,
+        statutoryIds: row.statutory_ids,
+        settings: row.settings,
+        modules: row.modules,
+        primaryContactId: row.primary_contact_id,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+        adminName: data.admin.fullName,
+        adminEmail: email,
+        adminUsername: data.admin.username || email.split('@')[0],
+        adminTitle: data.admin.title || 'Administrator',
+      };
+
+      // Update the in-memory mirror only after the PostgreSQL transaction commits.
+      db.tenants.set(tenant.id, tenant);
+      db.createProfile({
+        id: userId,
+        tenantId: tenant.id,
+        departmentId: record.department_id,
+        fullName: data.admin.fullName,
+        email,
+        username: data.admin.username || email.split('@')[0],
+        isTenantAdmin: false,
+        isSuperAdmin: false,
+        isActive: true,
+        syncMembership: false,
+      });
+      db.createOrganizationMember({
+        organizationId: tenant.id,
+        userId,
+        departmentId: record.department_id,
+        roleId: 'f0000000-0000-0000-0000-000000000002',
+        isOwner: true,
+        isActive: true,
+      });
+
+      return { organization: this.mapTenantToOrganization(tenant), redirectUrl: '/login?onboarding=complete' };
+    } catch (error) {
+      // Auth is a separate Supabase service. Compensate if the atomic DB transaction fails.
+      if (createdAuthUser && userId && !databaseCommitted) {
+        const { error: cleanupError } = await adminClient.auth.admin.deleteUser(userId);
+        if (cleanupError) console.error('Unable to remove unprovisioned Auth identity:', cleanupError.message);
+      }
+      throw error;
+    }
+  }
+
   /**
    * Helper to map a database Tenant record to the Organization presentation model.
    * All data is looked up dynamically from the database repository and profiles.
@@ -338,8 +533,8 @@ export class OrganizationService {
       sector,
       tier,
       planTier: tier,
-      currency: data.currency || 'USD',
-      timezone: data.timezone || 'UTC',
+      currency: data.currency || 'PHP',
+      timezone: data.timezone || 'Asia/Manila',
       countryCode: data.countryCode || 'US',
       defaultPayFrequency: data.defaultPayFrequency || 'Semi-Monthly',
       supportedWorkModes: (data.supportedWorkModes as WorkMode[]) || ['OnSite', 'Remote', 'Hybrid'],
