@@ -8,7 +8,7 @@ Security phase status and the security release decision are maintained in [SECUR
 
 ## 1. Pre-Deployment Infrastructure & Database
 - [ ] **Supabase CLI Authentication:** Verified active session (`npx supabase login`).
-- [ ] **Target Project Reference Confirmed:** Linked to designated production project (`fsnfqnbixitmmjmeogml`).
+- [ ] **Target Project Reference Confirmed:** Linked to designated production project (`<PRODUCTION_PROJECT_REF>`). Note: `fsnfqnbixitmmjmeogml` is repurposed as development.
 - [ ] **Pending Migrations Audited:**
   - [ ] Review the repository migration sequence, including migrations `20261121000012` through `20261121000019`.
   - [ ] Compare repository files with the target database migration ledger; repository presence does not mean a migration was applied.

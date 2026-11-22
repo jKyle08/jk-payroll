@@ -6,19 +6,24 @@ This document outlines the architecture, data models, recursive CTE procedures, 
 
 ## 1. Core Architectural Pillars
 
-### 1.1 Strict Multi-Tenancy
-- **Tenant Isolation:** Every operational and transactional entity contains a non-nullable `tenant_id UUID` foreign key.
-- **Row Level Security (RLS):** Supabase RLS policies enforce that users can only select, insert, update, or delete records matching their authenticated profile's `tenant_id`.
+### 1.1 Strict Multi-Tenancy & Decision P-01 Option C
+- **Organization Isolation:** Every operational and transactional entity contains a non-nullable `organization_id UUID` foreign key (`tenant_id` supported as backward-compatible context alias).
+- **Composite Role Scoping:** Role assignments enforce `CONSTRAINT fk_user_roles_org_role FOREIGN KEY (organization_id, role_id) REFERENCES public.roles(organization_id, id) ON DELETE NO ACTION`. Cross-tenant role assignment is strictly prohibited.
+- **Single-Role Primary Key:** `public.user_roles` enforces `PRIMARY KEY (organization_id, user_id)`. Each user holds at most one active role per organization.
+- **Template Catalog Instantiation (Decision P-01 Option C):** Onboarding instantiates tenant-owned `ORG_ADMIN` and `EMPLOYEE` template roles (`role_type = 'CUSTOM'`). Global system roles are strictly reserved for platform SuperAdmin.
+- **Row Level Security (RLS):** Supabase RLS policies enforce that users can only select, insert, update, or delete records matching their authenticated profile's `organization_id`.
 
 ```mermaid
 graph TD
     User([Authenticated User JWT]) -->|auth.uid| Profile[public.profiles]
-    Profile -->|tenant_id| TenantScope{RLS Tenant Filter}
-    TenantScope --> Tenants[public.tenants]
-    TenantScope --> Departments[public.departments]
-    TenantScope --> DeptModules[public.department_modules]
-    TenantScope --> UserPerms[public.user_permissions]
-    TenantScope --> TxData[public.leave_requests]
+    Profile -->|organization_id| OrgScope{RLS Organization Filter}
+    OrgScope --> Organizations[public.organizations]
+    OrgScope --> Departments[public.departments]
+    OrgScope --> OrgModules[public.organization_modules]
+    OrgScope --> DeptModules[public.department_modules]
+    OrgScope --> Roles[public.roles]
+    OrgScope --> UserRoles[public.user_roles]
+    OrgScope --> RolePerms[public.role_permissions]
 ```
 
 ---
@@ -103,15 +108,11 @@ The application header adopts a clean Facebook-inspired topbar:
   - `supabase/seed.sql`: Baseline database seed definitions.
   - `supabase/clean_and_seed_superadmin.sql`: Teardown and superadmin credential initialization.
 - **Canonical Migrations (`supabase/migrations/`):**
-  1. `20261104000001_core_schema.sql`: Base multi-tenant schema (`tenants`, `departments`, `profiles`, `modules`, `module_actions`, `tenant_modules`, `department_modules`, `user_permissions`, `permission_dependencies`, `type_of_leave`, `leave_requests`).
-  2. `20261104000002_functions_and_rls.sql`: Recursive CTE functions (`get_department_sub_tree`, `get_department_ancestors`, `get_department_effective_modules`, `get_user_effective_permissions`) and Row Level Security policies.
-  3. `20261104000003_audit_logs.sql`: Security audit logging schema and event storage.
-  4. `20261104000004_attach_audit_triggers.sql`: Mutation tracking audit triggers across sensitive entities.
-  5. `20261104000005_seed_default_user_roles.sql`: System roles (`SUPER_ADMIN`, `TENANT_ADMIN`, `DEPARTMENT_HEAD`, `STAFF`) and permission matrix bindings.
-  6. `20261104000006_fix_auth_users_null_tokens.sql`: Auth token constraints and user profile null token fix.
-  7. `20261104000007_audit_logs_superadmin_policy.sql`: Superadmin cross-tenant audit access policies.
-  8. `20261104000008_align_organizations_schema.sql`: Enterprise organization entity alignment and metadata.
-  9. `20261104000009_expand_organizations_sector_settings.sql`: Multi-sector profile configuration (Private, Public, NonProfit).
+  The database is governed by **27 forward-only immutable migrations** (`20261104000001` through `20261122100007`), fully applied on the remote Supabase project (`fsnfqnbixitmmjmeogml`). For detailed entity schemas, triggers, and procedures, see [Consolidated Database Guide](docs/database/CONSOLIDATED_DATABASE_GUIDE.md).
+  - Migrations 1–9: Core multi-tenant schema, recursive CTE procedures, audit logging, system roles seed, and organization metadata.
+  - Migrations 10–17: Row Level Security hardening, audit immutability, fail-closed permission fixes, profile audit field protection, and organization locale defaults.
+  - Migrations 18–21: SuperAdmin onboarding invitations, authorized member invitations, SuperAdmin privilege containment, and database role boundaries.
+  - Migrations 22–27: Organization permission entitlements, single-role PK (`user_roles_pkey`), composite FKs (`ON DELETE NO ACTION`), Option C template role instantiation, canonical module catalog seeds, and invitation error standardization.
 - **Catalog Seeds (`supabase/seeds/`):**
   - `20261101000001_seed_catalog.sql`: Core permissions and modules seed dictionary.
 
@@ -136,21 +137,16 @@ jk-payroll/
 │   ├── config.toml
 │   ├── seed.sql
 │   ├── clean_and_seed_superadmin.sql
-│   ├── migrations/                    # 9 canonical migrations (000001 - 000009)
+│   ├── migrations/                    # 27 canonical migrations (000001 - 100007)
 │   └── seeds/
 │
-├── tests/                             # Comprehensive test suites
+├── tests/                             # Automated Vitest test suites (31 files, 510 tests)
+│   ├── integration/                   # Live Supabase & PGlite embedded integration suites
 │   ├── departments.test.ts            # Department hierarchy tests
-│   ├── footer.test.ts                 # Branding and footer specifications
-│   ├── organizations-page-crud.test.ts# Organization CRUD & expiration enforcement tests
 │   ├── organizations.test.ts          # Organization operational & licensing tests
-│   ├── permission-gate.test.ts        # UI permission gating atom tests
-│   ├── permission-matrix.test.ts      # Permission matrix allocation tests
 │   ├── rbac.test.ts                   # 3-tier cascading RBAC test suite
 │   ├── security-phase1.test.ts        # Phase 1 critical security regression suite
-│   ├── sidebar.test.ts                # Sidebar navigation tests
-│   ├── topbar.test.ts                 # Facebook-style topbar component tests
-│   └── user-roles.test.ts             # Role mapping and assignment tests
+│   └── ...                            # 31 total suites (see docs/testing/TESTING_AND_ACCEPTANCE_CRITERIA.md)
 │
 └── src/
     ├── shared/                        # 1. Single source of truth for contracts & constants

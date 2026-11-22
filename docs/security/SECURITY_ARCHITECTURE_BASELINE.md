@@ -33,4 +33,4 @@
 
 ## Implementation guidance
 
-Keep detailed subsystem instructions in `.agent/security/`, `.agent/database/`, and `.agent/testing/`. Those files guide implementation and should link to this baseline; they are not phase trackers. Record current status in the [master tracker](SECURITY_REMEDIATION_MASTER_TRACKER.md) and production acceptance in [SECURITY_PRODUCTION_READINESS.md](SECURITY_PRODUCTION_READINESS.md).
+Keep detailed subsystem instructions in the authoritative scoped `AGENTS.md` files (such as `src/server/AGENTS.md`, `supabase/AGENTS.md`, and `tests/AGENTS.md`). Those files guide implementation and reference canonical architecture; they are not phase trackers. Record current status in the [master tracker](SECURITY_REMEDIATION_MASTER_TRACKER.md) and production acceptance in [SECURITY_PRODUCTION_READINESS.md](SECURITY_PRODUCTION_READINESS.md).

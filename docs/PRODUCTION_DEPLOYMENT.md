@@ -70,12 +70,15 @@ Before deploying database infrastructure, verify your account possesses appropri
 
 ---
 
-## 4. Staging Project Setup
+## 4. Development & Staging Project Setup
 
-For staging deployments:
-1. Create a dedicated Staging Supabase project (e.g. `jk-payroll-staging`).
-2. Record its Project Reference ID (e.g. `staging-project-ref`).
-3. Set staging environment variables matching the staging backend and frontend domains.
+For development / testing deployments:
+1. Active Development Project: `fsnfqnbixitmmjmeogml` (`jKyle08's Project`).
+   - Repurposed as a dedicated **development environment** on 2026-11-21 by project owner authorization.
+   - Initialized cleanly from migrations 1 through 19.
+2. For dedicated staging deployments:
+   - Create a separate staging Supabase project (e.g. `jk-payroll-staging`).
+   - Record its Project Reference ID (e.g. `<STAGING_PROJECT_REF>`).
 
 ---
 
@@ -83,7 +86,8 @@ For staging deployments:
 
 For production deployments:
 1. Identify the designated Production Supabase project:
-   - Target project: `fsnfqnbixitmmjmeogml` (`jKyle08's Project`).
+   - Target project: `<PRODUCTION_PROJECT_REF>` (to be provisioned and isolated from development).
+   - Note: Project `fsnfqnbixitmmjmeogml` is NOT production; it is designated for development testing.
 2. Verify production compute tier, compute add-ons, and automated Point-in-Time Recovery (PITR) are active.
 3. Confirm network restrictions, allowed IP ranges, and SSL enforcement.
 
@@ -103,11 +107,14 @@ The CLI opens an interactive browser session to authenticate and stores access t
 
 Link the repository to the designated target Supabase project:
 ```bash
+# For Development:
+npx supabase link --project-ref fsnfqnbixitmmjmeogml
+
 # For Staging:
 npx supabase link --project-ref <STAGING_PROJECT_REF>
 
 # For Production (after confirmation):
-npx supabase link --project-ref fsnfqnbixitmmjmeogml
+npx supabase link --project-ref <PRODUCTION_PROJECT_REF>
 ```
 This updates local state in `supabase/.temp/` and binds CLI commands to the remote project.
 
