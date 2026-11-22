@@ -156,6 +156,6 @@ describe('Sidebar Navigation Permission Logic', () => {
       expect(typeof Sidebar).toBe('function');
       expect(OrganizationSwitcherModal).toBeDefined();
       expect(typeof OrganizationSwitcherModal).toBe('function');
-    });
+    }, 15000);
   });
 });

@@ -1,14 +1,14 @@
 # PayPulse: Consolidated Database Architecture & Migration Guide
 
-**Document Version:** 3.0.0 (Authoritative Database Reference)  
-**Status:** Implemented, Deployed, and Verified (27/27 Migrations on Supabase `fsnfqnbixitmmjmeogml`)  
+**Document Version:** 3.2.0 (Authoritative Database Reference)  
+**Status:** Implemented, Deployed, and Verified (29/29 Migrations on Supabase `fsnfqnbixitmmjmeogml`)  
 **Scope:** PostgreSQL Schema, Entities, Relationships, Triggers, RLS, and Stored Procedures
 
 ---
 
 ## 1. Migration Ledger & Applied History
 
-The database schema is constructed through 27 forward-only, strictly immutable SQL migrations:
+The database schema is constructed through 29 forward-only, strictly immutable SQL migrations:
 
 | Migration File | Name / Purpose | Applied Timestamp (UTC) | Status |
 | :--- | :--- | :--- | :---: |
@@ -39,6 +39,8 @@ The database schema is constructed through 27 forward-only, strictly immutable S
 | `20261122100005_seed_canonical_module_catalog.sql` | Idempotent seed of 14 modules and 36 actions | 2026-11-22 10:00:05 | **DEPLOYED** |
 | `20261122100006_fix_provision_organization_module_columns.sql` | Aligns `organization_modules` column names (`allocated_at`) | 2026-11-22 10:00:06 | **DEPLOYED** |
 | `20261122100007_align_invitation_error_message.sql` | Standardizes invitation error strings (`Invalid onboarding invitation`) | 2026-11-22 10:00:07 | **DEPLOYED** |
+| `20261122120000_remediate_supabase_performance_advisor.sql` | Performance Advisor: `(SELECT auth.uid())` subquery InitPlan caching, consolidated permissive policies on `modules`/`module_actions`, dropped redundant `uq_organizations_slug` index | 2026-11-22 12:00:00 | **DEPLOYED** |
+| `20261122130000_harden_database_functions_and_security.sql` | Security Advisor: Explicit `search_path` on all public functions, least-privilege `EXECUTE` grants (revoked `PUBLIC`/`anon`, locked down triggers/internal functions from RPC) | 2026-11-22 13:00:00 | **DEPLOYED** |
 
 ---
 

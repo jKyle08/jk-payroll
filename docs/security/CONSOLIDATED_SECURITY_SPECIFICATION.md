@@ -103,3 +103,38 @@ Every operational table has Row Level Security enabled (`ENABLE ROW LEVEL SECURI
    ```
 2. **Actor Attribution:** Every mutation captures `auth.uid()`, client IP, user agent, before/after JSONB state, and PostgreSQL `clock_timestamp()`.
 3. **Retention Independence:** Deleting an operational department or role does not alter historical audit log entries.
+
+---
+
+## 7. Database Function Security & Least-Privilege Execution Model
+
+Implemented and enforced via migration `20261122130000_harden_database_functions_and_security.sql`:
+
+### 7.1 Immutable `search_path` Standard
+All public database functions and triggers must explicitly configure a fixed `search_path`:
+- Standard: `SET search_path = public, pg_temp;`
+- Catalog-pinned: `SET search_path = pg_catalog, public, pg_temp;` (used for low-level cast and system functions)
+- Functions with mutable or null `search_path` are strictly forbidden to prevent search path hijacking.
+
+### 7.2 Function Execution Privileges Matrix
+PostgreSQL assigns default `EXECUTE` on functions to `PUBLIC`. PayPulse strictly overrides this default:
+
+| Function Category | Function Names | `PUBLIC` | `anon` | `authenticated` | `service_role` | Justification |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Trigger Functions** | `enforce_audit_log_immutability`, `fn_sync_department_hierarchy`, `fn_sync_organization_active_status`, `record_audit_log`, `enforce_profile_security_fields`, `enforce_organization_role_assignment`, etc. | **REVOKED** | **REVOKED** | **REVOKED** | **REVOKED** / Owner | Triggers execute exclusively via engine mutation triggers. Exposing them to `authenticated` or `anon` creates unintended RPC endpoints. |
+| **Internal Traversal Helpers** | `get_ancestor_department_ids`, `get_sub_department_ids` | **REVOKED** | **REVOKED** | **REVOKED** | **GRANTED** | Internal recursive CTEs invoked by administrative routines or server workloads; direct client invocation is denied. |
+| **RLS Helper Functions** | `current_user_organization_id`, `is_super_admin`, `is_organization_admin`, `is_organization_member`, `get_profile_by_id`, `is_assignable_organization_role`, `is_existing_trusted_tenant_admin_membership`, `is_existing_trusted_tenant_admin_user_role` | **REVOKED** | **REVOKED** | **GRANTED** | **GRANTED** | Evaluated within PostgreSQL RLS policy expressions when authenticated users execute queries. Identity is cryptographically pinned via `auth.uid()`. |
+| **Utility Functions** | `safe_cast_uuid` | **REVOKED** | **REVOKED** | **GRANTED** | **GRANTED** | Read-only deterministic parsing function used in data transformations and RLS parsing. |
+
+---
+
+## 8. Supabase Auth Security Configuration
+
+### 8.1 Leaked Password Protection (HaveIBeenPwned Integration)
+To guard against credential stuffing and compromised credential reuse:
+- **Supabase Cloud Dashboard Configuration:**
+  1. Navigate to your Supabase Project: **Authentication** -> **Configuration** -> **Security**.
+  2. Locate the **Leaked password protection** toggle.
+  3. Toggle **Enable Leaked Password Protection** to **ON**.
+  4. Ensure the check is set to block signup and password reset attempts containing compromised passwords known in HaveIBeenPwned.
+- *Note:* Supabase Auth configuration is managed at the platform control plane level and cannot be toggled via transactional SQL migrations.
