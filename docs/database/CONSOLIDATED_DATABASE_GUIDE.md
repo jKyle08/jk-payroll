@@ -41,6 +41,7 @@ The database schema is constructed through 29 forward-only, strictly immutable S
 | `20261122100007_align_invitation_error_message.sql` | Standardizes invitation error strings (`Invalid onboarding invitation`) | 2026-11-22 10:00:07 | **DEPLOYED** |
 | `20261122120000_remediate_supabase_performance_advisor.sql` | Performance Advisor: `(SELECT auth.uid())` subquery InitPlan caching, consolidated permissive policies on `modules`/`module_actions`, dropped redundant `uq_organizations_slug` index | 2026-11-22 12:00:00 | **DEPLOYED** |
 | `20261122130000_harden_database_functions_and_security.sql` | Security Advisor: Explicit `search_path` on all public functions, least-privilege `EXECUTE` grants (revoked `PUBLIC`/`anon`, locked down triggers/internal functions from RPC) | 2026-11-22 13:00:00 | **DEPLOYED** |
+| `20261122150000_isolate_rls_helpers_in_private_schema.sql` | Security Advisor: Complete isolation of 8 `SECURITY DEFINER` RLS helpers into unexposed `private` schema; public wrappers converted to `SECURITY INVOKER` (achieving 0 Security Advisor findings) | 2026-11-22 15:00:00 | **DEPLOYED** |
 
 ---
 

@@ -101,6 +101,20 @@ describe('Database Function Security Hardening & Privilege Hardening Suite', () 
 
       expect(res.rows).toEqual([]);
     });
+
+    it('verifies that zero SECURITY DEFINER functions in public are executable by authenticated (0 Advisor Findings)', async () => {
+      await s.owner();
+      const res = await db.query<{ proname: string }>(`
+        SELECT p.proname
+        FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+          AND p.prosecdef = true
+          AND has_function_privilege('authenticated', p.oid, 'EXECUTE');
+      `);
+
+      expect(res.rows).toEqual([]);
+    });
   });
 
   // ============================================================================
@@ -134,6 +148,11 @@ describe('Database Function Security Hardening & Privilege Hardening Suite', () 
       await expectRejected(
         () => db.query(`SELECT * FROM public.get_ancestor_department_ids('${ORG_A}', '${DEPT_A1}');`),
         /permission denied for function get_ancestor_department_ids/i
+      );
+
+      await expectRejected(
+        () => db.query(`SELECT * FROM private.get_profile_by_id('${USER_STAFF_A}');`),
+        /permission denied for schema private|permission denied for function get_profile_by_id/i
       );
     });
   });
@@ -216,6 +235,34 @@ describe('Database Function Security Hardening & Privilege Hardening Suite', () 
 
       const adminCheck = await db.query(`SELECT public.is_organization_admin('${ORG_A}') as result;`);
       expect(adminCheck.rows[0].result).toBe(true);
+    });
+
+    it('get_profile_by_id enforces authorization boundaries against unauthorized cross-tenant reads', async () => {
+      // User can read their own profile
+      await s.as(USER_STAFF_A, 'authenticated', { organization_id: ORG_A });
+      const ownProfile = await db.query(`SELECT (p).* FROM private.get_profile_by_id('${USER_STAFF_A}') p;`);
+      expect(ownProfile.rows.length).toBe(1);
+      expect((ownProfile.rows[0] as any).id).toBe(USER_STAFF_A);
+
+      // Staff A cannot read Staff B's profile from ORG_B (returns NULL)
+      const crossProfile = await db.query(`SELECT (p).* FROM private.get_profile_by_id('${USER_STAFF_B}') p;`);
+      expect((crossProfile.rows[0] as any).id).toBeNull();
+
+      // Org Admin A can read Staff A's profile within own org
+      await s.as(USER_ADMIN_A, 'authenticated', { organization_id: ORG_A });
+      const adminReadStaff = await db.query(`SELECT (p).* FROM private.get_profile_by_id('${USER_STAFF_A}') p;`);
+      expect(adminReadStaff.rows.length).toBe(1);
+      expect((adminReadStaff.rows[0] as any).id).toBe(USER_STAFF_A);
+
+      // Org Admin A cannot read Staff B's profile in ORG_B (returns NULL)
+      const adminReadCross = await db.query(`SELECT (p).* FROM private.get_profile_by_id('${USER_STAFF_B}') p;`);
+      expect((adminReadCross.rows[0] as any).id).toBeNull();
+
+      // SuperAdmin can inspect any profile
+      await s.as(USER_SUPER, 'authenticated');
+      const superReadB = await db.query(`SELECT (p).* FROM private.get_profile_by_id('${USER_STAFF_B}') p;`);
+      expect(superReadB.rows.length).toBe(1);
+      expect((superReadB.rows[0] as any).id).toBe(USER_STAFF_B);
     });
   });
 
