@@ -212,6 +212,15 @@ export class OrganizationService {
         adminTitle: data.admin.title || 'Administrator',
       };
 
+      // Reload tenant-owned administrator role from the committed transaction (Option C)
+      const { data: userRoleRow } = await adminClient
+        .from('user_roles')
+        .select('role_id')
+        .eq('organization_id', tenant.id)
+        .eq('user_id', userId)
+        .maybeSingle();
+      const tenantAdminRoleId = userRoleRow?.role_id || null;
+
       // Update the in-memory mirror only after the PostgreSQL transaction commits.
       db.tenants.set(tenant.id, tenant);
       db.createProfile({
@@ -226,14 +235,40 @@ export class OrganizationService {
         isActive: true,
         syncMembership: false,
       });
+      if (tenantAdminRoleId) {
+        db.roles.set(tenantAdminRoleId, {
+          id: tenantAdminRoleId,
+          organizationId: tenant.id,
+          code: 'ORG_ADMIN',
+          name: 'Organization Administrator',
+          description: 'Administrative authority within the organization. Manages departments, invitations, and roles.',
+          roleType: 'CUSTOM',
+          isDefault: true,
+          isMutable: false,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
       db.createOrganizationMember({
         organizationId: tenant.id,
         userId,
         departmentId: record.department_id,
-        roleId: 'f0000000-0000-0000-0000-000000000002',
+        roleId: tenantAdminRoleId,
         isOwner: true,
         isActive: true,
       });
+      if (tenantAdminRoleId) {
+        db.userRoles.set(`${tenant.id}:${userId}`, {
+          id: `ur-${tenant.id}-${userId}`,
+          tenantId: tenant.id,
+          userId,
+          roleId: tenantAdminRoleId,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
 
       return { organization: this.mapTenantToOrganization(tenant), redirectUrl: '/login?onboarding=complete' };
     } catch (error) {
@@ -287,8 +322,8 @@ export class OrganizationService {
       dbAllocatedModules.length > 0
         ? dbAllocatedModules
         : tenant.modules && tenant.modules.length > 0
-        ? tenant.modules
-        : ['Department', 'EmployeeProfile', 'RolePermission'];
+          ? tenant.modules
+          : ['Department', 'EmployeeProfile', 'RolePermission'];
     const { resolvedModules } = resolveModuleDependencies(rawModules);
 
     return {
@@ -631,23 +666,23 @@ export class OrganizationService {
     const currentSettings = existing.settings || DEFAULT_ORGANIZATION_SETTINGS;
     const mergedSettings = data.settings
       ? {
-          payroll: {
-            ...currentSettings.payroll,
-            ...(data.settings.payroll || {}),
-          },
-          timeAndAttendance: {
-            ...currentSettings.timeAndAttendance,
-            ...(data.settings.timeAndAttendance || {}),
-          },
-          leaves: {
-            ...currentSettings.leaves,
-            ...(data.settings.leaves || {}),
-          },
-          security: {
-            ...currentSettings.security,
-            ...(data.settings.security || {}),
-          },
-        }
+        payroll: {
+          ...currentSettings.payroll,
+          ...(data.settings.payroll || {}),
+        },
+        timeAndAttendance: {
+          ...currentSettings.timeAndAttendance,
+          ...(data.settings.timeAndAttendance || {}),
+        },
+        leaves: {
+          ...currentSettings.leaves,
+          ...(data.settings.leaves || {}),
+        },
+        security: {
+          ...currentSettings.security,
+          ...(data.settings.security || {}),
+        },
+      }
       : currentSettings;
 
     const mergedStatutoryIds = data.statutoryIds

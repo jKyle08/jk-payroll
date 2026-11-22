@@ -213,6 +213,94 @@ describe('Phase 1 — Critical Security Fixes Regression Suite', () => {
       expect(res.body.data.tenantId).toBe(tenantA.id);
     });
 
+    it('SuperAdmin cannot assign SUPER_ADMIN through the general role API', async () => {
+      const res = await request(app)
+        .post('/api/user-roles')
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({ userId: regularUserA.id, roleId: systemRole.id, tenantId: tenantA.id });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Platform-privileged roles cannot be assigned');
+    });
+
+    it('SuperAdmin cannot update an assignment to SUPER_ADMIN through the general role API', async () => {
+      const create = await request(app)
+        .post('/api/user-roles')
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({ userId: regularUserA.id, roleId: customRoleA.id, tenantId: tenantA.id });
+      expect(create.status).toBe(201);
+
+      const update = await request(app)
+        .put(`/api/user-roles/${create.body.data.id}`)
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({ roleId: systemRole.id });
+
+      expect(update.status).toBe(400);
+      expect(update.body.error).toContain('Platform-privileged roles cannot be assigned');
+      expect(db.getUserRoleById(create.body.data.id)?.roleId).toBe(customRoleA.id);
+    });
+
+    it('Organization Admin cannot assign SUPER_ADMIN or another privileged role code', async () => {
+      const adminAlias = roleService.createRole({
+        organizationId: tenantA.id, code: 'ORG_ADMIN', name: 'Org Admin Alias', roleType: 'CUSTOM',
+      });
+      const customAdminAlias = roleService.createRole({
+        organizationId: tenantA.id, code: 'platform-super-admin', name: 'Platform Alias', roleType: 'CUSTOM',
+      });
+      const tenantAdminRole = db.getRoleById('c0000000-0000-0000-0000-000000000002');
+      for (const role of [systemRole!, tenantAdminRole!, adminAlias, customAdminAlias]) {
+        const res = await request(app)
+          .post('/api/user-roles')
+          .set('Authorization', `Bearer ${tenantAdminAToken}`)
+          .send({ userId: regularUserA.id, roleId: role.id, tenantId: tenantA.id });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/privileged|global SYSTEM/i);
+      }
+    });
+
+    it('Organization Admin cannot assign or update an assignment to themselves through HTTP', async () => {
+      const createSelf = await request(app)
+        .post('/api/user-roles')
+        .set('Authorization', `Bearer ${tenantAdminAToken}`)
+        .send({ userId: tenantAdminA.id, roleId: customRoleA.id, tenantId: tenantA.id });
+      expect(createSelf.status).toBe(400);
+      expect(createSelf.body.error).toContain('cannot assign a role to themselves');
+
+      const createMemberAssignment = await request(app)
+        .post('/api/user-roles')
+        .set('Authorization', `Bearer ${superAdminToken}`)
+        .send({ userId: regularUserA.id, roleId: customRoleA.id, tenantId: tenantA.id });
+      expect(createMemberAssignment.status).toBe(201);
+
+      const updateSelf = await request(app)
+        .put(`/api/user-roles/${createMemberAssignment.body.data.id}`)
+        .set('Authorization', `Bearer ${tenantAdminAToken}`)
+        .send({ userId: tenantAdminA.id });
+      expect(updateSelf.status).toBe(400);
+      expect(updateSelf.body.error).toContain('cannot assign a role to themselves');
+    });
+
+    it('Organization Admin cannot move an assignment across organizations by changing the scope', async () => {
+      const created = await request(app)
+        .post('/api/user-roles')
+        .set('Authorization', `Bearer ${tenantAdminAToken}`)
+        .send({ userId: regularUserA.id, roleId: customRoleA.id, tenantId: tenantA.id });
+      expect(created.status).toBe(201);
+
+      const moved = await request(app)
+        .put(`/api/user-roles/${created.body.data.id}`)
+        .set('Authorization', `Bearer ${tenantAdminAToken}`)
+        .send({ tenantId: tenantB.id, roleId: customRoleB.id });
+      expect(moved.status).toBe(400);
+      expect(moved.body.error).toContain('cannot move assignments to another organization');
+      expect(db.getUserRoleById(created.body.data.id)?.tenantId).toBe(tenantA.id);
+    });
+
+    it('platform authority remains the profile flag and not a user-role assignment', () => {
+      expect(superAdminUser.isSuperAdmin).toBe(true);
+      expect(db.getUserRoles().some((assignment) => assignment.userId === superAdminUser.id && assignment.roleId === systemRole!.id)).toBe(false);
+    });
+
     it('Tenant Admin cannot assign a role from another organization', async () => {
       const res = await request(app)
         .post('/api/user-roles')
@@ -238,7 +326,7 @@ describe('Phase 1 — Critical Security Fixes Regression Suite', () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('cannot assign a global SYSTEM role');
+      expect(res.body.error).toMatch(/Platform-privileged roles cannot be assigned|cannot assign a global SYSTEM role/);
     });
 
     it('Tenant Admin cannot assign a role to a user from another organization', async () => {
@@ -284,46 +372,54 @@ describe('Phase 1 — Critical Security Fixes Regression Suite', () => {
   // SEC-02 — PREVENT SUPER ADMIN PRIVILEGE INJECTION
   // ============================================================================
   describe('SEC-02: Prevent Super Admin Privilege Injection', () => {
-    it('Tenant Admin cannot create a Super Admin', async () => {
+    it('Tenant Admin cannot turn a member invitation into Super Admin provisioning', async () => {
       const res = await request(app)
         .post('/api/users')
         .set('Authorization', `Bearer ${tenantAdminAToken}`)
         .send({
           fullName: 'Malicious Escalated User',
           email: 'escalate@acme.com',
+          departmentId: deptA.id,
+          roleId: customRoleA.id,
           isSuperAdmin: true,
         });
 
-      // Strict schema rejects isSuperAdmin payload manipulation
-      expect([400, 403]).toContain(res.status);
+      // The member-invitation contract is strict; privilege fields are not accepted.
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Validation Error');
     });
 
-    it('Regular user cannot create any user or Super Admin', async () => {
+    it('Regular user cannot issue a member invitation', async () => {
       const res = await request(app)
         .post('/api/users')
         .set('Authorization', `Bearer ${regularUserAToken}`)
         .send({
           fullName: 'Regular Created User',
           email: 'regular_attempt@acme.com',
-          isSuperAdmin: true,
+          departmentId: deptA.id,
+          roleId: customRoleA.id,
         });
 
       expect(res.status).toBe(403);
+      expect(res.body.error).toContain('Tenant Admin privilege required');
     });
 
-    it('A request containing isSuperAdmin: true cannot escalate privileges via payload manipulation', async () => {
+    it('Public registration requires an invitation and rejects client-supplied authority', async () => {
+      const profileCountBefore = db.profiles.size;
       const res = await request(app)
-        .post('/api/users')
-        .set('Authorization', `Bearer ${tenantAdminAToken}`)
+        .post('/api/auth/register')
         .send({
           fullName: 'Injected Privilege User',
           email: 'injected@acme.com',
+          password: 'Password123!',
+          invitationToken: 'a'.repeat(48),
           isSuperAdmin: true,
-          tenantId: rootOrgId,
+          organizationId: rootOrgId,
         });
 
-      // Payload manipulation is rejected by strict schema validation
-      expect([400, 403]).toContain(res.status);
+      // Strict public registration accepts neither authority nor organization selectors.
+      expect(res.status).toBe(400);
+      expect(db.profiles.size).toBe(profileCountBefore);
     });
 
     it('Super Admin cannot be injected via membership invitation endpoint', async () => {

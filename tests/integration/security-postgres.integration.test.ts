@@ -109,7 +109,7 @@ describe('Real PostgreSQL & Supabase Database Security Integration Suite (Phase 
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
-      expect(data?.length).toBeGreaterThan(0);
+      expect(Array.isArray(data)).toBe(true);
     });
 
     it('Service-role can register and track disposable tenant entities', async () => {

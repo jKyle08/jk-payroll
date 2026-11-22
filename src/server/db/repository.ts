@@ -21,6 +21,7 @@ import {
   OrganizationMember,
 } from '../../shared/types/index.js';
 import { AuditLogEntry, AuditLogsFilterQuery } from '../../features/audit-logs/types.js';
+import { isProtectedOrganizationRoleCode } from '../../shared/constants/role-security.js';
 
 export class DatabaseRepository {
   public tenants = new Map<string, Tenant>();
@@ -545,32 +546,20 @@ export class DatabaseRepository {
       });
     }
 
-    // 4. Default User Roles
-    const superAdminUserRoleId = 'ur-root-superadmin-01';
-    const adminUserRoleId = 'ur-apex-admin-01';
-
-    if (!this.userRoles.has(superAdminUserRoleId)) {
-      this.userRoles.set(superAdminUserRoleId, {
-        id: superAdminUserRoleId,
-        tenantId: rootTenantId,
-        userId: superAdminUserId,
-        roleId: superAdminRoleId,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-
-    if (!this.userRoles.has(adminUserRoleId)) {
-      this.userRoles.set(adminUserRoleId, {
-        id: adminUserRoleId,
-        tenantId: apexTenantId,
-        userId: adminUserId,
-        roleId: adminRoleId,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+    // The profile flag is the platform authority; neither SuperAdmin nor
+    // tenant-admin authority is bootstrapped by a user-role assignment.
+    for (const [organizationId, userId, isOwner] of [
+      [rootTenantId, superAdminUserId, true],
+      [apexTenantId, adminUserId, true],
+    ] as const) {
+      const key = `${organizationId}:${userId}`;
+      if (!this.organizationMembers.has(key)) {
+        this.organizationMembers.set(key, {
+          id: randomUUID(), organizationId, userId, roleId: null,
+          departmentId: null, isOwner, isActive: true,
+          createdAt: new Date(), updatedAt: new Date(),
+        });
+      }
     }
 
     // 5. Seed Hierarchical Departments (OPG, OPG-ITD, OPG-PIO, HR, HR-PAYROLL, FIN)
@@ -1588,6 +1577,7 @@ export class DatabaseRepository {
     roleId: string;
     isActive?: boolean;
   }): UserRole {
+    this.assertUserRoleAssignment(data.tenantId, data.userId, data.roleId);
     const userRole: UserRole = {
       id: data.id || randomUUID(),
       tenantId: data.tenantId,
@@ -1625,8 +1615,30 @@ export class DatabaseRepository {
       ...data,
       updatedAt: new Date(),
     };
+    if (data.tenantId !== undefined || data.userId !== undefined || data.roleId !== undefined) {
+      this.assertUserRoleAssignment(updated.tenantId, updated.userId, updated.roleId);
+    }
     this.userRoles.set(id, updated);
     return updated;
+  }
+
+  private assertUserRoleAssignment(organizationId: string, userId: string, roleId: string): void {
+    const role = this.roles.get(roleId);
+    if (!role) throw new Error(`Role with ID '${roleId}' not found`);
+    if (isProtectedOrganizationRoleCode(role.code)) {
+      throw new Error('Platform-privileged roles cannot be assigned through organization role management');
+    }
+    if (role.roleType !== 'CUSTOM' || role.organizationId === null) {
+      throw new Error('Only organization-scoped custom roles can be assigned');
+    }
+    if (role.organizationId !== organizationId) {
+      throw new Error('Role belongs to another organization and cannot be assigned');
+    }
+    if (!role.isActive) throw new Error('Role is inactive and cannot be assigned');
+    const membership = this.organizationMembers.get(`${organizationId}:${userId}`);
+    if (!membership || !membership.isActive) {
+      throw new Error('Target user does not have an active membership in the organization');
+    }
   }
 
   public deleteUserRole(id: string): boolean {

@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     sector organization_sector NOT NULL DEFAULT 'Private',
     tier organization_tier NOT NULL DEFAULT 'Enterprise',
     status organization_status NOT NULL DEFAULT 'Active',
+    is_active BOOLEAN NOT NULL DEFAULT true,
     start_date TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     end_date TIMESTAMPTZ,
     

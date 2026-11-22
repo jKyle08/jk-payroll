@@ -13,6 +13,7 @@ import { createApp } from '../src/server/app.js';
 import { db } from '../src/server/db/repository.js';
 import { generateTestToken } from '../src/server/middleware/auth.middleware.js';
 import { auditLogsService, extractTrustedActor, extractTrustedIp } from '../src/features/audit-logs/audit-logs.service.js';
+import { organizationService } from '../src/features/organizations/organization.service.js';
 import * as supabaseModule from '../src/server/db/supabase.js';
 
 describe('Phase 5 — Audit Log Attribution & Administrative Mutation Integrity Suite', () => {
@@ -258,6 +259,21 @@ describe('Phase 5 — Audit Log Attribution & Administrative Mutation Integrity 
     });
 
     it('4. Super Admin mutation records the correct actor type (SUPER_ADMIN)', async () => {
+      const createdOrg = {
+        id: 'gamma-onboarding-org',
+        code: 'GAMMA',
+        name: 'Gamma Systems',
+        slug: 'org_gamma',
+        status: 'Active',
+        isActive: true,
+      } as any;
+      const issueInvitation = vi
+        .spyOn(organizationService, 'createOnboardingInvitation')
+        .mockResolvedValue({ token: 'single-use-onboarding-token', expiresAt: new Date(Date.now() + 86_400_000).toISOString() });
+      const redeemInvitation = vi
+        .spyOn(organizationService, 'completeInvitedOrganizationOnboarding')
+        .mockResolvedValue({ organization: createdOrg, redirectUrl: '/org_gamma/dashboard' });
+
       const res = await request(app)
         .post('/api/organizations')
         .set('Authorization', `Bearer ${superAdminToken}`)
@@ -283,6 +299,12 @@ describe('Phase 5 — Audit Log Attribution & Administrative Mutation Integrity 
       expect(log?.actor_id).toBe(superAdminUser.id);
       expect(log?.actor_type).toBe('SUPER_ADMIN');
       expect(log?.actor_name).toBe('Master Super Admin');
+      expect(issueInvitation).toHaveBeenCalledWith(superAdminUser.id, 'gary@gamma.test');
+      expect(redeemInvitation).toHaveBeenCalledWith(expect.objectContaining({
+        code: 'GAMMA',
+        name: 'Gamma Systems',
+        admin: expect.objectContaining({ email: 'gary@gamma.test' }),
+      }), 'single-use-onboarding-token');
     });
 
     it('5. System operations are distinguishable from user operations', async () => {

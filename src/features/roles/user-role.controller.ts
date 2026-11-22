@@ -97,6 +97,7 @@ export class UserRoleController {
         ? {
             isSuperAdmin: Boolean(req.user.isSuperAdmin),
             tenantId: req.user.tenantId,
+          userId: req.user.userId,
           }
         : undefined;
 
@@ -143,6 +144,7 @@ export class UserRoleController {
         ? {
             isSuperAdmin: Boolean(req.user.isSuperAdmin),
             tenantId: req.user.tenantId,
+          userId: req.user.userId,
           }
         : undefined;
 

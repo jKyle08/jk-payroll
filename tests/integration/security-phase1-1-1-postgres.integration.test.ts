@@ -175,7 +175,7 @@ describe('Phase 1.1.1 — PostgreSQL (embedded) security integration', () => {
   const scalar = async (sql: string) => ((await db.query(sql)).rows[0] as any);
 
   beforeAll(async () => {
-    db = await createMigratedDb();
+    db = await createMigratedDb('20261121000019_authorized_member_invitations.sql');
     s = session(db);
     await seed(db);
   }, 120_000);

@@ -56,10 +56,6 @@ export async function createMigratedDb(upToInclusive?: string): Promise<PGlite> 
     let sql = fs.readFileSync(path.join(dir, file), 'utf8');
     // wasm build has no uuid-ossp/pgcrypto contrib; gen_random_uuid() is built in.
     sql = sql.replace(/CREATE\s+EXTENSION\s+IF\s+NOT\s+EXISTS\s+["']?(uuid-ossp|pgcrypto)["']?;?/gi, '-- extension skipped');
-    if (file === '20261104000002_functions_and_rls.sql') {
-      // migration 2 references organizations.is_active which migration 12 adds later (pre-existing ordering quirk)
-      await db.exec(`ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;`);
-    }
     await db.exec(sql);
     if (upToInclusive && file === upToInclusive) break;
   }

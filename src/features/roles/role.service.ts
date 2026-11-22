@@ -5,6 +5,22 @@
 
 import { db } from '../../server/db/repository.js';
 import { Role, RolePermission, CreateRoleInput, RoleItem, UpdateRoleInput, RoleType } from './types.js';
+import { isProtectedOrganizationRoleCode } from '../../shared/constants/role-security.js';
+
+function assertRoleCanBeAssigned(targetRole: Role, effectiveTenantId: string): void {
+  if (isProtectedOrganizationRoleCode(targetRole.code)) {
+    throw new Error('Platform-privileged roles cannot be assigned through organization role management');
+  }
+  if (targetRole.roleType === 'SYSTEM' || targetRole.organizationId === null) {
+    throw new Error('Tenant administrator cannot assign a global SYSTEM role without authorization');
+  }
+  if (targetRole.organizationId !== effectiveTenantId) {
+    throw new Error('Role belongs to another organization and cannot be assigned');
+  }
+  if (!targetRole.isActive) {
+    throw new Error('Role is inactive and cannot be assigned');
+  }
+}
 
 export class RoleService {
   // ----------------------------------------------------------------------------
@@ -447,6 +463,9 @@ export class RoleService {
     actor?: { isSuperAdmin?: boolean; tenantId?: string; userId?: string }
   ): any {
     const isSuper = Boolean(actor?.isSuperAdmin);
+    if (actor && !isSuper && data.tenantId !== actor.tenantId) {
+      throw new Error('Organization administrators cannot assign roles outside their organization');
+    }
     const effectiveTenantId = actor && !isSuper && actor.tenantId ? actor.tenantId : data.tenantId;
 
     if (!effectiveTenantId) {
@@ -458,7 +477,8 @@ export class RoleService {
       throw new Error(`User with ID '${data.userId}' not found`);
     }
 
-    if (actor && !isSuper && targetUser.tenantId !== effectiveTenantId) {
+    const targetMembership = db.getOrganizationMember(effectiveTenantId, data.userId);
+    if (!targetMembership || !targetMembership.isActive) {
       throw new Error('Target user does not belong to your organization');
     }
 
@@ -466,22 +486,11 @@ export class RoleService {
     if (!targetRole) {
       throw new Error(`Role with ID '${data.roleId}' not found`);
     }
-    if (!targetRole.isActive) {
-      throw new Error('Role is inactive and cannot be assigned');
-    }
+    assertRoleCanBeAssigned(targetRole, effectiveTenantId);
 
     if (actor && !isSuper) {
-      if (targetRole.roleType === 'SYSTEM' || targetRole.organizationId === null) {
-        throw new Error('Tenant administrator cannot assign a global SYSTEM role without authorization');
-      }
-      if (targetRole.organizationId !== effectiveTenantId) {
-        throw new Error('Role belongs to another organization and cannot be assigned');
-      }
       if (actor.userId === data.userId) {
         throw new Error('Organization administrators cannot assign a role to themselves');
-      }
-      if (['TENANT_ADMIN', 'ORGANIZATION_ADMIN', 'ORG_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(targetRole.code.toUpperCase())) {
-        throw new Error('Organization administrators cannot assign privileged roles');
       }
     }
 
@@ -501,37 +510,35 @@ export class RoleService {
     if (!existing) return undefined;
 
     const isSuper = Boolean(actor?.isSuperAdmin);
+    if (actor && !isSuper && data.tenantId !== undefined && data.tenantId !== actor.tenantId) {
+      throw new Error('Organization administrators cannot move assignments to another organization');
+    }
     if (actor && !isSuper && actor.tenantId && existing.tenantId !== actor.tenantId) {
       throw new Error('Access denied: Cannot modify user role assignment of another organization');
     }
 
-    const effectiveTenantId = actor && !isSuper && actor.tenantId ? actor.tenantId : (data.tenantId || existing.tenantId);
+    const effectiveTenantId = actor && !isSuper && actor.tenantId
+      ? actor.tenantId
+      : (data.tenantId || existing.tenantId);
 
-    if (data.userId && data.userId !== existing.userId) {
-      const targetUser = db.getProfileById(data.userId);
-      if (!targetUser) throw new Error(`User with ID '${data.userId}' not found`);
-      if (actor && !isSuper && targetUser.tenantId !== effectiveTenantId) {
-        throw new Error('Target user does not belong to your organization');
+    const resultingUserId = data.userId || existing.userId;
+    const resultingRoleId = data.roleId || existing.roleId;
+    const assignmentScopeChanged = data.userId !== undefined || data.roleId !== undefined || data.tenantId !== undefined;
+
+    if (assignmentScopeChanged) {
+      const targetUser = db.getProfileById(resultingUserId);
+      if (!targetUser) throw new Error(`User with ID '${resultingUserId}' not found`);
+      const targetMembership = db.getOrganizationMember(effectiveTenantId, resultingUserId);
+      if (!targetMembership || !targetMembership.isActive) {
+        throw new Error('Target user does not belong to the selected organization');
       }
-    }
 
-    if (data.roleId && data.roleId !== existing.roleId) {
-      const targetRole = db.getRoleById(data.roleId);
-      if (!targetRole) throw new Error(`Role with ID '${data.roleId}' not found`);
-      if (!targetRole.isActive) throw new Error('Role is inactive and cannot be assigned');
-      if (actor && !isSuper) {
-        if (targetRole.roleType === 'SYSTEM' || targetRole.organizationId === null) {
-          throw new Error('Tenant administrator cannot assign a global SYSTEM role without authorization');
-        }
-        if (targetRole.organizationId !== effectiveTenantId) {
-          throw new Error('Role belongs to another organization and cannot be assigned');
-        }
-        if ((data.userId || existing.userId) === actor.userId) {
-          throw new Error('Organization administrators cannot assign a role to themselves');
-        }
-        if (['TENANT_ADMIN', 'ORGANIZATION_ADMIN', 'ORG_ADMIN', 'ADMIN', 'SUPER_ADMIN'].includes(targetRole.code.toUpperCase())) {
-          throw new Error('Organization administrators cannot assign privileged roles');
-        }
+      const targetRole = db.getRoleById(resultingRoleId);
+      if (!targetRole) throw new Error(`Role with ID '${resultingRoleId}' not found`);
+      assertRoleCanBeAssigned(targetRole, effectiveTenantId);
+
+      if (actor && !isSuper && resultingUserId === actor.userId) {
+        throw new Error('Organization administrators cannot assign a role to themselves');
       }
     }
 

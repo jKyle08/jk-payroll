@@ -32,12 +32,18 @@ import {
 import { Button, Badge } from '../../../client/components/ui/index.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
 import { authFetch } from '../../../client/lib/auth-session.js';
+import { isProtectedOrganizationRoleCode } from '../../../shared/constants/role-security.js';
 
 export interface UserRoleFormPageProps {
   userRoleIdOverride?: string;
   onNavigateBack?: () => void;
   onSuccess?: (item: UserRoleItem) => void;
 }
+
+const isAssignableOrganizationRole = (role: RoleItemDefinition) =>
+  !role.isSystem &&
+  Boolean(role.organizationId) &&
+  !isProtectedOrganizationRoleCode(role.code);
 
 // Available Default Facilities / Organizations
 export const DEFAULT_ORGANIZATIONS = [
@@ -572,8 +578,10 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                 code: r.code,
                 name: r.name,
                 description: r.description || 'Custom organizational role.',
-                isSystem: false,
-                organizationId: tenantId,
+                isSystem:
+                  String(r.roleType || r.role_type || '').toUpperCase() === 'SYSTEM' ||
+                  !Boolean(r.organizationId || r.organization_id),
+                organizationId: r.organizationId || r.organization_id || null,
               }));
               const systemRoles = prev.filter((r) => r.isSystem || !r.organizationId);
               return [...systemRoles, ...customRoles];
@@ -593,7 +601,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
   // Available roles for the selected organization scope (FK: organization_id is null or equals tenantId)
   const availableOrgRoles = useMemo(() => {
     return roleList.filter(
-      (r) => !r.organizationId || r.organizationId === tenantId || r.isSystem
+      (r) => r.organizationId === tenantId && isAssignableOrganizationRole(r)
     );
   }, [roleList, tenantId]);
 

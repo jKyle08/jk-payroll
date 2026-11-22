@@ -119,24 +119,12 @@ describe('User Role Page-Driven CRUD & Service Architecture', () => {
     expect(adminOrg?.name).toContain('Admin');
   });
 
-  it('lists seeded User Roles with KPIs and organizational context', async () => {
+  it('does not seed platform authority through user-role assignments', async () => {
     const result = await userRoleService.listUserRoles();
-    expect(result.items.length).toBeGreaterThanOrEqual(2);
-    expect(result.total).toBeGreaterThanOrEqual(2);
-    expect(result.activeCount).toBeGreaterThanOrEqual(2);
-    expect(result.rolesCount).toBeGreaterThanOrEqual(2);
-
-    // Verify SuperAdmin mapping
-    const superAdminItem = result.items.find(i => i.roleId === 'c0000000-0000-0000-0000-000000000001' || i.roleCode === 'SUPER_ADMIN');
-    expect(superAdminItem).toBeDefined();
-    expect(superAdminItem?.tenantId).toBe('00000000-0000-0000-0000-000000000000');
-    expect(superAdminItem?.tenantName).toBe('SuperAdmin Platform');
-
-    // Verify Admin mapping
-    const adminItem = result.items.find(i => i.roleId === 'c0000000-0000-0000-0000-000000000002' || i.roleCode === 'ADMIN');
-    expect(adminItem).toBeDefined();
-    expect(adminItem?.tenantId).toBe('00000000-0000-0000-0000-000000000001');
-    expect(adminItem?.tenantName).toBe('Apex Health Systems');
+    expect(result.items.some(i => i.roleCode === 'SUPER_ADMIN')).toBe(false);
+    expect(result.items.some(i => i.roleCode === 'TENANT_ADMIN')).toBe(false);
+    expect(db.getProfileById('00000000-0000-0000-0000-000000000001')?.isSuperAdmin).toBe(true);
+    expect(db.getUserRoles().some((ur) => ur.userId === '00000000-0000-0000-0000-000000000001')).toBe(false);
   });
 
   it('executes full CRUD lifecycle on User Role assignments', async () => {
@@ -144,12 +132,12 @@ describe('User Role Page-Driven CRUD & Service Architecture', () => {
     const created = await userRoleService.createUserRole({
       tenantId: '00000000-0000-0000-0000-000000000001',
       userId: '00000000-0000-0000-0000-000000000002',
-      roleId: 'c0000000-0000-0000-0000-000000000003',
+      roleId: 'c0000000-0000-0000-0000-000000000004',
       isActive: true,
     });
 
     expect(created.id).toBeDefined();
-    expect(created.roleId).toBe('c0000000-0000-0000-0000-000000000003');
+    expect(created.roleId).toBe('c0000000-0000-0000-0000-000000000004');
     expect(created.isActive).toBe(true);
 
     // 2. Fetch by ID
@@ -173,6 +161,20 @@ describe('User Role Page-Driven CRUD & Service Architecture', () => {
   });
 
   it('filters User Roles by organization, role, and search keyword', async () => {
+    const member = db.createProfile({
+      id: '90000000-0000-0000-0000-000000000001',
+      tenantId: '00000000-0000-0000-0000-000000000001',
+      fullName: 'Role Filter Member',
+      email: 'role-filter@example.invalid',
+      isSuperAdmin: false,
+      isTenantAdmin: false,
+    });
+    db.assignUserRole({
+      tenantId: '00000000-0000-0000-0000-000000000001',
+      userId: member.id,
+      roleId: 'c0000000-0000-0000-0000-000000000004',
+    });
+
     // Filter by SuperAdmin tenant
     const superAdminList = await userRoleService.listUserRoles({
       tenantId: '00000000-0000-0000-0000-000000000000',
@@ -181,15 +183,47 @@ describe('User Role Page-Driven CRUD & Service Architecture', () => {
 
     // Filter by role
     const adminRoles = await userRoleService.listUserRoles({
-      roleId: 'c0000000-0000-0000-0000-000000000002',
+      roleId: 'c0000000-0000-0000-0000-000000000004',
     });
-    expect(adminRoles.items.every(i => i.roleId === 'c0000000-0000-0000-0000-000000000002')).toBe(true);
+    expect(adminRoles.items.every(i => i.roleId === 'c0000000-0000-0000-0000-000000000004')).toBe(true);
 
     // Search by user email or name
     const searchResult = await userRoleService.listUserRoles({
-      search: 'superadmin',
+      search: 'role-filter@example.invalid',
     });
     expect(searchResult.items.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('repository writes reject protected roles and cross-organization roles', () => {
+    const user = db.createProfile({
+      id: '90000000-0000-0000-0000-000000000002',
+      tenantId: '00000000-0000-0000-0000-000000000001',
+      fullName: 'Role Guard Member',
+      email: 'role-guard@example.invalid',
+      isSuperAdmin: false,
+      isTenantAdmin: false,
+    });
+    const protectedAlias = roleService.createRole({
+      organizationId: '00000000-0000-0000-0000-000000000001',
+      code: ' pLaTfOrM-sUpEr-AdMiN ',
+      name: 'Protected Alias',
+      roleType: 'CUSTOM',
+    });
+    const foreignOrganization = db.createTenant({ name: 'Other Role Organization', code: 'OTHER-ROLE' });
+    const foreignRole = roleService.createRole({
+      organizationId: foreignOrganization.id,
+      code: 'FOREIGN_STAFF',
+      name: 'Foreign Staff',
+      roleType: 'CUSTOM',
+    });
+    expect(() => db.assignUserRole({
+      tenantId: '00000000-0000-0000-0000-000000000001', userId: user.id, roleId: protectedAlias.id,
+    })).toThrow(/Platform-privileged roles/);
+    expect(() => db.assignUserRole({
+      tenantId: '00000000-0000-0000-0000-000000000001',
+      userId: user.id,
+      roleId: foreignRole.id,
+    })).toThrow(/belongs to another organization/);
   });
 });
 
