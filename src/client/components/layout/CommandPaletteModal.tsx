@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: GLOBAL COMMAND PALETTE MODAL
-// Design System: "Midnight & Champagne Steel" (Centered SaaS Command Overlay)
+// Design System: Balanced Glossy Graphite (Centered SaaS Command Overlay)
 // File: src/client/components/layout/CommandPaletteModal.tsx
 // ==============================================================================
 
@@ -292,7 +292,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-[#0F172A]/50 backdrop-blur-xs select-none animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-[#0B0E14]/75 backdrop-blur-md select-none animate-in fade-in duration-150"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -301,29 +301,29 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       <div
         ref={containerRef}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[75vh] animate-in zoom-in-95 duration-150"
+        className="w-full max-w-xl rounded-2xl bg-white dark:bg-[#181D2A] border border-slate-200 dark:border-white/12 shadow-2xl dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.75)] overflow-hidden flex flex-col max-h-[75vh] animate-in zoom-in-95 duration-150 relative before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent"
       >
         {/* Search Input Bar */}
-        <div className="relative flex items-center px-4 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-          <Search className="w-5 h-5 text-slate-400 dark:text-slate-500 mr-3 flex-shrink-0" />
+        <div className="relative flex items-center px-4 py-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#141924]">
+          <Search className="w-5 h-5 text-slate-400 dark:text-[#64748B] mr-3 flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search actions, employees, modules..."
-            className="w-full text-sm bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none border-none p-0 focus:ring-0 font-sans"
+            className="w-full text-sm bg-transparent text-slate-900 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-[#64748B] outline-none border-none p-0 focus:ring-0 font-sans"
           />
           {query ? (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors mr-2 cursor-pointer"
+              className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC] transition-colors mr-2 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           ) : null}
-          <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 bg-slate-200/60 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 pointer-events-none">
+          <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-medium text-slate-500 dark:text-[#94A3B8] bg-slate-200/60 dark:bg-[#202637] rounded border border-slate-300 dark:border-white/10 pointer-events-none">
             ESC
           </kbd>
         </div>
@@ -332,10 +332,10 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar text-xs">
           {filteredCommands.length === 0 ? (
             <div className="text-center py-12 px-4">
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              <p className="text-sm font-medium text-slate-600 dark:text-[#94A3B8]">
                 No commands or modules found
               </p>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 dark:text-[#64748B] mt-1">
                 Try searching for dashboard, payroll, leave, or settings
               </p>
             </div>
@@ -355,8 +355,8 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-colors cursor-pointer group ${
                     isSelected
-                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-medium'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      ? 'bg-slate-100 dark:bg-[#202637] text-slate-900 dark:text-[#F8FAFC] font-medium'
+                      : 'text-slate-600 dark:text-[#94A3B8] hover:bg-slate-50 dark:hover:bg-white/[0.04]'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -364,7 +364,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                       className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
                         isSelected
                           ? 'bg-[#0F172A] text-white dark:bg-[#CBD5E1] dark:text-[#0F172A]'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                          : 'bg-slate-100 dark:bg-[#121620] text-slate-500 dark:text-[#94A3B8] border border-transparent dark:border-white/5'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -372,7 +372,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{cmd.label}</div>
                       {cmd.description && (
-                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                        <div className="text-[11px] text-slate-400 dark:text-[#64748B] truncate mt-0.5">
                           {cmd.description}
                         </div>
                       )}
@@ -380,11 +380,11 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider hidden sm:inline">
+                    <span className="text-[10px] font-mono text-slate-400 dark:text-[#64748B] uppercase tracking-wider hidden sm:inline">
                       {cmd.group}
                     </span>
                     {isSelected && (
-                      <CornerDownLeft className="w-3.5 h-3.5 text-slate-400" />
+                      <CornerDownLeft className="w-3.5 h-3.5 text-slate-400 dark:text-[#94A3B8]" />
                     )}
                   </div>
                 </button>
@@ -394,16 +394,16 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         </div>
 
         {/* Footer Hint */}
-        <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/30 text-[11px] text-slate-400 flex items-center justify-between">
+        <div className="px-4 py-2 border-t border-slate-100 dark:border-white/10 bg-slate-50/70 dark:bg-[#141924] text-[11px] text-slate-400 dark:text-[#64748B] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span>
-              <kbd className="font-mono bg-slate-200/60 dark:bg-slate-800 px-1 py-0.5 rounded text-[10px]">
+              <kbd className="font-mono bg-slate-200/60 dark:bg-[#202637] border border-slate-300 dark:border-white/10 px-1 py-0.5 rounded text-[10px] text-slate-700 dark:text-[#94A3B8]">
                 ↑↓
               </kbd>{' '}
               Navigate
             </span>
             <span>
-              <kbd className="font-mono bg-slate-200/60 dark:bg-slate-800 px-1 py-0.5 rounded text-[10px]">
+              <kbd className="font-mono bg-slate-200/60 dark:bg-[#202637] border border-slate-300 dark:border-white/10 px-1 py-0.5 rounded text-[10px] text-slate-700 dark:text-[#94A3B8]">
                 ↵
               </kbd>{' '}
               Select

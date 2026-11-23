@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: APPLICATION TOPBAR COMPONENT
-// Design System: "Midnight & Champagne Steel" (Compact Global Action Topbar)
+// Design System: Balanced Glossy Graphite (Compact Global Action Topbar)
 // File: src/client/components/layout/AppTopbar.tsx
 // ==============================================================================
 
@@ -39,6 +39,8 @@ export interface TopbarProps {
   onNavigate?: (path: string) => void;
   onSwitchOrganization?: () => void;
   isSuperAdmin?: boolean;
+  canEditOrganization?: boolean;
+  onEditOrganization?: () => void;
 }
 
 export type AppTopbarProps = TopbarProps;
@@ -98,6 +100,8 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
   onNavigate,
   onSwitchOrganization,
   isSuperAdmin = false,
+  canEditOrganization = false,
+  onEditOrganization,
 }) => {
   const sidebarContext = useSidebar();
   const isCollapsed = isSidebarCollapsed !== undefined ? isSidebarCollapsed : sidebarContext.isCollapsed;
@@ -109,6 +113,11 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [notifItems, setNotifItems] = useState(notifications);
+
+  // Trigger refs for popovers to prevent click/mousedown race conditions
+  const statusTriggerRef = React.useRef<HTMLButtonElement>(null);
+  const bellTriggerRef = React.useRef<HTMLButtonElement>(null);
+  const profileTriggerRef = React.useRef<HTMLButtonElement>(null);
 
   // Platform detection for keyboard shortcut indicator (⌘K or Ctrl+K)
   const [isApple, setIsApple] = useState(false);
@@ -175,7 +184,7 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
 
   return (
     <>
-      <header id="app-topbar" data-app-topbar="true" className="sticky top-0 left-0 right-0 h-14 w-full bg-white dark:bg-slate-900 border-b border-[#E5E7EB] dark:border-slate-800 z-30 select-none transition-colors">
+      <header id="app-topbar" data-app-topbar="true" className="sticky top-0 left-0 right-0 h-14 w-full bg-white/90 dark:bg-[#121620]/80 backdrop-blur-md border-b border-[#E5E7EB] dark:border-white/10 z-30 select-none transition-colors">
         <div className="h-full px-3 sm:px-4 flex items-center justify-between gap-3 max-w-full">
           
           {/* ==================================================================== */}
@@ -189,12 +198,12 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
               title={isCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-expanded={!isCollapsed}
-              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-500 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
             >
               {isCollapsed ? (
-                <PanelLeftOpen className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                <PanelLeftOpen className="w-4 h-4 text-slate-700 dark:text-[#CBD5E1]" />
               ) : (
-                <PanelLeftClose className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                <PanelLeftClose className="w-4 h-4 text-slate-700 dark:text-[#CBD5E1]" />
               )}
             </button>
           </div>
@@ -206,16 +215,16 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
             <button
               type="button"
               onClick={handleOpenSearch}
-              className="relative flex items-center justify-between w-full h-9 px-3 rounded-full bg-slate-50 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer group text-left shadow-2xs"
+              className="relative flex items-center justify-between w-full h-9 px-3 rounded-full bg-slate-50 dark:bg-[#181D2A] hover:bg-white dark:hover:bg-[#202637] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer group text-left shadow-2xs dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"
               aria-label="Search actions, employees, modules"
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors flex-shrink-0" />
-                <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                <Search className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B] group-hover:text-slate-700 dark:group-hover:text-[#F8FAFC] transition-colors flex-shrink-0" />
+                <span className="text-xs text-slate-500 dark:text-[#94A3B8] truncate">
                   Search actions, employees, modules...
                 </span>
               </div>
-              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 bg-slate-200/60 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 pointer-events-none flex-shrink-0">
+              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-slate-500 dark:text-[#94A3B8] bg-slate-200/60 dark:bg-white/[0.08] rounded border border-slate-300 dark:border-white/10 pointer-events-none flex-shrink-0">
                 {isApple ? '⌘K' : 'Ctrl+K'}
               </kbd>
             </button>
@@ -224,7 +233,7 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
           {/* ==================================================================== */}
           {/* 3. RIGHT SECTION: THEME, SYSTEM STATUS, NOTIFICATIONS, AVATAR        */}
           {/* ==================================================================== */}
-          <div className="flex items-center gap-1.5 sm:gap-2 relative flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 relative flex-shrink-0">
             
             {/* Theme Toggle */}
             {onToggleTheme && (
@@ -233,7 +242,7 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
                 onClick={() => onToggleTheme(currentTheme === 'dark' ? 'light' : 'dark')}
                 title={`Switch to ${currentTheme === 'dark' ? 'Light' : 'Dark'} mode`}
                 aria-label={`Switch to ${currentTheme === 'dark' ? 'Light' : 'Dark'} mode`}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors inline-flex items-center justify-center cursor-pointer"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full text-slate-500 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors inline-flex items-center justify-center cursor-pointer"
               >
                 {currentTheme === 'dark' ? (
                   <Sun className="w-4 h-4 text-amber-400" />
@@ -246,45 +255,51 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
             {/* Operational Health / System Status Trigger */}
             <div className="relative">
               <button
+                ref={statusTriggerRef}
                 id="topbar-system-status"
                 type="button"
                 onClick={handleToggleStatus}
                 title="System Operational Status"
                 aria-label="System Operational Status"
                 aria-expanded={isStatusOpen}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors inline-flex items-center justify-center cursor-pointer relative"
+                aria-controls="topbar-system-status-popover"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full text-slate-500 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors inline-flex items-center justify-center cursor-pointer relative"
               >
                 <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 dark:shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
               </button>
 
               {/* Floating System Status Popover */}
               <SystemStatusPopover
+                id="topbar-system-status-popover"
                 isOpen={isStatusOpen}
                 onClose={() => setIsStatusOpen(false)}
                 version="v2.4.0"
+                triggerRef={statusTriggerRef}
               />
             </div>
 
             {/* Notification Bell Button */}
             <div className="relative">
               <button
+                ref={bellTriggerRef}
                 id="topbar-notifications-bell"
                 type="button"
                 onClick={handleToggleNotifications}
                 className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-colors relative cursor-pointer ${
                   isNotificationOpen
                     ? 'bg-slate-900 text-white dark:bg-[#CBD5E1] dark:text-[#0F172A]'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                    : 'text-slate-500 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                 }`}
                 aria-label="Notifications"
                 aria-expanded={isNotificationOpen}
+                aria-controls="topbar-notifications-popover"
               >
                 <Bell className="w-4 h-4" />
 
                 {/* Unread counter badge */}
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-slate-900 text-white font-bold text-[9px] flex items-center justify-center border-2 border-white dark:border-slate-900">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-slate-900 dark:bg-[#CBD5E1] text-white dark:text-[#0F172A] font-bold text-[9px] flex items-center justify-center border-2 border-white dark:border-[#121620] pointer-events-none select-none">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -292,27 +307,31 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
 
               {/* Floating Notification Popover */}
               <NotificationPopover
+                id="topbar-notifications-popover"
                 isOpen={isNotificationOpen}
                 onClose={() => setIsNotificationOpen(false)}
                 notifications={notifItems}
                 onMarkAllAsRead={handleMarkAllRead}
                 onItemClick={onNotificationClick}
+                triggerRef={bellTriggerRef}
               />
             </div>
 
             {/* User Profile Avatar with Presence Dot */}
             <div className="relative">
               <button
+                ref={profileTriggerRef}
                 id="topbar-user-avatar"
                 type="button"
                 onClick={handleToggleProfile}
                 className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all relative focus:outline-none cursor-pointer ring-2 ${
                   isProfileOpen
-                    ? 'ring-slate-900 dark:ring-blue-500'
-                    : 'ring-transparent hover:ring-slate-200 dark:hover:ring-slate-700'
+                    ? 'ring-slate-900 dark:ring-white/40'
+                    : 'ring-transparent hover:ring-slate-200 dark:hover:ring-white/20'
                 }`}
                 aria-label="User Account Menu"
                 aria-expanded={isProfileOpen}
+                aria-controls="topbar-user-profile-popover"
               >
                 {user.avatarUrl ? (
                   <img
@@ -321,14 +340,14 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full rounded-full bg-[#0F172A] text-white font-bold text-xs flex items-center justify-center tracking-wide">
-                    {user.initials}
+                  <div className="w-full h-full rounded-full bg-[#0F172A] dark:bg-[#181D2A] dark:border dark:border-white/15 text-white font-bold text-xs flex items-center justify-center tracking-wide">
+                    {user.initials || user.fullName?.slice(0, 2).toUpperCase() || 'U'}
                   </div>
                 )}
 
                 {/* Presence indicator dot */}
                 <span
-                  className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-slate-900 ${
+                  className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-[#121620] ${
                     user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
                   }`}
                 />
@@ -336,14 +355,18 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
 
               {/* Floating User Profile Popover */}
               <UserProfilePopover
+                id="topbar-user-profile-popover"
                 isOpen={isProfileOpen}
                 onClose={() => setIsProfileOpen(false)}
                 user={user}
+                canEditOrganization={canEditOrganization}
+                onEditOrganization={onEditOrganization}
                 onSignOut={onSignOut}
                 onProfileClick={onProfileClick}
                 onSwitchDepartment={onSwitchDepartment}
                 onToggleTheme={onToggleTheme}
                 currentTheme={currentTheme}
+                triggerRef={profileTriggerRef}
               />
             </div>
 

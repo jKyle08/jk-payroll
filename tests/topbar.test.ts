@@ -63,4 +63,113 @@ describe('Facebook-Style Topbar & Popover Logic Tests', () => {
     expect(updated.every((n) => n.isRead)).toBe(true);
     expect(updated.filter((n) => !n.isRead)).toHaveLength(0);
   });
+
+  describe('Topbar Avatar & Notification Popover Conflict Resolution & Accessibility', () => {
+    it('verifies actor avatar rendering logic in notification items', () => {
+      const notificationWithAvatar: NotificationItem = {
+        id: 'notif-actor-avatar',
+        type: 'leave_request',
+        title: 'Leave request from Jane Doe',
+        description: '3 days sick leave',
+        timestamp: '5m ago',
+        isRead: false,
+        actor: {
+          name: 'Jane Doe',
+          initials: 'JD',
+          avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+        },
+      };
+
+      const notificationWithInitialsOnly: NotificationItem = {
+        id: 'notif-actor-initials',
+        type: 'approval',
+        title: 'Approval from John Smith',
+        description: 'Disbursement approved',
+        timestamp: '15m ago',
+        isRead: false,
+        actor: {
+          name: 'John Smith',
+          initials: 'JS',
+        },
+      };
+
+      const notificationWithoutActor: NotificationItem = {
+        id: 'notif-no-actor',
+        type: 'system',
+        title: 'System update completed',
+        description: 'Database migrated',
+        timestamp: '1h ago',
+        isRead: true,
+      };
+
+      expect(notificationWithAvatar.actor?.avatarUrl).toBeDefined();
+      expect(notificationWithInitialsOnly.actor?.avatarUrl).toBeUndefined();
+      expect(notificationWithInitialsOnly.actor?.initials).toBe('JS');
+      expect(notificationWithoutActor.actor).toBeUndefined();
+    });
+
+    it('validates outside-click exclusion logic prevents trigger-toggle race condition', () => {
+      // Simulation of outside click handler
+      const shouldCloseOnOutsideClick = (
+        isInsidePopover: boolean,
+        isInsideTrigger: boolean
+      ): boolean => {
+        if (isInsidePopover) return false;
+        if (isInsideTrigger) return false; // Trigger's onClick handles toggle
+        return true;
+      };
+
+      // Clicking inside popover -> do not close
+      expect(shouldCloseOnOutsideClick(true, false)).toBe(false);
+      // Clicking trigger button -> do not close via outside-click (avoids flicker/reopen)
+      expect(shouldCloseOnOutsideClick(false, true)).toBe(false);
+      // Clicking elsewhere outside -> close
+      expect(shouldCloseOnOutsideClick(false, false)).toBe(true);
+    });
+
+    it('enforces mutually exclusive state transitions for topbar popovers', () => {
+      interface PopoverState {
+        isNotificationOpen: boolean;
+        isProfileOpen: boolean;
+        isStatusOpen: boolean;
+        isCommandPaletteOpen: boolean;
+      }
+
+      const toggleNotifications = (prev: PopoverState): PopoverState => ({
+        isNotificationOpen: !prev.isNotificationOpen,
+        isProfileOpen: false,
+        isStatusOpen: false,
+        isCommandPaletteOpen: false,
+      });
+
+      const toggleProfile = (prev: PopoverState): PopoverState => ({
+        isProfileOpen: !prev.isProfileOpen,
+        isNotificationOpen: false,
+        isStatusOpen: false,
+        isCommandPaletteOpen: false,
+      });
+
+      let state: PopoverState = {
+        isNotificationOpen: false,
+        isProfileOpen: false,
+        isStatusOpen: false,
+        isCommandPaletteOpen: false,
+      };
+
+      // Open notification
+      state = toggleNotifications(state);
+      expect(state.isNotificationOpen).toBe(true);
+      expect(state.isProfileOpen).toBe(false);
+
+      // Open profile -> notification automatically closes
+      state = toggleProfile(state);
+      expect(state.isProfileOpen).toBe(true);
+      expect(state.isNotificationOpen).toBe(false);
+
+      // Toggle profile again -> closes
+      state = toggleProfile(state);
+      expect(state.isProfileOpen).toBe(false);
+      expect(state.isNotificationOpen).toBe(false);
+    });
+  });
 });

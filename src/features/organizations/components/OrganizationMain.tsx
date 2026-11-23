@@ -1,7 +1,7 @@
 // ==============================================================================
 // JK-PAYROLL: ORGANIZATION MAIN HUB COMPONENT
 // Root page (/organizations): Header + KPI Cards + Toolbar (Search/Filter/View) + Table/Grid + Pagination + ConfirmDialog
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/features/organizations/components/OrganizationMain.tsx
 // ==============================================================================
 
@@ -148,23 +148,23 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
   );
 
   return (
-    <div className="space-y-6 pb-12 text-[#111827] dark:text-white font-sans">
-      {/* 1. Top Header Bar: Midnight & Champagne Steel Aesthetic */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-slate-800">
+    <div className="space-y-6 pb-12 text-[#111827] dark:text-[#F8FAFC] font-sans">
+      {/* 1. Top Header Bar: Balanced Glossy Graphite Aesthetic */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-white/10">
         <div>
           <div className="flex items-center space-x-2 mb-1.5">
-            <span className="text-xs font-semibold text-[#6B7280]">
+            <span className="text-xs font-semibold text-[#6B7280] dark:text-[#64748B]">
               Organizations
             </span>
-            <span className="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
-            <span className="text-xs font-semibold text-[#111827] dark:text-slate-200">
+            <span className="text-xs text-[#E5E7EB] dark:text-white/10">/</span>
+            <span className="text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">
               Organization Directory
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-[#F8FAFC]">
             Organizations
           </h1>
-          <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">
             Manage client organizations, billing entities, isolation domains, and subscription tiers.
           </p>
         </div>
@@ -309,23 +309,23 @@ export const OrganizationMain: React.FC<OrganizationMainProps> = ({
         }}
       />
       {showInviteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <section role="dialog" aria-modal="true" aria-labelledby="onboarding-link-title" className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B0E14]/75 backdrop-blur-md p-4 animate-in fade-in duration-150">
+          <section role="dialog" aria-modal="true" aria-labelledby="onboarding-link-title" className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#181D2A] dark:border dark:border-white/12 dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.75)] relative before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent">
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <h2 id="onboarding-link-title" className="text-lg font-semibold">Create organization onboarding link</h2>
-                <p className="mt-1 text-sm text-slate-500">The link is single-use, bound to this email, and expires after 24 hours.</p>
+                <h2 id="onboarding-link-title" className="text-lg font-semibold text-slate-900 dark:text-[#F8FAFC]">Create organization onboarding link</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-[#94A3B8]">The link is single-use, bound to this email, and expires after 24 hours.</p>
               </div>
-              <button type="button" aria-label="Close" onClick={() => setShowInviteDialog(false)}><X className="h-4 w-4" /></button>
+              <button type="button" aria-label="Close" onClick={() => setShowInviteDialog(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F8FAFC]"><X className="h-4 w-4" /></button>
             </div>
-            <label htmlFor="onboarding-invite-email" className="mb-1 block text-sm font-medium">Administrator email</label>
-            <input id="onboarding-invite-email" type="email" autoComplete="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm dark:border-slate-700 dark:bg-slate-800" />
-            {inviteError && <p role="alert" className="mt-2 text-sm text-rose-600">{inviteError}</p>}
+            <label htmlFor="onboarding-invite-email" className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#CBD5E1]">Administrator email</label>
+            <input id="onboarding-invite-email" type="email" autoComplete="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 dark:border-white/10 px-3 text-sm dark:bg-[#121620] dark:text-[#F8FAFC] dark:placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white/20" />
+            {inviteError && <p role="alert" className="mt-2 text-sm text-rose-600 dark:text-rose-400">{inviteError}</p>}
             {inviteUrl && (
               <div className="mt-4">
-                <label htmlFor="onboarding-invite-link" className="mb-1 block text-sm font-medium">Copy and send this link</label>
+                <label htmlFor="onboarding-invite-link" className="mb-1 block text-sm font-medium text-slate-700 dark:text-[#CBD5E1]">Copy and send this link</label>
                 <div className="flex gap-2">
-                  <input id="onboarding-invite-link" readOnly value={inviteUrl} className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-xs dark:border-slate-700 dark:bg-slate-800" />
+                  <input id="onboarding-invite-link" readOnly value={inviteUrl} className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 dark:border-white/10 px-3 text-xs dark:bg-[#121620] dark:text-[#F8FAFC]" />
                   <Button type="button" variant="secondary" size="md" leftIcon={<Copy className="h-4 w-4" />} onClick={() => void navigator.clipboard?.writeText(inviteUrl)}>Copy</Button>
                 </div>
               </div>

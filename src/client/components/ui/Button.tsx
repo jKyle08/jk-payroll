@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: STANDARDIZED BUTTON COMPONENT
-// Design System: Monochromatic Enterprise SaaS ("Midnight & Champagne Steel")
+// Design System: Balanced Glossy Graphite
 // File: src/client/components/ui/Button.tsx
 // ==============================================================================
 
@@ -12,7 +12,8 @@ export type ButtonVariant =
   | 'secondary'
   | 'outline'
   | 'ghost'
-  | 'destructive';
+  | 'destructive'
+  | 'link';
 
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm';
 
@@ -27,25 +28,29 @@ export interface ButtonProps
 }
 
 const VARIANT_STYLES: Record<ButtonVariant, string> = {
-  // Primary: Midnight Slate (#0F172A) in Light mode, Platinum Slate (#CBD5E1) in Dark mode
+  // Primary: Midnight Slate (#0F172A) in Light mode, Polished Platinum Slate (#CBD5E1) in Dark mode
   primary:
-    'bg-[#0F172A] hover:bg-[#1E293B] active:bg-[#020617] text-white border border-[#0F172A] focus:ring-[#0F172A]/15 focus-visible:ring-[#0F172A]/15 dark:bg-[#CBD5E1] dark:hover:bg-[#E2E8F0] dark:active:bg-[#94A3B8] dark:text-[#0F172A] dark:border-[#CBD5E1] dark:focus:ring-slate-400/20 dark:focus-visible:ring-slate-400/20 shadow-2xs',
+    'bg-[#0F172A] hover:bg-[#1E293B] active:bg-[#020617] text-white border border-[#0F172A] focus:ring-[#0F172A]/15 focus-visible:ring-[#0F172A]/15 dark:bg-[#CBD5E1] dark:hover:bg-[#E2E8F0] dark:active:bg-[#94A3B8] dark:text-[#0F172A] dark:border-[#CBD5E1] dark:focus:ring-white/20 dark:focus-visible:ring-white/20 shadow-2xs dark:shadow-[0_0_12px_rgba(203,213,225,0.12)]',
 
-  // Secondary: Neutral surface background, subtle neutral border, default foreground text
+  // Secondary: Charcoal surface, metallic border, crisp text
   secondary:
-    'bg-white dark:bg-slate-800 hover:bg-[#F8FAFC] dark:hover:bg-slate-700/80 active:bg-[#F1F5F9] dark:active:bg-slate-700 text-[#334155] dark:text-slate-200 border border-[#E2E8F0] dark:border-slate-700 shadow-2xs',
+    'bg-white dark:bg-[#181D2A] hover:bg-[#F8FAFC] dark:hover:bg-[#202637] active:bg-[#F1F5F9] dark:active:bg-[#252C3D] text-[#334155] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-white/10 shadow-2xs dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]',
 
-  // Outline: Transparent background, subtle neutral border, neutral foreground, minimal hover background
+  // Outline: Transparent background, subtle metallic border, muted to white text
   outline:
-    'bg-transparent hover:bg-[#F8FAFC] dark:hover:bg-slate-800 active:bg-[#F1F5F9] dark:active:bg-slate-700/80 text-[#475569] dark:text-slate-300 border border-[#E2E8F0] dark:border-slate-700',
+    'bg-transparent hover:bg-[#F8FAFC] dark:hover:bg-white/[0.06] active:bg-[#F1F5F9] dark:active:bg-white/[0.10] text-[#475569] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] border border-[#E2E8F0] dark:border-white/10',
 
-  // Ghost: Transparent background, no visible border, muted foreground, subtle neutral hover background
+  // Ghost: Transparent background, no border, subtle hover illumination
   ghost:
-    'bg-transparent hover:bg-[#F1F5F9] dark:hover:bg-slate-800 active:bg-[#E2E8F0] dark:active:bg-slate-700 text-[#64748B] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white border-transparent',
+    'bg-transparent hover:bg-[#F1F5F9] dark:hover:bg-white/[0.06] active:bg-[#E2E8F0] dark:active:bg-white/[0.10] text-[#64748B] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-white border-transparent',
 
-  // Destructive: Muted red treatment, reserved strictly for destructive actions
+  // Destructive: Muted red treatment
   destructive:
     'bg-rose-50 hover:bg-rose-100/90 active:bg-rose-200/80 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:active:bg-rose-900/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 shadow-2xs',
+
+  // Link: Inline clickable text with subtle hover underline
+  link:
+    'bg-transparent hover:underline text-[#0F172A] dark:text-[#CBD5E1] border-transparent shadow-none p-0 h-auto font-medium',
 };
 
 const SIZE_STYLES: Record<ButtonSize, string> = {

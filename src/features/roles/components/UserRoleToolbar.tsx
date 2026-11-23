@@ -2,7 +2,7 @@
 // JK-PAYROLL: USER ROLE TOOLBAR COMPONENT
 // Panel 1: Search Box + SearchButton + Filter Toggle + Actions
 // Panel 2: Collapsible Filter Directory (Organization, Security Role, Status) + Active Chips
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/features/roles/components/UserRoleToolbar.tsx
 // ==============================================================================
 
@@ -15,7 +15,7 @@ import {
   SearchableOption,
 } from '../../../client/components/ui/SearchableSelect.js';
 import { SearchButton } from '../../../client/components/ui/SearchButton.js';
-import { Button, Badge } from '../../../client/components/ui/index.js';
+import { Button, Badge, Input } from '../../../client/components/ui/index.js';
 
 const TENANT_OPTIONS: SearchableOption[] = [
   { value: 'All', label: 'All Organizations' },
@@ -216,11 +216,10 @@ export const UserRoleToolbar: React.FC<UserRoleToolbarProps> = ({
       {/* ================================================================== */}
       {/* PANEL 1: SEARCH BOX + SEARCH BUTTON + FILTER BUTTON + ACTIONS      */}
       {/* ================================================================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl border border-[#E5E7EB] dark:border-slate-800 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white dark:bg-[#121620] rounded-xl border border-[#E5E7EB] dark:border-white/10 shadow-2xs">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-[#6B7280] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
+          <div className="flex-1">
+            <Input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -231,18 +230,20 @@ export const UserRoleToolbar: React.FC<UserRoleToolbarProps> = ({
                 }
               }}
               placeholder="Search by user, email, role, or organization..."
-              className="h-10 w-full pl-10 pr-9 text-xs rounded-lg bg-[#FBFBFC] dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 text-[#111827] dark:text-white placeholder-[#6B7280] focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all"
+              leftIcon={<Search className="w-4 h-4" />}
+              rightElement={
+                searchInput ? (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="p-1 text-[#6B7280] hover:text-[#111827] dark:text-[#64748B] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+                    title="Clear search query"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                ) : undefined
+              }
             />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#111827] dark:hover:text-slate-200 transition-colors cursor-pointer"
-                title="Clear search query"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
           </div>
 
           <SearchButton onClick={handleExecuteSearch} />
@@ -260,7 +261,7 @@ export const UserRoleToolbar: React.FC<UserRoleToolbarProps> = ({
           >
             <span>Filter</span>
             {hasActiveDropdownFilters && (
-              <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-slate-900 ml-1" />
+              <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-[#121620] ml-1" />
             )}
           </Button>
 
@@ -293,8 +294,8 @@ export const UserRoleToolbar: React.FC<UserRoleToolbarProps> = ({
       {/* ================================================================== */}
       {activeChips.length > 0 && (
         <div className="flex items-center flex-wrap gap-1.5 py-1 text-xs">
-          <span className="text-[11px] font-semibold text-[#6B7280] dark:text-slate-400 mr-1 flex items-center gap-1">
-            <Filter className="w-3 h-3 text-[#6B7280]" />
+          <span className="text-[11px] font-semibold text-[#6B7280] dark:text-[#94A3B8] mr-1 flex items-center gap-1">
+            <Filter className="w-3 h-3 text-[#6B7280] dark:text-[#64748B]" />
             <span>Active Filters:</span>
           </span>
           {activeChips.map((chip) => (
@@ -307,7 +308,7 @@ export const UserRoleToolbar: React.FC<UserRoleToolbarProps> = ({
               <button
                 type="button"
                 onClick={() => handleRemoveChip(chip.key)}
-                className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer ml-1"
+                className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors cursor-pointer ml-1"
                 title="Remove filter"
               >
                 ✕
@@ -317,7 +318,7 @@ export const UserRoleToolbar: React.FC<UserRoleToolbarProps> = ({
           <button
             type="button"
             onClick={handleClearAll}
-            className="text-xs font-semibold text-[#0F172A] dark:text-blue-400 hover:underline ml-1.5 cursor-pointer"
+            className="text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] hover:underline ml-1.5 cursor-pointer"
           >
             Clear All
           </button>
@@ -328,11 +329,11 @@ export const UserRoleToolbar: React.FC<UserRoleToolbarProps> = ({
       {/* PANEL 2: COLLAPSIBLE FILTER DIRECTORY PANEL                        */}
       {/* ================================================================== */}
       {isFilterPanelOpen && (
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-[#E5E7EB] dark:border-slate-800 space-y-3 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB] dark:border-slate-800">
+        <div className="p-4 bg-white dark:bg-[#181D2A] rounded-xl border border-[#E5E7EB] dark:border-white/10 space-y-3 shadow-xs dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB] dark:border-white/10">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-[#475569] dark:text-slate-300" />
-              <span className="text-xs font-bold text-[#111827] dark:text-white">
+              <Filter className="w-4 h-4 text-[#475569] dark:text-[#CBD5E1]" />
+              <span className="text-xs font-bold text-[#111827] dark:text-[#F8FAFC]">
                 Filter Directory
               </span>
             </div>

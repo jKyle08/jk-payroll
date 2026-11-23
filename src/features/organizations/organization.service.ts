@@ -19,6 +19,10 @@ import {
   PayFrequency,
   DEFAULT_ORGANIZATION_SETTINGS,
   OrganizationOnboardingResult,
+  Country,
+  StatutoryIdentifierDefinition,
+  OrganizationLegalEntity,
+  OrganizationStatutoryRegistration,
 } from './types.js';
 import {
   CreateOrganizationInput,
@@ -26,7 +30,12 @@ import {
   UpdateOrganizationInput,
   OrganizationOnboardingInput,
   UpdateOrganizationSettingsInput,
+  CreateLegalEntityInput,
+  UpdateLegalEntityInput,
+  CreateStatutoryRegistrationInput,
+  UpdateStatutoryRegistrationInput,
 } from './organization.schema.js';
+import { encryptionService } from '../../server/security/encryption.service.js';
 
 interface SupabaseResult<T> {
   data: T | null;
@@ -326,6 +335,10 @@ export class OrganizationService {
           : ['Department', 'EmployeeProfile', 'RolePermission'];
     const { resolvedModules } = resolveModuleDependencies(rawModules);
 
+    const primaryLegalEntity = db.getPrimaryLegalEntity(tenant.id);
+    const legalEntities = db.getLegalEntitiesByOrg(tenant.id);
+    const statutoryRegistrations = primaryLegalEntity ? db.getStatutoryRegistrations(primaryLegalEntity.id) : [];
+
     return {
       id: tenant.id,
       code: code,
@@ -353,6 +366,9 @@ export class OrganizationService {
       defaultPayFrequency: (tenant.defaultPayFrequency as PayFrequency) || 'Semi-Monthly',
       modules: resolvedModules,
       primaryContactId: tenant.primaryContactId || adminProfile?.id || null,
+      primaryLegalEntity,
+      legalEntities,
+      statutoryRegistrations,
       admin: {
         name: adminFullName,
         fullName: adminFullName,
@@ -883,6 +899,400 @@ export class OrganizationService {
     } catch (err) {
       console.warn('Supabase organization delete warning:', err);
     }
+    return deleted;
+  }
+
+  // ============================================================================
+  // INTERNATIONAL JURISDICTIONS, LEGAL ENTITIES & STATUTORY REGISTRATIONS
+  // ============================================================================
+
+  /**
+   * Retrieves all active supported countries/jurisdictions
+   */
+  public async getCountries(): Promise<Country[]> {
+    return db.getCountries();
+  }
+
+  /**
+   * Retrieves statutory identifier definitions filtered by country code
+   */
+  public async getStatutoryDefinitions(countryCode?: string): Promise<StatutoryIdentifierDefinition[]> {
+    return db.getStatutoryDefinitions(countryCode);
+  }
+
+  /**
+   * Retrieves all registered legal entities for an organization
+   */
+  public async getLegalEntities(orgId: string, scopeTenantId?: string): Promise<OrganizationLegalEntity[]> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied to this organization.');
+    }
+    return db.getLegalEntitiesByOrg(orgId);
+  }
+
+  /**
+   * Retrieves a single legal entity by ID with tenant scoping
+   */
+  public async getLegalEntityById(
+    orgId: string,
+    entityId: string,
+    scopeTenantId?: string
+  ): Promise<OrganizationLegalEntity | undefined> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied to this organization.');
+    }
+    const entity = db.getLegalEntityById(entityId);
+    if (!entity || entity.organizationId !== orgId) return undefined;
+    return entity;
+  }
+
+  /**
+   * Registers a new legal entity for an organization
+   */
+  public async createLegalEntity(
+    orgId: string,
+    input: CreateLegalEntityInput,
+    scopeTenantId?: string
+  ): Promise<OrganizationLegalEntity> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied.');
+    }
+    const tenant = db.getTenantById(orgId);
+    if (!tenant) throw new Error(`Organization with ID '${orgId}' not found`);
+
+    const created = db.createLegalEntity({
+      organizationId: orgId,
+      legalName: input.legalName,
+      tradingName: input.tradingName,
+      countryCode: input.countryCode,
+      registrationNumber: input.registrationNumber,
+      isPrimary: input.isPrimary,
+      status: input.status,
+    });
+
+    try {
+      const supabase = getSupabaseClient();
+      await withSupabaseTimeout(
+        supabase.from('organization_legal_entities').insert({
+          id: created.id,
+          organization_id: created.organizationId,
+          legal_name: created.legalName,
+          trading_name: created.tradingName,
+          country_code: created.countryCode,
+          registration_number: created.registrationNumber,
+          is_primary: created.isPrimary,
+          status: created.status,
+        })
+      );
+    } catch (err) {
+      console.warn('Supabase createLegalEntity warning:', err);
+    }
+
+    return created;
+  }
+
+  /**
+   * Updates an existing legal entity
+   */
+  public async updateLegalEntity(
+    orgId: string,
+    entityId: string,
+    input: UpdateLegalEntityInput,
+    scopeTenantId?: string
+  ): Promise<OrganizationLegalEntity | undefined> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied.');
+    }
+    const existing = db.getLegalEntityById(entityId);
+    if (!existing || existing.organizationId !== orgId) return undefined;
+
+    const updated = db.updateLegalEntity(entityId, input);
+    if (!updated) return undefined;
+
+    try {
+      const supabase = getSupabaseClient();
+      await withSupabaseTimeout(
+        supabase
+          .from('organization_legal_entities')
+          .update({
+            legal_name: updated.legalName,
+            trading_name: updated.tradingName,
+            country_code: updated.countryCode,
+            registration_number: updated.registrationNumber,
+            is_primary: updated.isPrimary,
+            status: updated.status,
+          })
+          .eq('id', entityId)
+      );
+    } catch (err) {
+      console.warn('Supabase updateLegalEntity warning:', err);
+    }
+
+    return updated;
+  }
+
+  /**
+   * Deletes a non-primary legal entity
+   */
+  public async deleteLegalEntity(
+    orgId: string,
+    entityId: string,
+    scopeTenantId?: string
+  ): Promise<boolean> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied.');
+    }
+    const existing = db.getLegalEntityById(entityId);
+    if (!existing || existing.organizationId !== orgId) return false;
+    if (existing.isPrimary) {
+      throw new Error('Cannot delete primary legal entity. Designate another entity as primary first.');
+    }
+
+    const deleted = db.deleteLegalEntity(entityId);
+    try {
+      const supabase = getSupabaseClient();
+      await withSupabaseTimeout(
+        supabase.from('organization_legal_entities').delete().eq('id', entityId)
+      );
+    } catch (err) {
+      console.warn('Supabase deleteLegalEntity warning:', err);
+    }
+    return deleted;
+  }
+
+  /**
+   * Retrieves all statutory registrations for a legal entity (with masked values)
+   */
+  public async getStatutoryRegistrations(
+    orgId: string,
+    entityId: string,
+    scopeTenantId?: string
+  ): Promise<OrganizationStatutoryRegistration[]> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied.');
+    }
+    const entity = db.getLegalEntityById(entityId);
+    if (!entity || entity.organizationId !== orgId) {
+      throw new Error(`Legal entity '${entityId}' not found in organization '${orgId}'`);
+    }
+
+    return db.getStatutoryRegistrations(entityId);
+  }
+
+  /**
+   * Saves or updates a statutory registration with encryption and masking
+   */
+  public async saveStatutoryRegistration(
+    orgId: string,
+    entityId: string,
+    input: CreateStatutoryRegistrationInput,
+    actorId?: string,
+    scopeTenantId?: string
+  ): Promise<OrganizationStatutoryRegistration> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied.');
+    }
+    const entity = db.getLegalEntityById(entityId);
+    if (!entity || entity.organizationId !== orgId) {
+      throw new Error(`Legal entity '${entityId}' not found in organization '${orgId}'`);
+    }
+
+    const definition = db.statutoryDefinitions.get(input.identifierDefinitionId);
+    if (!definition) {
+      throw new Error(`Statutory identifier definition '${input.identifierDefinitionId}' not found`);
+    }
+
+    // Verify country compatibility
+    if (definition.countryCode !== entity.countryCode) {
+      throw new Error(
+        `Identifier '${definition.label}' belongs to jurisdiction '${definition.countryCode}', but legal entity is registered in '${entity.countryCode}'`
+      );
+    }
+
+    // Validate format against definition regex if provided
+    if (definition.validationConfig?.regex) {
+      const reg = new RegExp(definition.validationConfig.regex);
+      if (!reg.test(input.value)) {
+        throw new Error(
+          `Invalid registration value format for '${definition.label}'. Expected format matching pattern '${definition.validationConfig.regex}'`
+        );
+      }
+    }
+
+    // Encrypt the sensitive identifier
+    const { encryptedValue, keyVersion, maskedValue } = encryptionService.encrypt(input.value);
+
+    const saved = db.upsertStatutoryRegistration({
+      legalEntityId: entityId,
+      identifierDefinitionId: definition.id,
+      countryCode: definition.countryCode,
+      jurisdictionCode: input.jurisdictionCode,
+      encryptedValue,
+      encryptionKeyVersion: keyVersion,
+      maskedValue,
+      registrationStatus: input.registrationStatus || 'Active',
+      effectiveDate: input.effectiveDate,
+      expirationDate: input.expirationDate,
+      createdBy: actorId,
+      updatedBy: actorId,
+    });
+
+    // If primary legal entity, sync into tenant.statutoryIds for backward compatibility
+    if (entity.isPrimary) {
+      const tenant = db.getTenantById(orgId);
+      if (tenant) {
+        tenant.statutoryIds = {
+          ...(tenant.statutoryIds || {}),
+          [definition.identifierKey.toLowerCase()]: input.value,
+        };
+      }
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+      await withSupabaseTimeout(
+        supabase.from('organization_statutory_registrations').upsert({
+          id: saved.id,
+          legal_entity_id: saved.legalEntityId,
+          identifier_definition_id: saved.identifierDefinitionId,
+          country_code: saved.countryCode,
+          jurisdiction_code: saved.jurisdictionCode,
+          encrypted_value: saved.encryptedValue,
+          encryption_key_version: saved.encryptionKeyVersion,
+          masked_value: saved.maskedValue,
+          registration_status: saved.registrationStatus,
+          effective_date: saved.effectiveDate,
+          expiration_date: saved.expirationDate,
+          created_by: saved.createdBy,
+          updated_by: saved.updatedBy,
+        })
+      );
+    } catch (err) {
+      console.warn('Supabase upsert statutory registration warning:', err);
+    }
+
+    return {
+      ...saved,
+      definition,
+    };
+  }
+
+  /**
+   * Updates an existing statutory registration
+   */
+  public async updateStatutoryRegistration(
+    orgId: string,
+    entityId: string,
+    regId: string,
+    input: UpdateStatutoryRegistrationInput,
+    actorId?: string,
+    scopeTenantId?: string
+  ): Promise<OrganizationStatutoryRegistration | undefined> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied.');
+    }
+    const entity = db.getLegalEntityById(entityId);
+    if (!entity || entity.organizationId !== orgId) return undefined;
+
+    const existing = db.getStatutoryRegistrationById(regId);
+    if (!existing || existing.legalEntityId !== entityId) return undefined;
+
+    let encryptedValue = existing.encryptedValue;
+    let keyVersion = existing.encryptionKeyVersion;
+    let maskedValue = existing.maskedValue;
+
+    if (input.value) {
+      const enc = encryptionService.encrypt(input.value);
+      encryptedValue = enc.encryptedValue;
+      keyVersion = enc.keyVersion;
+      maskedValue = enc.maskedValue;
+
+      // Sync backward-compatible statutoryIds
+      if (entity.isPrimary) {
+        const def = db.statutoryDefinitions.get(existing.identifierDefinitionId);
+        const tenant = db.getTenantById(orgId);
+        if (def && tenant) {
+          tenant.statutoryIds = {
+            ...(tenant.statutoryIds || {}),
+            [def.identifierKey.toLowerCase()]: input.value,
+          };
+        }
+      }
+    }
+
+    const updated = db.upsertStatutoryRegistration({
+      id: regId,
+      legalEntityId: entityId,
+      identifierDefinitionId: existing.identifierDefinitionId,
+      countryCode: existing.countryCode,
+      jurisdictionCode: input.jurisdictionCode !== undefined ? input.jurisdictionCode : existing.jurisdictionCode,
+      encryptedValue: encryptedValue || '',
+      encryptionKeyVersion: keyVersion,
+      maskedValue,
+      registrationStatus: input.registrationStatus || existing.registrationStatus,
+      effectiveDate: input.effectiveDate !== undefined ? input.effectiveDate : existing.effectiveDate,
+      expirationDate: input.expirationDate !== undefined ? input.expirationDate : existing.expirationDate,
+      updatedBy: actorId,
+    });
+
+    const def = db.statutoryDefinitions.get(updated.identifierDefinitionId);
+
+    try {
+      const supabase = getSupabaseClient();
+      await withSupabaseTimeout(
+        supabase
+          .from('organization_statutory_registrations')
+          .update({
+            encrypted_value: updated.encryptedValue,
+            encryption_key_version: updated.encryptionKeyVersion,
+            masked_value: updated.maskedValue,
+            registration_status: updated.registrationStatus,
+            jurisdiction_code: updated.jurisdictionCode,
+            effective_date: updated.effectiveDate,
+            expiration_date: updated.expirationDate,
+            updated_by: updated.updatedBy,
+          })
+          .eq('id', regId)
+      );
+    } catch (err) {
+      console.warn('Supabase update statutory registration warning:', err);
+    }
+
+    return {
+      ...updated,
+      definition: def,
+    };
+  }
+
+  /**
+   * Deletes a statutory registration
+   */
+  public async deleteStatutoryRegistration(
+    orgId: string,
+    entityId: string,
+    regId: string,
+    scopeTenantId?: string
+  ): Promise<boolean> {
+    if (scopeTenantId && scopeTenantId !== orgId) {
+      throw new Error('Tenant isolation violation: Access denied.');
+    }
+    const entity = db.getLegalEntityById(entityId);
+    if (!entity || entity.organizationId !== orgId) return false;
+
+    const existing = db.getStatutoryRegistrationById(regId);
+    if (!existing || existing.legalEntityId !== entityId) return false;
+
+    const deleted = db.deleteStatutoryRegistration(regId);
+
+    try {
+      const supabase = getSupabaseClient();
+      await withSupabaseTimeout(
+        supabase.from('organization_statutory_registrations').delete().eq('id', regId)
+      );
+    } catch (err) {
+      console.warn('Supabase delete statutory registration warning:', err);
+    }
+
     return deleted;
   }
 }

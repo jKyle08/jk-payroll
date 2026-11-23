@@ -1,7 +1,7 @@
 // ==============================================================================
 // JK-PAYROLL: USER ROLE MAIN HUB COMPONENT
 // Root page for User Roles: Header + KPI Cards + Toolbar + Table + ConfirmDialog
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/features/roles/components/UserRoleMain.tsx
 // ==============================================================================
 
@@ -109,24 +109,24 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header Bar: Midnight & Champagne Steel Aesthetic */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
+    <div className="space-y-6 pb-12 font-sans">
+      {/* 1. Header Bar: Balanced Glossy Graphite Aesthetic */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB] dark:border-white/10">
         <div>
           {/* Breadcrumbs */}
           <div className="flex items-center space-x-2 mb-1">
-            <span className="text-xs font-semibold text-[#6B7280]">
+            <span className="text-xs font-semibold text-[#6B7280] dark:text-[#64748B]">
               User Roles
             </span>
-            <span className="text-xs text-[#E5E7EB]">/</span>
-            <span className="text-xs font-semibold text-[#111827]">
+            <span className="text-xs text-[#E5E7EB] dark:text-white/10">/</span>
+            <span className="text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">
               User Role Assignments
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
+          <h1 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-[#F8FAFC]">
             User Roles
           </h1>
-          <p className="text-xs text-[#6B7280] mt-0.5">
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">
             Assign security roles to multiple users, manage user assignments, and enforce organization-level scoping.
           </p>
         </div>

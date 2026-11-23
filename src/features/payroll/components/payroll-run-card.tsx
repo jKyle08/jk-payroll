@@ -14,9 +14,9 @@ export interface PayrollRunCardProps {
 
 export const PayrollRunCard: React.FC<PayrollRunCardProps> = ({ computation, onApprove }) => {
   return (
-    <div className="p-4 rounded-xl border border-[#E5E7EB] bg-white space-y-2">
+    <div className="p-4 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#181D2A] dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)] space-y-2 relative overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-[#111827]">
+        <span className="text-xs font-semibold text-[#111827] dark:text-[#F8FAFC]">
           Batch #{computation.id}
         </span>
         <Badge variant="neutral" size="sm">
@@ -24,10 +24,10 @@ export const PayrollRunCard: React.FC<PayrollRunCardProps> = ({ computation, onA
         </Badge>
       </div>
       <div className="flex items-baseline justify-between pt-1">
-        <span className="text-sm font-bold text-[#111827] tabular-nums">
+        <span className="text-sm font-bold text-[#111827] dark:text-[#F8FAFC] font-mono tabular-nums">
           ₱{(computation.netPay || 0).toLocaleString()}
         </span>
-        <span className="text-xs text-[#6B7280]">
+        <span className="text-xs text-[#6B7280] dark:text-[#94A3B8]">
           {computation.employeeName || 'Active Payroll'}
         </span>
       </div>

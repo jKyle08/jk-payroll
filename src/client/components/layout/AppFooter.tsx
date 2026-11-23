@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: APPLICATION FOOTER COMPONENT
-// Design System: "Midnight & Champagne Steel" (Subtle Enterprise SaaS Flow)
+// Design System: Balanced Glossy Graphite (Subtle Enterprise SaaS Flow)
 // File: src/client/components/layout/AppFooter.tsx
 // ==============================================================================
 
@@ -59,7 +59,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({
     <footer
       role="contentinfo"
       aria-label="Application Footer"
-      className={`mt-auto w-full py-4 px-4 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 select-none ${className}`}
+      className={`mt-auto w-full py-4 px-4 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-white/10 text-xs text-slate-500 dark:text-[#64748B] select-none ${className}`}
     >
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 max-w-7xl mx-auto w-full">
         {/* Attribution & Copyright */}
@@ -70,12 +70,12 @@ export const AppFooter: React.FC<AppFooterProps> = ({
               href={companyUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-2 transition-colors"
+              className="font-medium text-slate-700 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:underline underline-offset-2 transition-colors"
             >
               {companyName}
             </a>
           </span>
-          <span className="text-slate-300 dark:text-slate-700">•</span>
+          <span className="text-slate-300 dark:text-white/10">•</span>
           <span>© {currentYear} {companyName}. All rights reserved.</span>
         </div>
 
@@ -87,7 +87,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({
               href={link.href}
               target={link.external ? '_blank' : undefined}
               rel={link.external ? 'noopener noreferrer' : undefined}
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="text-slate-500 dark:text-[#64748B] hover:text-slate-900 dark:hover:text-[#F8FAFC] transition-colors"
             >
               {link.label}
             </a>

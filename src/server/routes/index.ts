@@ -18,6 +18,7 @@ import { auditLogsRoutes } from '../../features/audit-logs/audit-logs.routes.js'
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { requirePermission } from '../middleware/rbac.guard.js';
 import { leaveController } from '../../features/leave-management/leave.controller.js';
+import { organizationController } from '../../features/organizations/organization.controller.js';
 
 export const apiRouter = Router();
 
@@ -25,6 +26,12 @@ export const apiRouter = Router();
 apiRouter.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Reference Data Endpoints
+apiRouter.get('/countries', authMiddleware, (req, res) => organizationController.getCountries(req, res));
+apiRouter.get('/statutory-identifiers/definitions', authMiddleware, (req, res) =>
+  organizationController.getStatutoryDefinitions(req, res)
+);
 
 // ------------------------------------------------------------------------------
 // Domain / Feature-First Routes

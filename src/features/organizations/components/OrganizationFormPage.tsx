@@ -2,7 +2,7 @@
 // JK-PAYROLL: ORGANIZATION FORM PAGE
 // Routes to OrganizationOnboardingForm (/organizations/new)
 // or OrganizationSettingsForm (/organizations/:id/edit)
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/features/organizations/components/OrganizationFormPage.tsx
 // ==============================================================================
 
@@ -13,6 +13,8 @@ import { Organization } from '../types.js';
 import { useOrganization } from '../hooks/useOrganization.js';
 import { OrganizationSettingsForm } from './OrganizationSettingsForm.js';
 import { OrganizationOnboardingWizard } from '../../../client/components/onboarding/OrganizationOnboardingWizard.js';
+import { useAuth } from '../../auth/hooks/use-auth.js';
+import { UnauthorizedPage } from '../../../client/components/ui/StatusPages.js';
 
 export interface OrganizationFormPageProps {
   organizationIdOverride?: string;
@@ -28,6 +30,7 @@ export const OrganizationFormPage: React.FC<OrganizationFormPageProps> = ({
   const { id: routeId } = useParams<{ id: string }>();
   const id = organizationIdOverride || routeId;
   const isEditMode = Boolean(id);
+  const { user } = useAuth();
 
   // Safe router navigation with fallback
   let navigate: ((path: string) => void) | undefined;
@@ -45,12 +48,41 @@ export const OrganizationFormPage: React.FC<OrganizationFormPageProps> = ({
     }
   };
 
+  // Role & permission evaluation
+  const isSuperAdmin = Boolean(
+    user?.isSuperAdmin ||
+      (user as any)?.role === 'SUPER_ADMIN' ||
+      (user as any)?.role === 'SuperAdmin'
+  );
+  const isTenantAdmin = Boolean(
+    user?.isTenantAdmin ||
+      (user as any)?.role === 'ORG_ADMIN' ||
+      (user as any)?.role === 'TENANT_ADMIN' ||
+      (user as any)?.role === 'Admin'
+  );
+  const hasOrgEditPermission = Boolean(
+    user?.effectivePermissions?.includes('Organization.Edit') ||
+      user?.effectivePermissions?.includes('Tenant.Edit') ||
+      user?.effectivePermissions?.includes('Organization.Settings.Update') ||
+      user?.effectivePermissions?.includes('*') ||
+      (user as any)?.permissions?.includes('Organization.Edit')
+  );
+
+  const canEditAny = isSuperAdmin;
+  const canEditOwn = (isTenantAdmin || hasOrgEditPermission) && (user?.tenantId === id || (user as any)?.organizationId === id);
+  const isAuthorized = isSuperAdmin || (isEditMode ? canEditOwn : true);
+
   // Single-record fetching for edit mode
   const {
     organization: existingOrg,
     isLoading: isLoadingOrg,
     error: loadError,
-  } = useOrganization(id);
+  } = useOrganization(isAuthorized ? id : undefined);
+
+  // Check authorization - reject regular users attempting to navigate to organization edit
+  if (user && isEditMode && !isAuthorized) {
+    return <UnauthorizedPage />;
+  }
 
   if (isEditMode && isLoadingOrg) {
     return (
@@ -66,16 +98,16 @@ export const OrganizationFormPage: React.FC<OrganizationFormPageProps> = ({
   if (isEditMode && (loadError || !existingOrg)) {
     return (
       <div className="p-12 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl border border-rose-200 dark:border-rose-900/50 p-6 text-center shadow-xs">
-          <AlertCircle className="w-8 h-8 text-rose-600 mx-auto mb-2" />
-          <h3 className="text-sm font-semibold text-[#111827] dark:text-white">Organization Not Found</h3>
-          <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-1">
+        <div className="max-w-md w-full bg-white dark:bg-[#181D2A] rounded-2xl border border-rose-200 dark:border-rose-500/30 p-6 text-center shadow-xs dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)]">
+          <AlertCircle className="w-8 h-8 text-rose-600 dark:text-rose-400 mx-auto mb-2" />
+          <h3 className="text-sm font-semibold text-[#111827] dark:text-[#F8FAFC]">Organization Not Found</h3>
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-1">
             {loadError || `Organization with ID '${id}' could not be located.`}
           </p>
           <button
             type="button"
             onClick={handleBack}
-            className="mt-4 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#0F172A] text-white text-xs font-semibold"
+            className="mt-4 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#0F172A] dark:bg-[#202637] text-white dark:text-[#F8FAFC] border border-transparent dark:border-white/10 hover:dark:bg-[#252C3D] text-xs font-semibold"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Return to Organizations</span>
@@ -86,17 +118,17 @@ export const OrganizationFormPage: React.FC<OrganizationFormPageProps> = ({
   }
 
   return (
-    <div className="space-y-6 pb-12 text-[#111827] dark:text-white font-sans w-full">
+    <div className="space-y-6 pb-12 text-[#111827] dark:text-[#F8FAFC] font-sans w-full">
       <div className="flex items-center space-x-2 pb-1">
         <button
           type="button"
           onClick={handleBack}
-          className="text-xs font-semibold text-[#6B7280] hover:underline cursor-pointer transition-colors"
+          className="text-xs font-semibold text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F8FAFC] hover:underline cursor-pointer transition-colors"
         >
           Organizations
         </button>
-        <span className="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
-        <span className="text-xs font-semibold text-[#111827] dark:text-slate-200">
+        <span className="text-xs text-[#E5E7EB] dark:text-white/20">/</span>
+        <span className="text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">
           {isEditMode ? 'Edit Organization Settings' : 'New Workspace Onboarding'}
         </span>
       </div>

@@ -2,7 +2,7 @@
 // JK-PAYROLL: ROLE UNIFIED FORM PAGE
 // Single page-driven form for Create and Edit of role definitions.
 // SYSTEM roles are rendered read-only for non-Super-Admin users.
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/features/roles/components/RoleFormPage.tsx
 // ==============================================================================
 
@@ -23,7 +23,7 @@ import { RoleItem } from '../types.js';
 import { fetchRoleById } from '../services/role.client.js';
 import { useRoleMutations } from '../hooks/useRoleMutations.js';
 import { SearchableSelect, type SearchableOption } from '../../../client/components/ui/SearchableSelect.js';
-import { Button, Badge, toast } from '../../../client/components/ui/index.js';
+import { Button, Badge, Alert, toast } from '../../../client/components/ui/index.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
 import { authFetch } from '../../../client/lib/auth-session.js';
 
@@ -260,28 +260,28 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
   }
 
   return (
-    <div className="space-y-6 pb-12 text-[#111827] dark:text-white">
+    <div className="space-y-6 pb-12 text-[#111827] dark:text-[#F8FAFC]">
       {/* Breadcrumbs & Page Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-white/10">
         <div>
           <div className="flex items-center space-x-2 mb-1.5">
             <button
               type="button"
               onClick={handleBack}
-              className="text-xs font-semibold text-[#6B7280] hover:underline cursor-pointer"
+              className="text-xs font-semibold text-[#6B7280] dark:text-[#94A3B8] hover:underline cursor-pointer"
             >
               Roles
             </button>
-            <span className="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
+            <span className="text-xs text-[#E5E7EB] dark:text-white/20">/</span>
             <button
               type="button"
               onClick={handleBack}
-              className="text-xs font-semibold text-[#6B7280] hover:underline cursor-pointer"
+              className="text-xs font-semibold text-[#6B7280] dark:text-[#94A3B8] hover:underline cursor-pointer"
             >
               Role Directory
             </button>
-            <span className="text-xs text-[#E5E7EB] dark:text-slate-700">/</span>
-            <span className="text-xs font-semibold text-[#111827] dark:text-slate-200">
+            <span className="text-xs text-[#E5E7EB] dark:text-white/20">/</span>
+            <span className="text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">
               {isReadOnly
                 ? 'View Role'
                 : isEditMode
@@ -300,7 +300,7 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                 : 'Create Role Definition'}
             </span>
           </h1>
-          <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">
             Configure role identity, organizational scope, permission boundary,
             and system constraints.
           </p>
@@ -309,43 +309,38 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
 
       {/* Banners */}
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          <span>{successMessage}</span>
-        </div>
+        <Alert variant="success" onDismiss={() => setSuccessMessage(null)}>
+          {successMessage}
+        </Alert>
       )}
 
       {(mutationError || loadError) && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-          <span>{mutationError || loadError}</span>
-        </div>
+        <Alert variant="destructive">
+          {mutationError || loadError}
+        </Alert>
       )}
 
       {isReadOnly && (
-        <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] text-[#475569] text-xs font-medium flex items-center gap-2">
-          <Lock className="w-4 h-4 flex-shrink-0" />
-          <span>
-            {loaded?.roleType === 'SYSTEM'
-              ? 'System Global roles can only be edited by Super Admin.'
-              : 'This role is locked to prevent administrative lockout and cannot be modified.'}
-          </span>
-        </div>
+        <Alert variant="info" icon={<Lock className="w-4 h-4" />}>
+          {loaded?.roleType === 'SYSTEM'
+            ? 'System Global roles can only be edited by Super Admin.'
+            : 'This role is locked to prevent administrative lockout and cannot be modified.'}
+        </Alert>
       )}
 
       {/* Clean Role Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* CARD: ROLE DEFINITION & CONSTRAINTS */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-[#E5E7EB] dark:border-slate-800 shadow-xs space-y-6">
-          <div className="flex items-center space-x-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-[#0F172A] dark:text-white flex items-center justify-center font-bold">
+        <div className="bg-white dark:bg-[#181D2A] rounded-2xl p-6 border border-[#E5E7EB] dark:border-white/10 shadow-xs dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)] space-y-6 relative overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent">
+          <div className="flex items-center space-x-3 pb-3 border-b border-slate-100 dark:border-white/10">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#121620] text-[#0F172A] dark:text-[#CBD5E1] border border-transparent dark:border-white/10 flex items-center justify-center font-bold">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">
                 Role Identity &amp; Scope
               </h3>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
                 Define role identifiers, tenant authorization scope, and
                 privilege lifecycle
               </p>
@@ -355,11 +350,11 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
           {/* Row 1: Role Name & Role Code */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] mb-1">
                 Role Name <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
-                <Award className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Award className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#64748B] pointer-events-none" />
                 <input
                   type="text"
                   value={name}
@@ -369,10 +364,10 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                   minLength={2}
                   maxLength={128}
                   placeholder="e.g. Senior Payroll Specialist"
-                  className="h-10 w-full pl-9 pr-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A] disabled:bg-slate-50 disabled:text-slate-500"
+                  className="h-10 w-full pl-9 pr-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] text-slate-900 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-400 dark:focus:border-white/20 transition-colors disabled:bg-slate-50 dark:disabled:bg-white/[0.02] disabled:text-slate-500 dark:disabled:text-[#64748B]"
                 />
               </div>
-              <p className="text-[11px] text-[#6B7280] dark:text-slate-400 mt-1">
+              <p className="text-[11px] text-[#6B7280] dark:text-[#64748B] mt-1">
                 Human-readable display name shown across permissions and user
                 profile cards.
               </p>
@@ -380,15 +375,15 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1]">
                   Role Code <span className="text-rose-500">*</span>
                 </label>
-                <span className="text-[10px] text-slate-500 font-mono">
+                <span className="text-[10px] text-slate-500 dark:text-[#64748B] font-mono">
                   Uppercase identifier
                 </span>
               </div>
               <div className="relative">
-                <Terminal className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Terminal className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#64748B] pointer-events-none" />
                 <input
                   type="text"
                   value={code}
@@ -402,10 +397,10 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                   minLength={2}
                   maxLength={64}
                   placeholder="e.g. SENIOR_PAYROLL_SPECIALIST"
-                  className="h-10 w-full pl-9 pr-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A] disabled:bg-slate-50 disabled:text-slate-500"
+                  className="h-10 w-full pl-9 pr-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] text-slate-900 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-[#64748B] font-mono uppercase focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-400 dark:focus:border-white/20 transition-colors disabled:bg-slate-50 dark:disabled:bg-white/[0.02] disabled:text-slate-500 dark:disabled:text-[#64748B]"
                 />
               </div>
-              <p className="text-[11px] text-[#6B7280] dark:text-slate-400 mt-1">
+              <p className="text-[11px] text-[#6B7280] dark:text-[#64748B] mt-1">
                 Unique uppercase code (letters, numbers, underscores) enforced
                 per tenant scope.
               </p>
@@ -413,9 +408,9 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
           </div>
 
           {/* Row 2: Role Type & Organization Scope */}
-          <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-white/10">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] mb-2">
                 Role Type (Multi-Tenancy Model){' '}
                 <span className="text-rose-500">*</span>
               </label>
@@ -424,8 +419,8 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                 <label
                   className={`relative flex items-start gap-3 p-3.5 rounded-xl border transition-colors ${
                     roleType === 'SYSTEM'
-                      ? 'border-[#0F172A] bg-slate-50 dark:bg-slate-800/80 dark:border-slate-500'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 hover:border-slate-400'
+                      ? 'border-[#0F172A] bg-slate-50 dark:bg-[#202637] dark:border-white/30 ring-1 ring-slate-900 dark:ring-white/20'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#141924] hover:border-slate-400 dark:hover:border-white/20'
                   } ${
                     !canManageSystemRoles || isEditMode || isReadOnly
                       ? 'opacity-60 cursor-not-allowed'
@@ -443,14 +438,14 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                   />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC]">
                         SYSTEM Role (Global)
                       </span>
                       <Badge variant="neutral" size="sm">
                         Platform-Wide
                       </Badge>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       Global standard role available across all organizations.
                       Managed and editable only by Super Admin.
                     </p>
@@ -461,8 +456,8 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                 <label
                   className={`relative flex items-start gap-3 p-3.5 rounded-xl border transition-colors ${
                     roleType === 'CUSTOM'
-                      ? 'border-[#0F172A] bg-slate-50 dark:bg-slate-800/80 dark:border-slate-500'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 hover:border-slate-400'
+                      ? 'border-[#0F172A] bg-slate-50 dark:bg-[#202637] dark:border-white/30 ring-1 ring-slate-900 dark:ring-white/20'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#141924] hover:border-slate-400 dark:hover:border-white/20'
                   } ${
                     isEditMode || isReadOnly
                       ? 'opacity-60 cursor-not-allowed'
@@ -480,14 +475,14 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                   />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC]">
                         CUSTOM Role (Tenant-Scoped)
                       </span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-100 text-purple-700">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-transparent dark:border-purple-500/30">
                         Private
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
                       Custom role created and managed exclusively for a specific
                       organization.
                     </p>
@@ -500,10 +495,10 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
             {roleType === 'CUSTOM' && (
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1]">
                     Organization Scope <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-[10px] text-slate-500 font-mono">
+                  <span className="text-[10px] text-slate-500 dark:text-[#64748B] font-mono">
                     Defaults: SuperAdmin &amp; Admin
                   </span>
                 </div>
@@ -514,7 +509,7 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                   searchPlaceholder="Search organizations by name or code..."
                   options={orgSelectOptions}
                 />
-                <p className="text-[11px] text-[#6B7280] dark:text-slate-400 mt-1">
+                <p className="text-[11px] text-[#6B7280] dark:text-[#64748B] mt-1">
                   Select the owning organization boundary. The role code will be
                   unique within this organization.
                 </p>
@@ -523,8 +518,8 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
           </div>
 
           {/* Row 3: Description */}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          <div className="pt-2 border-t border-slate-100 dark:border-white/10">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] mb-1">
               Description
             </label>
             <textarea
@@ -534,18 +529,18 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
               maxLength={500}
               rows={3}
               placeholder="Describe the operational responsibilities, permission boundaries, and access levels for this role..."
-              className="w-full p-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A] disabled:bg-slate-50 disabled:text-slate-500"
+              className="w-full p-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] text-slate-900 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-[#64748B] focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-400 dark:focus:border-white/20 transition-colors disabled:bg-slate-50 dark:disabled:bg-white/[0.02] disabled:text-slate-500 dark:disabled:text-[#64748B]"
             />
           </div>
 
           {/* Row 4: Behavior & Security Guardrails */}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          <div className="pt-2 border-t border-slate-100 dark:border-white/10">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] mb-2">
               Behavior &amp; Security Guardrails
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* is_default */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex items-start gap-3">
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#141924] flex items-start gap-3">
                 <input
                   type="checkbox"
                   id="rf-is-default"
@@ -557,11 +552,11 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                 <div>
                   <label
                     htmlFor="rf-is-default"
-                    className="text-xs font-bold text-slate-900 dark:text-white cursor-pointer"
+                    className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] cursor-pointer"
                   >
                     Auto-Assign to New Invites (is_default)
                   </label>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
                     Automatically grant this role to newly created or invited
                     users within the organization.
                   </p>
@@ -569,7 +564,7 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
               </div>
 
               {/* is_mutable */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex items-start gap-3">
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#141924] flex items-start gap-3">
                 <input
                   type="checkbox"
                   id="rf-is-mutable"
@@ -581,11 +576,11 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
                 <div>
                   <label
                     htmlFor="rf-is-mutable"
-                    className="text-xs font-bold text-slate-900 dark:text-white cursor-pointer"
+                    className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] cursor-pointer"
                   >
                     Mutable Role Definition (is_mutable)
                   </label>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] mt-0.5">
                     Allow future modifications or deletion. Uncheck to lock this
                     role permanently against administrative tampering.
                   </p>
@@ -597,7 +592,7 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
 
         {/* Form Actions */}
         {/* BOTTOM ACTION BAR: Right-aligned Cancel, Reset, Save */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB] dark:border-slate-800">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB] dark:border-white/10">
           <Button
             type="button"
             variant="secondary"

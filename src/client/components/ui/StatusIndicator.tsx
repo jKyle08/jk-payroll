@@ -58,11 +58,19 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-2 text-[13px] font-medium text-[#111827] dark:text-slate-200 select-none ${className}`}
+      className={`inline-flex items-center gap-2 text-[13px] font-medium text-[#111827] dark:text-[#F8FAFC] select-none ${className}`}
       {...props}
     >
       <span
-        className="w-2 h-2 rounded-full flex-shrink-0"
+        className={`w-2 h-2 rounded-full flex-shrink-0 ${
+          resolvedStatus === 'Active'
+            ? 'dark:shadow-[0_0_6px_rgba(34,160,107,0.5)]'
+            : resolvedStatus === 'Inactive' || resolvedStatus === 'Suspended'
+            ? 'dark:shadow-[0_0_6px_rgba(220,98,98,0.5)]'
+            : resolvedStatus === 'Onboarding'
+            ? 'dark:shadow-[0_0_6px_rgba(217,119,6,0.5)]'
+            : ''
+        }`}
         style={{ backgroundColor: dotColor }}
         aria-hidden="true"
       />

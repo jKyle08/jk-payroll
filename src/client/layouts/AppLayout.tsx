@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: REUSABLE APP LAYOUT WITH FIXED COLLAPSIBLE SIDEBAR
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/client/layouts/AppLayout.tsx
 // ==============================================================================
 
@@ -17,6 +17,7 @@ import { Organization } from '../../features/organizations/types.js';
 import { OrganizationContext } from '../components/layout/sidebar.js';
 import { PERMISSIONS } from '../../shared/constants/permissions.js';
 import { toast } from '../components/ui/index.js';
+import { useTheme } from '../core/theme/ThemeContext.js';
 
 export interface AppLayoutProps {
   children?: React.ReactNode;
@@ -103,24 +104,8 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
   const [activeTenantCode, setActiveTenantCode] = useState(initialTenantCode);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
-  // Theme state
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-    }
-    return 'light';
-  });
-
-  const handleToggleTheme = useCallback((theme: 'light' | 'dark') => {
-    setCurrentTheme(theme);
-    if (typeof document !== 'undefined') {
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-  }, []);
+  // Centralized Theme state from ThemeContext
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   // Keep internal state in sync with updated props from session wrapper
   useEffect(() => {
@@ -174,6 +159,21 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
     userPermissions.includes('SUPER_ADMIN')
   );
 
+  const canEditOrganization = Boolean(
+    isSuperAdmin ||
+    currentUser.role === 'Tenant Admin' ||
+    currentUser.role?.toLowerCase().includes('admin') ||
+    userPermissions.includes('Organization.Edit') ||
+    userPermissions.includes('Tenant.Edit') ||
+    userPermissions.includes('*')
+  );
+
+  const handleEditOrganization = useCallback(() => {
+    if (currentUser.tenantId) {
+      navigate(`/organizations/${encodeURIComponent(currentUser.tenantId)}/edit`);
+    }
+  }, [currentUser.tenantId, navigate]);
+
   // Convert organization context for Sidebar
   const orgContext: OrganizationContext = useMemo(
     () => ({
@@ -190,7 +190,7 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
   );
 
   return (
-    <div className="min-h-screen w-full min-w-0 bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased flex relative">
+    <div className="min-h-screen w-full min-w-0 bg-[#FBFBFC] dark:bg-[#0B0E14] font-sans text-[#111827] dark:text-[#F8FAFC] antialiased flex relative selection:bg-slate-200 dark:selection:bg-white/20">
       {/* 1. Reserved Sidebar Shell Column (Desktop): Reserves exact width in document flow without margin-calc hacks */}
       <div
         className={`hidden lg:block flex-shrink-0 transition-[width] duration-300 ease-in-out ${
@@ -213,7 +213,7 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
       />
 
       {/* 3. Main Workspace Column: Automatically fills 100% of the remaining available viewport width */}
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen max-w-full">
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen max-w-full bg-[#FBFBFC] dark:bg-[#0E121B]">
         {/* Top Header with Accessible Sidebar Toggle Button */}
         <AppTopbar
           notifications={notifications}
@@ -223,13 +223,15 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
           tenantCode={activeTenantCode}
           isSidebarCollapsed={isCollapsed}
           onToggleSidebar={toggleSidebar}
-          onToggleTheme={handleToggleTheme}
-          currentTheme={currentTheme}
+          onToggleTheme={() => toggleTheme()}
+          currentTheme={resolvedTheme}
           onNavigate={(path) => navigate(path)}
           onSwitchOrganization={() => setIsSwitcherOpen(true)}
           onProfileClick={() => navigate('/admin/profiles')}
           onSwitchDepartment={() => navigate('/admin/departments')}
           isSuperAdmin={isSuperAdmin}
+          canEditOrganization={canEditOrganization}
+          onEditOrganization={handleEditOrganization}
         />
 
         {/* Dynamic Main Content Viewport */}

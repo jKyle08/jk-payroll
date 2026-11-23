@@ -458,6 +458,7 @@ export const updateOrganizationSettingsSchema = z.object({
   sector: organizationSectorEnum.optional(),
   domain: z.string().min(3).max(120).optional().or(z.literal('')).nullable(),
   logoUrl: z.string().url().optional().nullable(),
+  countryCode: z.string().length(2).optional(),
 
   // HR, Localization & Work Modalities
   currency: z.string().length(3).optional().transform((v) => v?.toUpperCase()),
@@ -560,3 +561,67 @@ export const organizationQuerySchema = z.object({
 });
 
 export type OrganizationQueryInput = z.infer<typeof organizationQuerySchema>;
+
+// ==============================================================================
+// LEGAL ENTITIES & STATUTORY REGISTRATIONS VALIDATION SCHEMAS
+// ==============================================================================
+
+export const legalEntityStatusEnum = z.enum(['Active', 'Inactive']);
+
+export const createLegalEntitySchema = z.object({
+  legalName: z.string().min(2, 'Legal name must be at least 2 characters').max(255),
+  tradingName: z.string().max(255).optional().nullable(),
+  countryCode: z.string().length(2, 'Country code must be ISO 3166-1 alpha-2 (2 characters)').toUpperCase(),
+  registrationNumber: z.string().max(100).optional().nullable(),
+  isPrimary: z.boolean().optional().default(false),
+  status: legalEntityStatusEnum.optional().default('Active'),
+});
+
+export type CreateLegalEntityInput = z.infer<typeof createLegalEntitySchema>;
+
+export const updateLegalEntitySchema = z.object({
+  legalName: z.string().min(2, 'Legal name must be at least 2 characters').max(255).optional(),
+  tradingName: z.string().max(255).optional().nullable(),
+  countryCode: z.string().length(2).toUpperCase().optional(),
+  registrationNumber: z.string().max(100).optional().nullable(),
+  isPrimary: z.boolean().optional(),
+  status: legalEntityStatusEnum.optional(),
+});
+
+export type UpdateLegalEntityInput = z.infer<typeof updateLegalEntitySchema>;
+
+export const statutoryRegistrationStatusEnum = z.enum(['Active', 'Pending', 'Expired']);
+
+export const createStatutoryRegistrationSchema = z.object({
+  identifierDefinitionId: z.string().uuid('Invalid statutory identifier definition ID'),
+  countryCode: z.string().length(2).toUpperCase().optional(),
+  jurisdictionCode: z.string().max(32).optional().nullable(),
+  value: z.string().min(1, 'Registration value is required'),
+  registrationStatus: statutoryRegistrationStatusEnum.optional().default('Active'),
+  effectiveDate: updateDateField,
+  expirationDate: updateDateField,
+});
+
+export type CreateStatutoryRegistrationInput = z.infer<typeof createStatutoryRegistrationSchema>;
+
+export const updateStatutoryRegistrationSchema = z.object({
+  value: z.string().min(1).optional(),
+  jurisdictionCode: z.string().max(32).optional().nullable(),
+  registrationStatus: statutoryRegistrationStatusEnum.optional(),
+  effectiveDate: updateDateField,
+  expirationDate: updateDateField,
+});
+
+export type UpdateStatutoryRegistrationInput = z.infer<typeof updateStatutoryRegistrationSchema>;
+
+export const legalEntityIdParamSchema = z.object({
+  id: z.string().min(1),
+  entityId: z.string().min(1),
+});
+
+export const registrationIdParamSchema = z.object({
+  id: z.string().min(1),
+  entityId: z.string().min(1),
+  registrationId: z.string().min(1),
+});
+

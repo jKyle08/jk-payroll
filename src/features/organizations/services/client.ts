@@ -8,6 +8,10 @@ import {
   Organization,
   OrgFilterState,
   OrganizationOnboardingResult,
+  Country,
+  StatutoryIdentifierDefinition,
+  OrganizationLegalEntity,
+  OrganizationStatutoryRegistration,
 } from '../types.js';
 import { authFetch, handleSessionTimeout } from '../../../client/lib/auth-session.js';
 import {
@@ -18,6 +22,10 @@ import {
   OrganizationOnboardingFormInput,
   UpdateOrganizationSettingsInput,
   UpdateOrganizationSettingsFormInput,
+  CreateLegalEntityInput,
+  UpdateLegalEntityInput,
+  CreateStatutoryRegistrationInput,
+  UpdateStatutoryRegistrationInput,
 } from '../organization.schema.js';
 
 export interface OrganizationListResponse {
@@ -189,12 +197,163 @@ export async function deleteOrganization(
   );
 }
 
+/**
+ * Fetch supported countries
+ */
+export async function fetchCountries(): Promise<Country[]> {
+  return apiRequest<Country[]>('/api/countries');
+}
+
+/**
+ * Fetch statutory identifier definitions
+ */
+export async function fetchStatutoryDefinitions(countryCode?: string): Promise<StatutoryIdentifierDefinition[]> {
+  const url = countryCode
+    ? `/api/statutory-identifiers/definitions?countryCode=${encodeURIComponent(countryCode)}`
+    : '/api/statutory-identifiers/definitions';
+  return apiRequest<StatutoryIdentifierDefinition[]>(url);
+}
+
+/**
+ * Fetch legal entities for an organization
+ */
+export async function fetchLegalEntities(orgId: string): Promise<OrganizationLegalEntity[]> {
+  if (!orgId) throw new Error('Organization ID is required');
+  return apiRequest<OrganizationLegalEntity[]>(`${BASE_URL}/${encodeURIComponent(orgId)}/legal-entities`);
+}
+
+/**
+ * Create a new legal entity for an organization
+ */
+export async function createLegalEntity(
+  orgId: string,
+  data: CreateLegalEntityInput
+): Promise<OrganizationLegalEntity> {
+  if (!orgId) throw new Error('Organization ID is required');
+  return apiRequest<OrganizationLegalEntity>(`${BASE_URL}/${encodeURIComponent(orgId)}/legal-entities`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update a legal entity
+ */
+export async function updateLegalEntity(
+  orgId: string,
+  entityId: string,
+  data: UpdateLegalEntityInput
+): Promise<OrganizationLegalEntity> {
+  if (!orgId || !entityId) throw new Error('Organization ID and Entity ID are required');
+  return apiRequest<OrganizationLegalEntity>(
+    `${BASE_URL}/${encodeURIComponent(orgId)}/legal-entities/${encodeURIComponent(entityId)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+/**
+ * Delete a legal entity
+ */
+export async function deleteLegalEntity(
+  orgId: string,
+  entityId: string
+): Promise<{ success: boolean; message?: string }> {
+  if (!orgId || !entityId) throw new Error('Organization ID and Entity ID are required');
+  return apiRequest<{ success: boolean; message?: string }>(
+    `${BASE_URL}/${encodeURIComponent(orgId)}/legal-entities/${encodeURIComponent(entityId)}`,
+    {
+      method: 'DELETE',
+    }
+  );
+}
+
+/**
+ * Fetch statutory registrations for a legal entity
+ */
+export async function fetchStatutoryRegistrations(
+  orgId: string,
+  entityId: string
+): Promise<OrganizationStatutoryRegistration[]> {
+  if (!orgId || !entityId) throw new Error('Organization ID and Entity ID are required');
+  return apiRequest<OrganizationStatutoryRegistration[]>(
+    `${BASE_URL}/${encodeURIComponent(orgId)}/legal-entities/${encodeURIComponent(entityId)}/statutory-registrations`
+  );
+}
+
+/**
+ * Save / create statutory registration
+ */
+export async function saveStatutoryRegistration(
+  orgId: string,
+  entityId: string,
+  data: CreateStatutoryRegistrationInput
+): Promise<OrganizationStatutoryRegistration> {
+  if (!orgId || !entityId) throw new Error('Organization ID and Entity ID are required');
+  return apiRequest<OrganizationStatutoryRegistration>(
+    `${BASE_URL}/${encodeURIComponent(orgId)}/legal-entities/${encodeURIComponent(entityId)}/statutory-registrations`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+/**
+ * Update statutory registration
+ */
+export async function updateStatutoryRegistration(
+  orgId: string,
+  entityId: string,
+  regId: string,
+  data: UpdateStatutoryRegistrationInput
+): Promise<OrganizationStatutoryRegistration> {
+  if (!orgId || !entityId || !regId) throw new Error('Organization ID, Entity ID, and Registration ID are required');
+  return apiRequest<OrganizationStatutoryRegistration>(
+    `${BASE_URL}/${encodeURIComponent(orgId)}/legal-entities/${encodeURIComponent(entityId)}/statutory-registrations/${encodeURIComponent(regId)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+/**
+ * Delete statutory registration
+ */
+export async function deleteStatutoryRegistration(
+  orgId: string,
+  entityId: string,
+  regId: string
+): Promise<{ success: boolean; message?: string }> {
+  if (!orgId || !entityId || !regId) throw new Error('Organization ID, Entity ID, and Registration ID are required');
+  return apiRequest<{ success: boolean; message?: string }>(
+    `${BASE_URL}/${encodeURIComponent(orgId)}/legal-entities/${encodeURIComponent(entityId)}/statutory-registrations/${encodeURIComponent(regId)}`,
+    {
+      method: 'DELETE',
+    }
+  );
+}
+
 export const organizationClient = {
   fetchOrganizations,
   fetchOrganizationById,
   createOrganization,
   updateOrganization,
+  updateOrganizationSettings,
   deleteOrganization,
+  fetchCountries,
+  fetchStatutoryDefinitions,
+  fetchLegalEntities,
+  createLegalEntity,
+  updateLegalEntity,
+  deleteLegalEntity,
+  fetchStatutoryRegistrations,
+  saveStatutoryRegistration,
+  updateStatutoryRegistration,
+  deleteStatutoryRegistration,
 };
 
 export default organizationClient;

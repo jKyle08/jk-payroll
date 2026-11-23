@@ -8,6 +8,7 @@ import React from 'react';
 import { DepartmentItem } from '../types.js';
 import { DepartmentTableRow } from './DepartmentTableRow.js';
 import { Building2 } from 'lucide-react';
+import { EmptyState } from '../../../client/components/ui/index.js';
 
 export interface DepartmentTableProps {
   departments: DepartmentItem[];
@@ -30,33 +31,29 @@ export const DepartmentTable: React.FC<DepartmentTableProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 p-12 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F172A] mb-3"></div>
-        <p className="text-xs text-[#6B7280]">Loading department records...</p>
+      <div className="bg-white dark:bg-[#181D2A] rounded-2xl border border-[#E5E7EB] dark:border-white/10 p-12 text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F172A] dark:border-[#CBD5E1] mb-3"></div>
+        <p className="text-xs text-[#6B7280] dark:text-[#94A3B8]">Loading department records...</p>
       </div>
     );
   }
 
   if (departments.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 p-12 text-center space-y-3">
-        <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
-          <Building2 className="w-6 h-6" />
-        </div>
-        <h3 className="text-sm font-bold text-[#111827] dark:text-white">No Departments Found</h3>
-        <p className="text-xs text-[#6B7280] max-w-sm mx-auto">
-          No department records match your search or filter criteria. Try resetting filters or create a new department.
-        </p>
-      </div>
+      <EmptyState
+        icon={<Building2 className="w-6 h-6" />}
+        title="No Departments Found"
+        description="No department records match your search or filter criteria. Try resetting filters or create a new department."
+      />
     );
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-xs">
+    <div className="bg-white dark:bg-[#121620] rounded-2xl border border-[#E5E7EB] dark:border-white/10 shadow-xs">
       <div className="overflow-x-auto rounded-t-2xl">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full min-w-[840px] text-left border-collapse">
           <thead>
-            <tr className="bg-[#F8FAFC] dark:bg-slate-800/80 border-b border-[#E5E7EB] dark:border-slate-700 text-[11px] font-bold text-[#6B7280] dark:text-slate-300 uppercase tracking-wider">
+            <tr className="bg-[#F8FAFC] dark:bg-[#141924] border-b border-[#E5E7EB] dark:border-white/10 text-[11px] font-bold text-[#6B7280] dark:text-[#64748B] uppercase tracking-wider">
               <th className="py-3 px-3 text-center w-12 font-mono">#</th>
               <th className="py-3 px-4">Department & Code</th>
               <th className="py-3 px-4">Organization</th>
@@ -67,7 +64,7 @@ export const DepartmentTable: React.FC<DepartmentTableProps> = ({
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E5E7EB] dark:divide-slate-800">
+          <tbody className="divide-y divide-[#E5E7EB] dark:divide-white/10">
             {departments.map((dept, index) => (
               <DepartmentTableRow
                 key={dept.id}
@@ -84,8 +81,8 @@ export const DepartmentTable: React.FC<DepartmentTableProps> = ({
 
       {/* Table Footer: Pagination */}
       {pagination ?? (
-        <div className="px-6 py-3 border-t border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-900/60 text-xs text-[#6B7280]">
-          Showing <span className="font-semibold text-[#111827] dark:text-white font-mono tabular-nums">{departments.length}</span>{' '}
+        <div className="px-6 py-3 border-t border-[#E5E7EB] dark:border-white/10 bg-[#FBFBFC] dark:bg-[#141924] text-xs text-[#6B7280] dark:text-[#64748B]">
+          Showing <span className="font-semibold text-[#111827] dark:text-[#F8FAFC] font-mono tabular-nums">{departments.length}</span>{' '}
           {departments.length === 1 ? 'department' : 'departments'}
         </div>
       )}

@@ -1,6 +1,13 @@
+// ==============================================================================
+// PAYPULSE: SYSTEM STATUS & FALLBACK ERROR PAGES
+// Design System: Balanced Glossy Graphite
+// File: src/client/components/ui/StatusPages.tsx
+// ==============================================================================
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, Construction, ArrowLeft, LogIn } from 'lucide-react';
+import { Button } from './Button.js';
 
 interface StatusLayoutProps {
   icon: React.ReactNode;
@@ -21,27 +28,24 @@ const StatusLayout: React.FC<StatusLayoutProps> = ({
 }) => (
   <div
     className={`flex items-center justify-center px-4 ${
-      fullScreen ? 'min-h-screen bg-slate-50' : 'min-h-[60vh]'
+      fullScreen ? 'min-h-screen bg-[#FBFBFC] dark:bg-[#0B0E14]' : 'min-h-[60vh]'
     }`}
   >
-    <div className="max-w-md w-full text-center bg-white border border-[#E5E7EB] rounded-2xl shadow-sm p-8">
-      <div className="mx-auto w-14 h-14 rounded-xl bg-[#0F172A]/5 text-[#0F172A] flex items-center justify-center mb-4">
+    <div className="relative max-w-md w-full text-center bg-white dark:bg-[#181D2A] dark:bg-gradient-to-b dark:from-[#202637] dark:to-[#161B27] border border-[#E5E7EB] dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_20px_48px_-8px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.15)] p-8 before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:pointer-events-none">
+      <div className="mx-auto w-14 h-14 rounded-xl bg-[#0F172A]/5 text-[#0F172A] dark:bg-white/[0.06] dark:text-[#CBD5E1] dark:border dark:border-white/10 flex items-center justify-center mb-4">
         {icon}
       </div>
       {code && (
-        <div className="font-mono text-xs font-bold tracking-widest text-[#6B7280] mb-1">{code}</div>
+        <div className="font-mono text-xs font-bold tracking-widest text-[#6B7280] dark:text-[#64748B] mb-1">
+          {code}
+        </div>
       )}
-      <h1 className="text-xl font-semibold text-[#111827]">{title}</h1>
-      <p className="mt-2 text-sm text-[#475569]">{description}</p>
+      <h1 className="text-xl font-semibold text-[#111827] dark:text-[#F8FAFC]">{title}</h1>
+      <p className="mt-2 text-sm text-[#475569] dark:text-[#94A3B8]">{description}</p>
       <div className="mt-6 flex items-center justify-center gap-2">{actions}</div>
     </div>
   </div>
 );
-
-const primaryBtn =
-  'inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0F172A] text-white text-sm font-medium hover:bg-[#1E293B] transition-colors';
-const secondaryBtn =
-  'inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#E5E7EB] text-[#111827] text-sm font-medium hover:bg-[#F1F5F9] transition-colors';
 
 export const UnauthorizedPage: React.FC = () => {
   const navigate = useNavigate();
@@ -59,12 +63,12 @@ export const UnauthorizedPage: React.FC = () => {
       description="Your session has expired or you are not signed in. Please sign in again to continue."
       actions={
         <>
-          <button type="button" onClick={handleLogin} className={primaryBtn}>
-            <LogIn className="w-4 h-4" /> Sign in
-          </button>
-          <button type="button" onClick={() => navigate(-1)} className={secondaryBtn}>
-            <ArrowLeft className="w-4 h-4" /> Go back
-          </button>
+          <Button type="button" variant="primary" size="md" onClick={handleLogin}>
+            <LogIn className="w-4 h-4 mr-1.5" /> Sign in
+          </Button>
+          <Button type="button" variant="secondary" size="md" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Go back
+          </Button>
         </>
       }
     />
@@ -81,15 +85,14 @@ export const MaintenancePage: React.FC = () => {
       description="This module isn't available yet. It's being built and will be released soon."
       actions={
         <>
-          <button type="button" onClick={() => navigate('/organizations')} className={primaryBtn}>
+          <Button type="button" variant="primary" size="md" onClick={() => navigate('/organizations')}>
             Back to Organizations
-          </button>
-          <button type="button" onClick={() => navigate(-1)} className={secondaryBtn}>
-            <ArrowLeft className="w-4 h-4" /> Go back
-          </button>
+          </Button>
+          <Button type="button" variant="secondary" size="md" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Go back
+          </Button>
         </>
       }
     />
   );
 };
-

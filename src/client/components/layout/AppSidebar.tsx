@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: PROFESSIONAL FIXED COLLAPSIBLE SIDEBAR
-// Design System: "Midnight & Champagne Steel" (SaaS Dashboard Aesthetic)
+// Design System: Balanced Glossy Graphite (SaaS Dashboard Aesthetic)
 // File: src/client/components/layout/AppSidebar.tsx
 // ==============================================================================
 
@@ -145,7 +145,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       <aside
         id="app-sidebar"
         aria-label="Application Navigation"
-        className={`fixed top-0 bottom-0 left-0 z-40 flex flex-col bg-[#FBFBFC] dark:bg-slate-900 border-r border-[#E5E7EB] dark:border-slate-800 transition-all duration-300 ease-in-out select-none overflow-hidden ${
+        className={`fixed top-0 bottom-0 left-0 z-40 flex flex-col bg-[#FBFBFC] dark:bg-[#121620] border-r border-[#E5E7EB] dark:border-white/10 transition-all duration-300 ease-in-out select-none overflow-hidden ${
           isMobileOpen
             ? 'translate-x-0 w-[260px] shadow-2xl z-50'
             : `-translate-x-full lg:translate-x-0 ${
@@ -157,11 +157,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           {/* ================================================================== */}
           {/* A. BRAND HEADER: APPLICATION LOGO & CLOSE BUTTON (MOBILE)          */}
           {/* ================================================================== */}
-          <div className="h-14 px-3 flex items-center justify-between border-b border-[#E5E7EB] dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
+          <div className="h-14 px-3 flex items-center justify-between border-b border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] flex-shrink-0">
             {isCollapsed ? (
               <div
                 title="PayPulse Enterprise Payroll"
-                className="w-8 h-8 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm mx-auto cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[#0F172A] dark:bg-[#181D2A] dark:border dark:border-white/15 dark:shadow-[0_0_12px_rgba(203,213,225,0.08)] text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm mx-auto cursor-pointer"
                 onClick={propToggleCollapse || sidebarContext.toggleSidebar}
               >
                 JK
@@ -169,14 +169,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             ) : (
               <>
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm flex-shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#0F172A] dark:bg-[#181D2A] dark:border dark:border-white/15 dark:shadow-[0_0_12px_rgba(203,213,225,0.08)] text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm flex-shrink-0">
                     JK
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-sm tracking-tight text-[#111827] dark:text-white leading-tight">
+                    <span className="font-bold text-sm tracking-tight text-[#111827] dark:text-[#F8FAFC] leading-tight">
                       PayPulse
                     </span>
-                    <span className="text-[10px] text-[#6B7280] dark:text-slate-400 truncate mt-0.5 font-medium leading-tight">
+                    <span className="text-[10px] text-[#6B7280] dark:text-[#64748B] truncate mt-0.5 font-medium leading-tight">
                       Enterprise Payroll
                     </span>
                   </div>
@@ -188,7 +188,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   onClick={handleCloseMobile}
                   title="Close navigation drawer"
                   aria-label="Close navigation drawer"
-                  className="p-1 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-slate-800 dark:hover:text-white transition-colors lg:hidden cursor-pointer"
+                  className="p-1 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-white/[0.06] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] transition-colors lg:hidden cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -199,7 +199,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           {/* ================================================================== */}
           {/* B. WORKSPACE / ORGANIZATION SWITCHER & MODULE SEARCH               */}
           {/* ================================================================== */}
-          <div className="p-3 border-b border-[#E5E7EB] dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 flex-shrink-0">
+          <div className="p-3 border-b border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] space-y-2 flex-shrink-0">
             {/* Interactive Organization Switcher (Super Admin) vs Static Badge */}
             {isCollapsed ? (
               isSuper ? (
@@ -208,9 +208,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   onClick={onSwitchOrganization}
                   title={`Switch organization: ${activeOrg.name} (${activeOrg.code})`}
                   data-testid="sidebar-org-switcher-button"
-                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/60 hover:bg-[#F1F5F9] dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FBFBFC] dark:bg-[#181D2A] hover:bg-[#F1F5F9] dark:hover:bg-[#202637] transition-colors cursor-pointer"
                 >
-                  <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider">
+                  <div className="w-7 h-7 rounded-md bg-[#0F172A] dark:bg-[#202637] dark:border dark:border-white/15 text-white flex items-center justify-center font-bold text-xs tracking-wider">
                     {activeOrg.code.slice(0, 2)}
                   </div>
                 </button>
@@ -218,9 +218,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 <div
                   title={`${activeOrg.name} (${activeOrg.code})`}
                   data-testid="sidebar-org-static-badge"
-                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/60 cursor-default"
+                  className="w-10 h-10 mx-auto flex items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FBFBFC] dark:bg-[#181D2A] cursor-default"
                 >
-                  <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs tracking-wider">
+                  <div className="w-7 h-7 rounded-md bg-[#0F172A] dark:bg-[#202637] dark:border dark:border-white/15 text-white flex items-center justify-center font-bold text-xs tracking-wider">
                     {activeOrg.code.slice(0, 2)}
                   </div>
                 </div>
@@ -231,38 +231,38 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 onClick={onSwitchOrganization}
                 title={`Switch active organization: ${activeOrg.name} (${activeOrg.code})`}
                 data-testid="sidebar-org-switcher-button"
-                className="w-full flex items-center justify-between p-2 rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/60 hover:bg-[#F1F5F9] dark:hover:bg-slate-800 text-left transition-colors group cursor-pointer"
+                className="w-full flex items-center justify-between p-2 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FBFBFC] dark:bg-[#181D2A] hover:bg-[#F1F5F9] dark:hover:bg-[#202637] text-left transition-colors group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 tracking-wider">
+                  <div className="w-7 h-7 rounded-md bg-[#0F172A] dark:bg-[#202637] dark:border dark:border-white/15 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 tracking-wider">
                     {activeOrg.code.slice(0, 2)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold text-[#111827] dark:text-white truncate leading-tight group-hover:text-[#0F172A] dark:group-hover:text-white">
+                    <div className="text-xs font-semibold text-[#111827] dark:text-[#F8FAFC] truncate leading-tight group-hover:text-[#0F172A] dark:group-hover:text-white">
                       {activeOrg.name}
                     </div>
-                    <div className="text-[10px] font-mono text-[#6B7280] dark:text-slate-400 truncate leading-tight mt-0.5">
+                    <div className="text-[10px] font-mono text-[#6B7280] dark:text-[#64748B] truncate leading-tight mt-0.5">
                       {activeOrg.code}
                     </div>
                   </div>
                 </div>
-                <ChevronsUpDown className="w-3.5 h-3.5 text-[#6B7280] dark:text-slate-400 group-hover:text-[#111827] dark:group-hover:text-white transition-colors flex-shrink-0 ml-1" />
+                <ChevronsUpDown className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#94A3B8] group-hover:text-[#111827] dark:group-hover:text-white transition-colors flex-shrink-0 ml-1" />
               </button>
             ) : (
               <div
                 title={`${activeOrg.name} (${activeOrg.code})`}
                 data-testid="sidebar-org-static-badge"
-                className="w-full flex items-center justify-between p-2 rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/60 text-left select-none cursor-default"
+                className="w-full flex items-center justify-between p-2 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FBFBFC] dark:bg-[#181D2A] text-left select-none cursor-default"
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-7 h-7 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 tracking-wider">
+                  <div className="w-7 h-7 rounded-md bg-[#0F172A] dark:bg-[#202637] dark:border dark:border-white/15 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 tracking-wider">
                     {activeOrg.code.slice(0, 2)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold text-[#111827] dark:text-white truncate leading-tight">
+                    <div className="text-xs font-semibold text-[#111827] dark:text-[#F8FAFC] truncate leading-tight">
                       {activeOrg.name}
                     </div>
-                    <div className="text-[10px] font-mono text-[#6B7280] dark:text-slate-400 truncate leading-tight mt-0.5">
+                    <div className="text-[10px] font-mono text-[#6B7280] dark:text-[#64748B] truncate leading-tight mt-0.5">
                       {activeOrg.code}
                     </div>
                   </div>
@@ -273,19 +273,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             {/* Navigation Search Input (Expanded only) */}
             {!isCollapsed && (
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-[#6B7280] dark:text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Search modules..."
-                  className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-800/50 text-xs text-[#111827] dark:text-white placeholder-[#6B7280] dark:placeholder-slate-400 focus:outline-none focus:border-[#0F172A] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#0F172A] dark:focus:ring-blue-500 transition-all font-sans"
+                  className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FBFBFC] dark:bg-[#0E121B] text-xs text-[#111827] dark:text-[#F8FAFC] placeholder-[#6B7280] dark:placeholder-[#64748B] focus:outline-none focus:border-[#0F172A] dark:focus:border-white/20 focus:ring-1 focus:ring-[#0F172A] dark:focus:ring-white/10 transition-all font-sans"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => handleSearchChange('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#6B7280] hover:text-[#111827] dark:text-slate-400 dark:hover:text-white rounded transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#6B7280] hover:text-[#111827] dark:text-[#64748B] dark:hover:text-white rounded transition-colors"
                     title="Clear search"
                   >
                     <X className="w-3 h-3" />
@@ -314,11 +314,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 <div key={section.id} className="space-y-0.5">
                   {/* Section Title (Hidden in collapsed mode) */}
                   {!isCollapsed ? (
-                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400 font-mono select-none">
+                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#64748B] font-mono select-none">
                       {section.title}
                     </div>
                   ) : (
-                    <div className="w-6 h-px bg-slate-200 dark:bg-slate-800 mx-auto my-1.5" />
+                    <div className="w-6 h-px bg-slate-200 dark:bg-white/10 mx-auto my-1.5" />
                   )}
 
                   {/* Section Items */}
@@ -341,15 +341,15 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                                 : 'gap-2.5 px-2.5 py-2'
                             } ${
                               isActive
-                                ? 'bg-[#0F172A]/5 dark:bg-slate-800 text-[#0F172A] dark:text-slate-100 font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#0F172A] dark:before:bg-[#CBD5E1] before:rounded-r'
-                                : 'text-[#475569] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F1F5F9]/70 dark:hover:bg-slate-800/70 font-medium'
+                                ? 'bg-[#0F172A]/5 dark:bg-[#181D2A] text-[#0F172A] dark:text-[#F8FAFC] font-semibold before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#0F172A] dark:before:bg-[#CBD5E1] dark:before:shadow-[0_0_8px_rgba(203,213,225,0.4)] before:rounded-r dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]'
+                                : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9]/70 dark:hover:bg-white/[0.04] font-medium'
                             }`}
                           >
                             <Icon
                               className={`w-4 h-4 flex-shrink-0 transition-colors ${
                                 isActive
-                                  ? 'text-[#0F172A] dark:text-slate-200'
-                                  : 'text-[#6B7280] dark:text-slate-400 group-hover:text-[#111827] dark:group-hover:text-white'
+                                  ? 'text-[#0F172A] dark:text-[#F8FAFC]'
+                                  : 'text-[#6B7280] dark:text-[#64748B] group-hover:text-[#111827] dark:group-hover:text-[#F8FAFC]'
                               }`}
                             />
 
@@ -362,7 +362,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                                     className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider font-mono ${
                                       isActive
                                         ? 'bg-[#0F172A] text-white dark:bg-[#CBD5E1] dark:text-[#0F172A]'
-                                        : 'bg-[#F1F5F9] dark:bg-slate-800 text-[#475569] dark:text-slate-300 border border-[#E5E7EB] dark:border-slate-700'
+                                        : 'bg-[#F1F5F9] dark:bg-[#181D2A] text-[#475569] dark:text-[#94A3B8] border border-[#E5E7EB] dark:border-white/10'
                                     }`}
                                   >
                                     {item.badge}
@@ -383,7 +383,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           {/* ================================================================== */}
           {/* D. SIDEBAR FOOTER: COMPACT USER MINI CARD                          */}
           {/* ================================================================== */}
-          <div className="p-3 border-t border-[#E5E7EB] dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
+          <div className="p-3 border-t border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] flex-shrink-0">
             {user && (
               isCollapsed ? (
                 <div
@@ -398,19 +398,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white font-bold text-xs flex items-center justify-center tracking-wide">
+                      <div className="w-8 h-8 rounded-full bg-[#0F172A] dark:bg-[#181D2A] dark:border dark:border-white/15 text-white font-bold text-xs flex items-center justify-center tracking-wide">
                         {user.initials}
                       </div>
                     )}
                     <span
-                      className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-1 ring-white ${
+                      className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-1 ring-white dark:ring-[#121620] ${
                         user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
                       }`}
                     />
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2.5 p-1.5 rounded-lg bg-[#FBFBFC] dark:bg-slate-800/50 border border-[#E5E7EB] dark:border-slate-800">
+                <div className="flex items-center gap-2.5 p-1.5 rounded-lg bg-[#FBFBFC] dark:bg-[#181D2A] border border-[#E5E7EB] dark:border-white/10">
                   <div className="relative flex-shrink-0">
                     {user.avatarUrl ? (
                       <img
@@ -419,21 +419,21 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         className="w-7 h-7 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-[#0F172A] text-white font-bold text-xs flex items-center justify-center tracking-wide">
+                      <div className="w-7 h-7 rounded-full bg-[#0F172A] dark:bg-[#202637] dark:border dark:border-white/15 text-white font-bold text-xs flex items-center justify-center tracking-wide">
                         {user.initials}
                       </div>
                     )}
                     <span
-                      className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-1 ring-white ${
+                      className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-1 ring-white dark:ring-[#181D2A] ${
                         user.isActive ? 'bg-[#22A06B]' : 'bg-[#DC6262]'
                       }`}
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold text-[#111827] dark:text-white truncate leading-tight">
+                    <div className="text-xs font-semibold text-[#111827] dark:text-[#F8FAFC] truncate leading-tight">
                       {user.fullName}
                     </div>
-                    <div className="text-[10px] text-[#6B7280] dark:text-slate-400 truncate leading-tight mt-0.5">
+                    <div className="text-[10px] text-[#6B7280] dark:text-[#64748B] truncate leading-tight mt-0.5">
                       {user.role || 'User'}
                     </div>
                   </div>

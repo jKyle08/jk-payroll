@@ -1,12 +1,11 @@
 // ==============================================================================
 // JK-PAYROLL: DEPARTMENT FORM PAGE COMPONENT
 // Page-Driven CRUD Form for Creating and Editing Departments
+// Design System: Balanced Glossy Graphite
 // File: src/features/departments/components/DepartmentFormPage.tsx
 // ==============================================================================
 
-import { SearchableSelect } from '../../../client/components/ui/SearchableSelect.js';
-import { Button } from '../../../client/components/ui/index.js';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Building2,
   ArrowLeft,
@@ -15,6 +14,17 @@ import {
   AlertCircle,
   HelpCircle,
 } from 'lucide-react';
+import { SearchableSelect } from '../../../client/components/ui/SearchableSelect.js';
+import {
+  Button,
+  Input,
+  Textarea,
+  Select,
+  Checkbox,
+  Alert,
+  FormField,
+  Card,
+} from '../../../client/components/ui/index.js';
 import { DepartmentItem, CreateDepartmentInput, UpdateDepartmentInput } from '../types.js';
 
 export interface DepartmentFormPageProps {
@@ -113,189 +123,176 @@ export const DepartmentFormPage: React.FC<DepartmentFormPageProps> = ({
   return (
     <div className="space-y-6 max-w-4xl pb-12">
       {/* Top Breadcrumb & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-white/10">
         <div>
-          <div className="flex items-center space-x-2 mb-1.5 text-xs text-[#6B7280]">
-            <button onClick={onCancel} className="hover:text-[#111827] dark:hover:text-white transition-colors">
+          <div className="flex items-center space-x-2 mb-1.5 text-xs text-[#6B7280] dark:text-[#64748B]">
+            <button onClick={onCancel} className="hover:text-[#111827] dark:hover:text-[#F8FAFC] transition-colors">
               Departments
             </button>
             <span>/</span>
-            <span className="font-semibold text-[#111827] dark:text-slate-200">
+            <span className="font-semibold text-[#111827] dark:text-[#CBD5E1]">
               {mode === 'create' ? 'New Department' : `Edit ${initialData?.code || 'Department'}`}
             </span>
           </div>
-          <h1 className="text-2xl font-bold text-[#111827] dark:text-white flex items-center gap-2.5 tracking-tight">
+          <h1 className="text-2xl font-bold text-[#111827] dark:text-[#F8FAFC] flex items-center gap-2.5 tracking-tight">
             <span>{mode === 'create' ? 'Create Department' : 'Edit Department'}</span>
           </h1>
-          <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">
             Define organizational hierarchy, materialized tree path, leadership roles, and operational scope.
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="lg"
           onClick={onCancel}
-          className="h-10 px-4 rounded-xl border border-[#E5E7EB] dark:border-slate-700 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 text-[#475569] dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer"
+          leftIcon={<ArrowLeft className="w-4 h-4" />}
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Directory</span>
-        </button>
+          Back to Directory
+        </Button>
       </div>
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>{errorMessage}</span>
-        </div>
+        <Alert variant="destructive" onDismiss={() => setErrorMessage(null)}>
+          {errorMessage}
+        </Alert>
       )}
 
       {/* Form Card */}
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 p-6 sm:p-8 space-y-6 shadow-xs">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-[#181D2A] rounded-2xl border border-[#E5E7EB] dark:border-white/10 p-6 sm:p-8 space-y-6 shadow-xs dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)]">
         {/* Hierarchy Information Section */}
         <div>
-          <h3 className="text-sm font-bold text-[#111827] dark:text-white flex items-center gap-2 mb-4">
-            <Building2 className="w-4 h-4 text-indigo-600" />
+          <h3 className="text-sm font-bold text-[#111827] dark:text-[#F8FAFC] flex items-center gap-2 mb-4">
+            <Building2 className="w-4 h-4 text-indigo-500" />
             <span>Organizational Hierarchy & Placement</span>
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Organization */}
             <div>
-              <label className="block text-xs font-semibold text-[#475569] dark:text-slate-300 mb-1.5">
-                Organization Scope <span className="text-rose-500">*</span>
-              </label>
-              <SearchableSelect
-                value={organizationId}
-                onChange={(v) => {
-                  setOrganizationId(v);
-                  setParentDepartmentId(null);
-                }}
-                disabled={!isSuperAdmin}
-                searchPlaceholder="Search organizations..."
-                options={organizations.map((org: any) => ({
-                  value: org.id,
-                  label: org.name,
-                  sublabel: org.code,
-                  avatarText: String(org.name || '?').slice(0, 2).toUpperCase(),
-                  avatarColor: 'bg-purple-600',
-                }))}
-              />
+              <FormField label="Organization Scope" required>
+                <SearchableSelect
+                  value={organizationId}
+                  onChange={(v) => {
+                    setOrganizationId(v);
+                    setParentDepartmentId(null);
+                  }}
+                  disabled={!isSuperAdmin}
+                  searchPlaceholder="Search organizations..."
+                  options={organizations.map((org: any) => ({
+                    value: org.id,
+                    label: org.name,
+                    sublabel: org.code,
+                    avatarText: String(org.name || '?').slice(0, 2).toUpperCase(),
+                    avatarColor: 'bg-purple-600',
+                  }))}
+                />
+              </FormField>
             </div>
 
             {/* Parent Department */}
             <div>
-              <label className="block text-xs font-semibold text-[#475569] dark:text-slate-300 mb-1.5">
-                Parent Department (Optional)
-              </label>
-              <select
-                value={parentDepartmentId || ''}
-                onChange={(e) => setParentDepartmentId(e.target.value ? e.target.value : null)}
-                className="w-full h-10 px-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 font-medium cursor-pointer"
+              <FormField
+                label="Parent Department (Optional)"
+                description="Leave empty if this is an Executive/Head Department (e.g. OPG, HR)."
               >
-                <option value="">None (Top-Level Head Department, Depth 0)</option>
-                {filteredParents.map((parent) => (
-                  <option key={parent.id} value={parent.id}>
-                    {parent.name} ({parent.code}) — Depth {parent.depth}
-                  </option>
-                ))}
-              </select>
-              <p className="text-[11px] text-[#6B7280] mt-1">
-                Leave empty if this is an Executive/Head Department (e.g. OPG, HR).
-              </p>
+                <Select
+                  value={parentDepartmentId || ''}
+                  onChange={(e) => setParentDepartmentId(e.target.value ? e.target.value : null)}
+                >
+                  <option value="" className="bg-white dark:bg-[#181D2A] text-[#111827] dark:text-[#F8FAFC]">None (Top-Level Head Department, Depth 0)</option>
+                  {filteredParents.map((parent) => (
+                    <option key={parent.id} value={parent.id} className="bg-white dark:bg-[#181D2A] text-[#111827] dark:text-[#F8FAFC]">
+                      {parent.name} ({parent.code}) — Depth {parent.depth}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
             </div>
           </div>
         </div>
 
 
-        <div className="border-t border-[#E5E7EB] dark:border-slate-800 pt-5">
-          <h3 className="text-sm font-bold text-[#111827] dark:text-white flex items-center gap-2 mb-4">
-            <Building2 className="w-4 h-4 text-indigo-600" />
+        <div className="border-t border-[#E5E7EB] dark:border-white/10 pt-5">
+          <h3 className="text-sm font-bold text-[#111827] dark:text-[#F8FAFC] flex items-center gap-2 mb-4">
+            <Building2 className="w-4 h-4 text-indigo-500" />
             <span>Department Identification & Leadership</span>
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Code */}
             <div>
-              <label className="block text-xs font-semibold text-[#475569] dark:text-slate-300 mb-1.5">
-                Department Code <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="e.g. OPG, OPG-ITD, OPG-PIO"
-                className="w-full h-10 px-3 text-xs uppercase font-mono rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#111827] dark:text-white placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] transition-all"
-              />
+              <FormField label="Department Code" required>
+                <Input
+                  type="text"
+                  required
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. OPG, OPG-ITD, OPG-PIO"
+                  isMonospace
+                  className="uppercase"
+                />
+              </FormField>
             </div>
 
             {/* Name */}
             <div>
-              <label className="block text-xs font-semibold text-[#475569] dark:text-slate-300 mb-1.5">
-                Department Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Office of the Provincial Governor, IT Division"
-                className="w-full h-10 px-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#111827] dark:text-white placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] transition-all"
-              />
+              <FormField label="Department Name" required>
+                <Input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Office of the Provincial Governor, IT Division"
+                />
+              </FormField>
             </div>
 
             {/* Department Head User */}
             <div>
-              <label className="block text-xs font-semibold text-[#475569] dark:text-slate-300 mb-1.5">
-                Department Head / Lead User
-              </label>
-              <select
-                value={headUserId || ''}
-                onChange={(e) => setHeadUserId(e.target.value ? e.target.value : null)}
-                className="w-full h-10 px-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 font-medium cursor-pointer"
-              >
-                <option value="">Unassigned (No lead appointed)</option>
-                {leadUserOptions.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.fullName} ({user.email})
-                  </option>
-                ))}
-              </select>
+              <FormField label="Department Head / Lead User">
+                <Select
+                  value={headUserId || ''}
+                  onChange={(e) => setHeadUserId(e.target.value ? e.target.value : null)}
+                >
+                  <option value="" className="bg-white dark:bg-[#181D2A] text-[#111827] dark:text-[#F8FAFC]">Unassigned (No lead appointed)</option>
+                  {leadUserOptions.map((user) => (
+                    <option key={user.id} value={user.id} className="bg-white dark:bg-[#181D2A] text-[#111827] dark:text-[#F8FAFC]">
+                      {user.fullName} ({user.email})
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
             </div>
 
             {/* Active Toggle */}
             <div className="flex items-center space-x-3 pt-6">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="dept-active-toggle"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A] cursor-pointer"
+                label="Department is active and operational"
               />
-              <label htmlFor="dept-active-toggle" className="text-xs font-semibold text-[#111827] dark:text-white cursor-pointer">
-                Department is active and operational
-              </label>
             </div>
 
             {/* Description */}
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-[#475569] dark:text-slate-300 mb-1.5">
-                Description & Operational Scope
-              </label>
-              <textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the department's primary responsibilities, functional jurisdiction, and organizational objectives..."
-                className="w-full p-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#111827] dark:text-white placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10 focus:border-[#0F172A] transition-all"
-              />
+              <FormField label="Description & Operational Scope">
+                <Textarea
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe the department's primary responsibilities, functional jurisdiction, and organizational objectives..."
+                />
+              </FormField>
             </div>
           </div>
         </div>
 
         {/* Form Actions */}
-        <div className="border-t border-[#E5E7EB] dark:border-slate-800 pt-5 flex items-center justify-end gap-3">
+        <div className="border-t border-[#E5E7EB] dark:border-white/10 pt-5 flex items-center justify-end gap-3">
           <Button
             type="button"
             variant="secondary"

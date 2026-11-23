@@ -1,7 +1,7 @@
 // ==============================================================================
 // JK-PAYROLL: USER ROLE TABLE ROW COMPONENT
 // Single row rendering user, organization, role badge, status, and action buttons
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/features/roles/components/UserRoleTableRow.tsx
 // ==============================================================================
 
@@ -35,23 +35,23 @@ export const UserRoleTableRow: React.FC<UserRoleTableRowProps> = ({
   const isSuperAdminRole = item.roleCode === 'SUPER_ADMIN';
 
   return (
-    <tr className="border-b border-[#E5E7EB] hover:bg-[#F8FAFC] transition-colors group">
+    <tr className="border-b border-[#E5E7EB] dark:border-white/10 hover:bg-[#F8FAFC] dark:hover:bg-white/[0.03] transition-colors group">
       {/* 0. Column Number */}
-      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#9CA3AF] font-medium">
+      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#9CA3AF] dark:text-[#64748B] font-medium">
         {index !== undefined ? index + 1 : '—'}
       </td>
 
       {/* 1. User Identity */}
       <td className="py-3 px-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 bg-slate-700">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white dark:text-[#CBD5E1] flex-shrink-0 bg-slate-700 dark:bg-[#121620] dark:border dark:border-white/10">
             {avatarInitials}
           </div>
           <div>
-            <div className="text-xs font-semibold text-[#111827] group-hover:text-blue-600 transition-colors">
+            <div className="text-xs font-semibold text-[#111827] dark:text-[#F8FAFC] group-hover:text-slate-600 dark:group-hover:text-white transition-colors">
               {item.userName}
             </div>
-            <div className="text-[11px] text-[#6B7280] font-mono mt-0.5">
+            <div className="text-[11px] text-[#6B7280] dark:text-[#94A3B8] font-mono mt-0.5">
               {item.userEmail}
             </div>
           </div>
@@ -61,10 +61,10 @@ export const UserRoleTableRow: React.FC<UserRoleTableRowProps> = ({
       {/* 2. Organization (Tenant) */}
       <td className="py-3 px-4">
         <div className="flex items-center gap-1.5">
-          <Building2 className="w-3.5 h-3.5 text-[#6B7280] flex-shrink-0" />
-          <span className="text-xs font-medium text-[#111827]">{item.tenantName}</span>
+          <Building2 className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#64748B] flex-shrink-0" />
+          <span className="text-xs font-medium text-[#111827] dark:text-[#CBD5E1]">{item.tenantName}</span>
         </div>
-        <div className="text-[10px] font-mono text-[#6B7280] mt-0.5">
+        <div className="text-[10px] font-mono text-[#6B7280] dark:text-[#64748B] mt-0.5">
           {item.tenantCode}
         </div>
       </td>
@@ -75,7 +75,7 @@ export const UserRoleTableRow: React.FC<UserRoleTableRowProps> = ({
           <Shield className="w-3 h-3 mr-1 text-[#64748B]" />
           <span>{item.roleName}</span>
         </Badge>
-        <div className="text-[10px] font-mono text-[#6B7280] mt-0.5">
+        <div className="text-[10px] font-mono text-[#6B7280] dark:text-[#64748B] mt-0.5">
           {item.roleCode}
         </div>
       </td>
@@ -86,7 +86,7 @@ export const UserRoleTableRow: React.FC<UserRoleTableRowProps> = ({
       </td>
 
       {/* 5. Assigned Date */}
-      <td className="py-3 px-4 text-xs font-mono text-[#6B7280] tabular-nums">
+      <td className="py-3 px-4 text-xs font-mono text-[#6B7280] dark:text-[#94A3B8] tabular-nums">
         {item.assignedAt}
       </td>
 

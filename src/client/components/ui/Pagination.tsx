@@ -1,7 +1,7 @@
 // ==============================================================================
 // JK-PAYROLL: PAGINATION + usePagination HOOK
-// Design System: "Midnight & Champagne Steel" (Based on index.html specification)
-// File: src/components/ui/Pagination.tsx
+// Design System: Balanced Glossy Graphite
+// File: src/client/components/ui/Pagination.tsx
 // ==============================================================================
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -107,7 +107,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div
-      className={`px-5 py-3 rounded-b-2xl border-t border-[#E5E7EB] dark:border-slate-800 bg-[#FBFBFC] dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400 ${className}`}
+      className={`px-5 py-3 rounded-b-2xl border-t border-[#E5E7EB] dark:border-white/10 bg-[#FBFBFC] dark:bg-[#121620] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-[#94A3B8] ${className}`}
     >
       {/* Left: "Show [10] items per page | Showing 1 to 10 of 12 items" */}
       <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
@@ -128,21 +128,21 @@ export const Pagination: React.FC<PaginationProps> = ({
               />
               <span>items per page</span>
             </div>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-slate-300 dark:text-white/10">|</span>
           </>
         )}
 
-        <span className="font-medium text-slate-600 dark:text-slate-300">
+        <span className="font-medium text-slate-600 dark:text-[#94A3B8]">
           Showing{' '}
-          <span className="font-semibold text-[#111827] dark:text-white font-mono tabular-nums">
+          <span className="font-semibold text-[#111827] dark:text-[#F8FAFC] font-mono tabular-nums">
             {from}
           </span>{' '}
           to{' '}
-          <span className="font-semibold text-[#111827] dark:text-white font-mono tabular-nums">
+          <span className="font-semibold text-[#111827] dark:text-[#F8FAFC] font-mono tabular-nums">
             {to}
           </span>{' '}
           of{' '}
-          <span className="font-semibold text-[#111827] dark:text-white font-mono tabular-nums">
+          <span className="font-semibold text-[#111827] dark:text-[#F8FAFC] font-mono tabular-nums">
             {total}
           </span>{' '}
           {itemLabel}
@@ -157,7 +157,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(page - 1)}
           title="Previous Page"
           aria-label="Previous page"
-          className="h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-medium transition-colors text-xs cursor-pointer"
+          className="h-8 px-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181D2A] text-slate-700 dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-[#202637] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-medium transition-colors text-xs cursor-pointer shadow-2xs"
         >
           <ChevronLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Previous</span>
@@ -174,13 +174,13 @@ export const Pagination: React.FC<PaginationProps> = ({
                 className={`h-8 min-w-8 px-2.5 rounded-lg border text-xs font-semibold font-mono tabular-nums flex items-center justify-center transition-colors cursor-pointer ${
                   p === page
                     ? 'bg-[#0F172A] text-white border-[#0F172A] dark:bg-[#CBD5E1] dark:text-[#0F172A] dark:border-[#CBD5E1] shadow-2xs'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#181D2A] text-slate-700 dark:text-[#94A3B8] hover:bg-slate-50 dark:hover:bg-[#202637] dark:hover:text-[#F8FAFC]'
                 }`}
               >
                 {p}
               </button>
             ) : (
-              <span key={p} className="px-1 text-slate-400">
+              <span key={p} className="px-1 text-slate-400 dark:text-[#64748B]">
                 …
               </span>
             )
@@ -193,7 +193,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(page + 1)}
           title="Next Page"
           aria-label="Next page"
-          className="h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-medium transition-colors text-xs cursor-pointer"
+          className="h-8 px-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181D2A] text-slate-700 dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-[#202637] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-medium transition-colors text-xs cursor-pointer shadow-2xs"
         >
           <span className="hidden sm:inline">Next</span>
           <ChevronRight className="w-4 h-4" />

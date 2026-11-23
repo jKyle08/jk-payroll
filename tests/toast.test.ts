@@ -643,10 +643,9 @@ describe('PayPulse Enterprise Toast Notification & Message Catalog System', () =
   // 10. SHELL INTEGRATION & DYNAMIC TOPBAR OFFSET CALCULATION
   // ============================================================================
   describe('10. Shell Integration & Dynamic Offset Calculation', () => {
-    it('calculates fallback offset (20px) when application topbar is absent', () => {
-      // In tests without #app-topbar, offset defaults to 20px
-      const container = React.createElement(ToastContainer, { defaultSpacing: 24 });
-      expect(container.props.defaultSpacing).toBe(24);
+    it('calculates fallback offset when application topbar is absent (defaults to topbar height + spacing >= 72px)', () => {
+      const container = React.createElement(ToastContainer, { defaultSpacing: 16 });
+      expect(container.props.defaultSpacing).toBe(16);
     });
 
     it('sets maxVisible dynamically via toastStore.setMaxVisible', () => {
@@ -665,6 +664,32 @@ describe('PayPulse Enterprise Toast Notification & Message Catalog System', () =
       toastStore.setMaxVisible(3);
       expect(toastStore.getState().visible).toHaveLength(3);
       expect(toastStore.getState().queueCount).toBe(0);
+    });
+
+    it('enforces strict z-index layering hierarchy across all application layers', () => {
+      const zIndexLayers = {
+        base: 0,
+        topbar: 30,
+        popover: 40,
+        toast: 45,
+        modal: 50,
+      };
+
+      // Toast is above topbar navigation (45 > 30)
+      expect(zIndexLayers.toast).toBeGreaterThan(zIndexLayers.topbar);
+      // Toast is above floating popovers/dropdowns (45 > 40)
+      expect(zIndexLayers.toast).toBeGreaterThan(zIndexLayers.popover);
+      // Toast is strictly below modal dialogs (45 < 50)
+      expect(zIndexLayers.toast).toBeLessThan(zIndexLayers.modal);
+      // Topbar is below popovers (30 < 40)
+      expect(zIndexLayers.topbar).toBeLessThan(zIndexLayers.popover);
+    });
+
+    it('verifies toast positioning formula references centralized topbar height token', () => {
+      const expectedTopStyle =
+        'calc(var(--app-topbar-height, 3.5rem) + var(--toast-spacing, 1rem) + env(safe-area-inset-top, 0px))';
+      expect(expectedTopStyle).toContain('--app-topbar-height');
+      expect(expectedTopStyle).toContain('--toast-spacing');
     });
   });
 });

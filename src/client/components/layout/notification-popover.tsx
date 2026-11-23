@@ -41,7 +41,32 @@ export interface NotificationPopoverProps {
   notifications: NotificationItem[];
   onMarkAllAsRead?: () => void;
   onItemClick?: (item: NotificationItem) => void;
+  triggerRef?: React.RefObject<HTMLElement | null>;
+  id?: string;
 }
+
+const NotificationActorAvatar: React.FC<{
+  actor: { name: string; avatarUrl?: string; initials: string };
+}> = ({ actor }) => {
+  const [imageError, setImageError] = useState(false);
+
+  if (actor.avatarUrl && !imageError) {
+    return (
+      <img
+        src={actor.avatarUrl}
+        alt={actor.name}
+        onError={() => setImageError(true)}
+        className="w-full h-full rounded-full object-cover"
+      />
+    );
+  }
+
+  return (
+    <span className="font-semibold text-xs text-slate-900 dark:text-[#CBD5E1]">
+      {actor.initials}
+    </span>
+  );
+};
 
 export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
   isOpen,
@@ -49,6 +74,8 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
   notifications,
   onMarkAllAsRead,
   onItemClick,
+  triggerRef,
+  id = 'topbar-notifications-popover',
 }) => {
   const [filter, setFilter] = useState<'All' | 'Unread'>('All');
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -58,9 +85,16 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
     if (!isOpen) return;
 
     const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        onClose();
+      const target = event.target as Node;
+      // Do nothing if clicking inside the popover itself
+      if (popoverRef.current && popoverRef.current.contains(target)) {
+        return;
       }
+      // Do nothing if clicking the trigger button (the trigger's own onClick toggles it)
+      if (triggerRef?.current && triggerRef.current.contains(target)) {
+        return;
+      }
+      onClose();
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -78,7 +112,7 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
       document.removeEventListener('touchstart', handleOutsideClick);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, triggerRef]);
 
   if (!isOpen) return null;
 
@@ -98,31 +132,32 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
     );
   };
 
-  const getEventIcon = (type: NotificationType) => {
+  const getEventIcon = (type: NotificationType, className = 'w-4 h-4 text-slate-600 dark:text-slate-300') => {
     switch (type) {
       case 'leave_request':
-        return <CalendarDays className="w-4 h-4 text-slate-600 dark:text-slate-300" />;
+        return <CalendarDays className={className} />;
       case 'approval':
-        return <FileCheck2 className="w-4 h-4 text-slate-600 dark:text-slate-300" />;
+        return <FileCheck2 className={className} />;
       case 'payroll_run':
-        return <DollarSign className="w-4 h-4 text-slate-600 dark:text-slate-300" />;
+        return <DollarSign className={className} />;
       default:
-        return <AlertCircle className="w-4 h-4 text-slate-600 dark:text-slate-300" />;
+        return <AlertCircle className={className} />;
     }
   };
 
   return (
     <div
       ref={popoverRef}
-      className="absolute right-0 top-14 mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+      id={id}
+      className="absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-2xl bg-white dark:bg-[#181D2A] border border-slate-200 dark:border-white/12 shadow-2xl dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.75)] overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150 before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent"
       role="dialog"
       aria-label="Notifications"
     >
       {/* Header */}
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="p-4 border-b border-slate-100 dark:border-white/10 bg-white dark:bg-[#141924]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
-            <h3 className="font-semibold text-base text-slate-900 dark:text-white tracking-tight">
+            <h3 className="font-semibold text-base text-slate-900 dark:text-[#F8FAFC] tracking-tight">
               Notifications
             </h3>
             {unreadCount > 0 && (
@@ -166,14 +201,14 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
       </div>
 
       {/* Notification List */}
-      <div className="max-h-[380px] overflow-y-auto divide-y divide-[#E5E7EB]">
+      <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-white/10">
         {displayedNotifications.length === 0 ? (
-          <div className="p-8 text-center flex flex-col items-center justify-center text-[#9CA3AF]">
+          <div className="p-8 text-center flex flex-col items-center justify-center text-slate-400 dark:text-[#64748B]">
             <Inbox className="w-10 h-10 mb-2 stroke-[1.5]" />
-            <p className="text-sm font-medium text-[#111827]">
+            <p className="text-sm font-medium text-slate-900 dark:text-[#F8FAFC]">
               No {filter === 'Unread' ? 'unread ' : ''}notifications
             </p>
-            <p className="text-xs text-[#6B7280] mt-1">You are all caught up with your payroll events!</p>
+            <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">You are all caught up with your payroll events!</p>
           </div>
         ) : (
           displayedNotifications.map((item) => (
@@ -183,61 +218,65 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
                 onItemClick?.(item);
                 onClose();
               }}
-              className={`p-3.5 flex items-start space-x-3 hover:bg-[#F8FAFC] cursor-pointer transition-colors relative ${
-                !item.isRead ? 'bg-[#F8FAFC]' : ''
+              className={`p-3.5 flex items-start space-x-3 hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer transition-colors relative ${
+                !item.isRead ? 'bg-slate-50/60 dark:bg-white/[0.02]' : ''
               }`}
             >
               {/* Actor Avatar / Category Icon */}
               <div className="relative flex-shrink-0">
                 {item.actor ? (
-                  <div className="w-9 h-9 rounded-full bg-[#F1F5F9] text-[#0F172A] font-semibold flex items-center justify-center text-xs border border-[#E5E7EB]">
-                    {item.actor.initials}
-                  </div>
+                  <>
+                    <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-[#121620] flex items-center justify-center border border-slate-200 dark:border-white/10 overflow-hidden">
+                      <NotificationActorAvatar actor={item.actor} />
+                    </div>
+                    {/* Small secondary event-type badge (only when an actor exists) */}
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white dark:bg-[#181D2A] border border-slate-200 dark:border-white/10 shadow-xs flex items-center justify-center">
+                      {getEventIcon(item.type, 'w-2.5 h-2.5 text-slate-600 dark:text-slate-300')}
+                    </div>
+                  </>
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-[#F1F5F9] flex items-center justify-center border border-[#E5E7EB]">
-                    {getEventIcon(item.type)}
+                  /* When no actor exists: display event icon in main circle without duplicate secondary badge */
+                  <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-[#121620] flex items-center justify-center border border-slate-200 dark:border-white/10">
+                    {getEventIcon(item.type, 'w-4 h-4 text-slate-600 dark:text-slate-300')}
                   </div>
                 )}
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-[#E5E7EB] shadow-sm flex items-center justify-center">
-                  {getEventIcon(item.type)}
-                </div>
               </div>
 
               {/* Text Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-1">
-                  <p className="text-xs font-semibold text-[#111827] line-clamp-1">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-[#F8FAFC] line-clamp-1">
                     {item.title}
                   </p>
                   {!item.isRead && (
-                    <span className="w-2 h-2 rounded-full bg-[#0F172A] flex-shrink-0 mt-1" />
+                    <span className="w-2 h-2 rounded-full bg-[#0F172A] dark:bg-[#CBD5E1] flex-shrink-0 mt-1" />
                   )}
                 </div>
-                <p className="text-xs text-[#6B7280] line-clamp-2 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8] line-clamp-2 mt-0.5">
                   {item.description}
                 </p>
                 <div className="flex items-center space-x-2 mt-1.5">
                   {getStatusBadge(item.status)}
-                  <span className="text-[11px] text-[#6B7280] font-mono">
+                  <span className="text-[11px] text-slate-400 dark:text-[#64748B] font-mono">
                     {item.timestamp}
                   </span>
                 </div>
               </div>
 
-              <ChevronRight className="w-4 h-4 text-[#9CA3AF] self-center flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#64748B] self-center flex-shrink-0" />
             </div>
           ))
         )}
       </div>
 
       {/* Footer */}
-      <div className="p-2 bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800">
+      <div className="p-2 bg-slate-50/80 dark:bg-[#141924] border-t border-slate-100 dark:border-white/10">
         <Button
           variant="ghost"
           size="sm"
           fullWidth
           onClick={onClose}
-          className="text-xs text-slate-600 dark:text-slate-400"
+          className="text-xs text-slate-600 dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]"
         >
           Close Notifications
         </Button>

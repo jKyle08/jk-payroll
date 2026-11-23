@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: ORGANIZATION DIRECTORY TYPES & MODULE DEPENDENCIES
-// Design System: "Midnight & Champagne Steel" (Ramp / Stripe / Mercury Aesthetic)
+// Design System: Balanced Glossy Graphite (Ramp / Stripe / Mercury Aesthetic)
 // File: src/features/organizations/types.ts
 // ==============================================================================
 
@@ -144,6 +144,11 @@ export interface Organization {
   updatedAt: string;
   updatedBy?: string | null;
 
+  // Normalized Legal Entities & Statutory Registrations
+  primaryLegalEntity?: OrganizationLegalEntity;
+  legalEntities?: OrganizationLegalEntity[];
+  statutoryRegistrations?: OrganizationStatutoryRegistration[];
+
   // Presentation & UI backward-compatibility aliases
   planTier?: OrganizationTier;
   headcount?: number;
@@ -256,3 +261,73 @@ export function resolveModuleDependencies(selectedModules: string[]): {
 
 // Default values removed in favor of dynamic database lookups
 export const DEFAULT_ORGANIZATIONS: Organization[] = [];
+
+// ==============================================================================
+// NORMALIZED INTERNATIONAL JURISDICTION, LEGAL ENTITY & STATUTORY INTERFACES
+// ==============================================================================
+
+export interface Country {
+  code: string;
+  name: string;
+  isActive: boolean;
+  currency?: string;
+  defaultTimezone?: string;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface StatutoryIdentifierDefinition {
+  id: string;
+  countryCode: string;
+  identifierKey: string;
+  label: string;
+  description?: string;
+  authorityName?: string;
+  validationConfig: {
+    regex?: string;
+    placeholder?: string;
+    minLength?: number;
+    maxLength?: number;
+  };
+  inputConfig: {
+    mask?: string;
+  };
+  isRequired: boolean;
+  isActive: boolean;
+  displayOrder: number;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface OrganizationLegalEntity {
+  id: string;
+  organizationId: string;
+  legalName: string;
+  tradingName?: string | null;
+  countryCode: string;
+  registrationNumber?: string | null;
+  isPrimary: boolean;
+  status: 'Active' | 'Inactive';
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface OrganizationStatutoryRegistration {
+  id: string;
+  legalEntityId: string;
+  identifierDefinitionId: string;
+  countryCode: string;
+  jurisdictionCode?: string | null;
+  maskedValue: string;
+  encryptedValue?: string;
+  encryptionKeyVersion?: string;
+  registrationStatus: 'Active' | 'Pending' | 'Expired';
+  effectiveDate?: string | null;
+  expirationDate?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  definition?: StatutoryIdentifierDefinition;
+}
+

@@ -199,6 +199,64 @@ export type OrganizationItem = Tenant;
 // Scoping Scopes for Transactional Queries
 export type DataScope = 'Self' | 'SubDepartment' | 'EntireDepartment' | 'Tenant' | 'Organization';
 
+export interface Country {
+  code: string;
+  name: string;
+  isActive: boolean;
+  currency?: string;
+  defaultTimezone?: string;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface StatutoryIdentifierDefinition {
+  id: string;
+  countryCode: string;
+  identifierKey: string;
+  label: string;
+  description?: string;
+  authorityName?: string;
+  validationConfig: Record<string, any>;
+  inputConfig: Record<string, any>;
+  isRequired: boolean;
+  isActive: boolean;
+  displayOrder: number;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface OrganizationLegalEntity {
+  id: string;
+  organizationId: string;
+  legalName: string;
+  tradingName?: string | null;
+  countryCode: string;
+  registrationNumber?: string | null;
+  isPrimary: boolean;
+  status: 'Active' | 'Inactive';
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface OrganizationStatutoryRegistration {
+  id: string;
+  legalEntityId: string;
+  identifierDefinitionId: string;
+  countryCode: string;
+  jurisdictionCode?: string | null;
+  maskedValue: string;
+  encryptedValue?: string;
+  encryptionKeyVersion?: string;
+  registrationStatus: 'Active' | 'Pending' | 'Expired';
+  effectiveDate?: string | null;
+  expirationDate?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  definition?: StatutoryIdentifierDefinition;
+}
+
 // Authenticated user request context
 export interface AuthUserContext {
   userId: string;

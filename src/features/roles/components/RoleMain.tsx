@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: ROLE DIRECTORY (MAIN) PAGE
-// Breadcrumb: Roles / Role Directory. Design System: "Midnight & Champagne Steel"
+// Breadcrumb: Roles / Role Directory. Design System: Balanced Glossy Graphite
 // File: src/features/roles/components/RoleMain.tsx
 // ==============================================================================
 
@@ -8,7 +8,7 @@ import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
 import { SearchableSelect } from '../../../client/components/ui/SearchableSelect.js';
 import { SearchButton } from '../../../client/components/ui/SearchButton.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
-import { Button, Badge, TableActionMenu, toast } from '../../../client/components/ui/index.js';
+import { Button, Badge, TableActionMenu, toast, Input } from '../../../client/components/ui/index.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 import React, { useState, useEffect } from 'react';
 import { Plus, UserPlus, Shield, Globe2, Building2, Search, X, Filter, Lock, Pencil, Trash2, Eye, AlertCircle } from 'lucide-react';
@@ -146,16 +146,16 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
   };
 
   return (
-    <div className="space-y-6 pb-12 text-[#111827]">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB]">
+    <div className="space-y-6 pb-12 text-[#111827] dark:text-[#F8FAFC] font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-white/10">
         <div>
           <div className="flex items-center space-x-2 mb-1.5">
-            <span className="text-xs font-semibold text-[#6B7280]">Roles</span>
-            <span className="text-xs text-[#E5E7EB]">/</span>
-            <span className="text-xs font-semibold text-[#111827]">Role Directory</span>
+            <span className="text-xs font-semibold text-[#6B7280] dark:text-[#64748B]">Roles</span>
+            <span className="text-xs text-[#E5E7EB] dark:text-white/10">/</span>
+            <span className="text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">Role Directory</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Role Directory</h1>
-          <p className="text-xs text-[#6B7280] mt-0.5">Directory of system and custom authorization roles, access tiers, and operational permissions.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[#111827] dark:text-[#F8FAFC]">Role Directory</h1>
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">Directory of system and custom authorization roles, access tiers, and operational permissions.</p>
         </div>
 
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
@@ -208,11 +208,10 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
       {/* Two-Panel Toolbar & Filter Directory */}
       <div className="space-y-3">
         {/* Panel 1: Search Box + SearchButton + Filter Toggle */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-xl border border-[#E5E7EB] shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white dark:bg-[#121620] rounded-xl border border-[#E5E7EB] dark:border-white/10 shadow-2xs">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
-              <input
+            <div className="flex-1">
+              <Input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -223,18 +222,20 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
                   }
                 }}
                 placeholder="Search by role name, code or organization..."
-                className="h-10 w-full pl-10 pr-9 text-xs rounded-lg border border-[#E5E7EB] bg-[#FBFBFC] text-[#111827] placeholder:text-[#6B7280] focus:outline-none focus:ring-1 focus:ring-[#0F172A] focus:border-[#0F172A]"
+                leftIcon={<Search className="w-4 h-4" />}
+                rightElement={
+                  searchInput ? (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="p-1 text-[#6B7280] hover:text-[#111827] dark:text-[#64748B] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+                      title="Clear search query"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  ) : undefined
+                }
               />
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer"
-                  title="Clear search query"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
             </div>
 
             <SearchButton onClick={handleExecuteSearch} />
@@ -246,15 +247,15 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
               onClick={() => setIsFilterPanelOpen((prev) => !prev)}
               className={`h-10 px-3.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all flex-shrink-0 cursor-pointer ${
                 isFilterPanelOpen || hasActiveDropdownFilters
-                  ? 'border-[#0F172A] bg-[#0F172A]/5 text-[#0F172A]'
-                  : 'border-[#E5E7EB] bg-white hover:bg-[#F8FAFC] text-[#475569]'
+                  ? 'border-[#0F172A] bg-[#0F172A]/5 text-[#0F172A] dark:border-white/20 dark:bg-white/10 dark:text-[#F8FAFC]'
+                  : 'border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#181D2A] hover:bg-[#F8FAFC] dark:hover:bg-[#202637] text-[#475569] dark:text-[#94A3B8]'
               }`}
               title="Filter Roles"
             >
-              <Filter className="w-4 h-4 text-[#6B7280]" />
+              <Filter className="w-4 h-4 text-[#6B7280] dark:text-[#64748B]" />
               <span>Filter</span>
               {hasActiveDropdownFilters && (
-                <span className="w-2 h-2 rounded-full bg-[#0F172A]" />
+                <span className="w-2 h-2 rounded-full bg-[#0F172A] dark:bg-[#CBD5E1]" />
               )}
             </button>
           </div>
@@ -263,24 +264,24 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
         {/* Active Filter Chips */}
         {(filters.search || hasActiveDropdownFilters) && (
           <div className="flex items-center flex-wrap gap-1.5 py-1 text-xs">
-            <span className="text-[11px] font-semibold text-[#6B7280] mr-1 flex items-center gap-1">
-              <Filter className="w-3 h-3 text-[#6B7280]" />
+            <span className="text-[11px] font-semibold text-[#6B7280] dark:text-[#64748B] mr-1 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-[#6B7280] dark:text-[#64748B]" />
               <span>Active Filters:</span>
             </span>
             {filters.search && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#0F172A] border border-[#E5E7EB]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] dark:bg-[#181D2A] text-[#0F172A] dark:text-[#CBD5E1] border border-[#E5E7EB] dark:border-white/10">
                 <span>Search: &quot;{filters.search}&quot;</span>
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] cursor-pointer"
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] cursor-pointer"
                 >
                   ✕
                 </button>
               </span>
             )}
             {filters.organizationId !== 'All' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#0F172A] border border-[#E5E7EB]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] dark:bg-[#181D2A] text-[#0F172A] dark:text-[#CBD5E1] border border-[#E5E7EB] dark:border-white/10">
                 <span>
                   Organization:{' '}
                   {filters.organizationId === 'GLOBAL'
@@ -294,14 +295,14 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
                     setDraftOrgId('All');
                     setFilters({ ...filters, organizationId: 'All' });
                   }}
-                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] cursor-pointer"
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] cursor-pointer"
                 >
                   ✕
                 </button>
               </span>
             )}
             {filters.roleType !== 'All' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#0F172A] border border-[#E5E7EB]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] dark:bg-[#181D2A] text-[#0F172A] dark:text-[#CBD5E1] border border-[#E5E7EB] dark:border-white/10">
                 <span>Type: {filters.roleType}</span>
                 <button
                   type="button"
@@ -309,7 +310,7 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
                     setDraftRoleType('All');
                     setFilters({ ...filters, roleType: 'All' });
                   }}
-                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] cursor-pointer"
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] cursor-pointer"
                 >
                   ✕
                 </button>
@@ -318,7 +319,7 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-xs font-semibold text-[#0F172A] hover:underline ml-1.5 cursor-pointer"
+              className="text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] dark:hover:text-[#F8FAFC] hover:underline ml-1.5 cursor-pointer"
             >
               Clear All
             </button>
@@ -327,11 +328,11 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
 
         {/* Panel 2: Collapsible Filter Directory */}
         {isFilterPanelOpen && (
-          <div className="p-4 bg-white rounded-xl border border-[#E5E7EB] space-y-3 shadow-xs">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB]">
+          <div className="p-4 bg-white dark:bg-[#181D2A] rounded-xl border border-[#E5E7EB] dark:border-white/10 space-y-3 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB] dark:border-white/10">
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-[#475569]" />
-                <span className="text-xs font-bold text-[#111827]">
+                <Filter className="w-4 h-4 text-[#475569] dark:text-[#94A3B8]" />
+                <span className="text-xs font-bold text-[#111827] dark:text-[#F8FAFC]">
                   Filter Directory
                 </span>
               </div>
@@ -340,14 +341,14 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
                 <button
                   type="button"
                   onClick={handleResetFilterDirectory}
-                  className="h-8 px-3 rounded-lg border border-[#E5E7EB] bg-white hover:bg-[#F8FAFC] text-xs font-semibold text-[#475569] transition-all cursor-pointer"
+                  className="h-8 px-3 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] hover:bg-[#F8FAFC] dark:hover:bg-[#202637] text-xs font-semibold text-[#475569] dark:text-[#94A3B8] transition-all cursor-pointer"
                 >
                   Reset
                 </button>
                 <button
                   type="button"
                   onClick={handleApplyFilters}
-                  className="h-8 px-4 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
+                  className="h-8 px-4 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white dark:bg-[#CBD5E1] dark:text-[#0F172A] dark:hover:bg-[#E2E8F0] text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
                 >
                   <span>Apply</span>
                 </button>
@@ -400,10 +401,10 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB]">
+      <div className="bg-white dark:bg-[#121620] rounded-xl border border-[#E5E7EB] dark:border-white/10 shadow-xs">
         <div className="overflow-x-auto rounded-t-xl">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#FBFBFC] border-b border-[#E5E7EB] text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">
+            <thead className="bg-[#FBFBFC] dark:bg-[#141924] border-b border-[#E5E7EB] dark:border-white/10 text-[11px] font-semibold text-[#6B7280] dark:text-[#64748B] uppercase tracking-wider">
               <tr>
                 <th className="py-3 px-3 text-center w-12 font-mono">#</th>
                 <th className="py-3 px-4">Role</th>
@@ -413,45 +414,45 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E5E7EB]">
+            <tbody className="divide-y divide-[#E5E7EB] dark:divide-white/10">
               {(isLoading || pagination.isPaging) && (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-[#6B7280]">
-                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#0F172A] mb-2"></div>
+                  <td colSpan={6} className="py-10 text-center text-[#6B7280] dark:text-[#94A3B8]">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#0F172A] dark:border-[#CBD5E1] mb-2"></div>
                     <p>Loading roles...</p>
                   </td>
                 </tr>
               )}
               {!(isLoading || pagination.isPaging) && items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-[#6B7280]">
+                  <td colSpan={6} className="py-10 text-center text-[#6B7280] dark:text-[#94A3B8]">
                     No roles match the current filters.
                   </td>
                 </tr>
               )}
               {!(isLoading || pagination.isPaging) &&
                 pagination.pageItems.map((r, idx) => (
-                  <tr key={r.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="py-3 px-3 text-center font-mono text-[11px] text-[#9CA3AF] font-medium">
+                  <tr key={r.id} className="hover:bg-[#F8FAFC] dark:hover:bg-white/[0.03] transition-colors">
+                    <td className="py-3 px-3 text-center font-mono text-[11px] text-[#9CA3AF] dark:text-[#64748B] font-medium">
                       {(serverPage - 1) * serverPageSize + idx + 1}
                     </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold">{r.name}</span>
+                      <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">{r.name}</span>
                       {r.isDefault && (
                         <Badge variant="neutral" size="sm">DEFAULT</Badge>
                       )}
-                      {!r.isMutable && <Lock className="w-3 h-3 text-[#9CA3AF]" />}
+                      {!r.isMutable && <Lock className="w-3 h-3 text-[#9CA3AF] dark:text-[#64748B]" />}
                     </div>
-                    <div className="text-[11px] text-[#6B7280] font-mono">{r.code}</div>
+                    <div className="text-[11px] text-[#6B7280] dark:text-[#94A3B8] font-mono">{r.code}</div>
                   </td>
-                  <td className="py-3 px-4">{r.organizationName}</td>
+                  <td className="py-3 px-4 text-slate-700 dark:text-[#CBD5E1]">{r.organizationName}</td>
                   <td className="py-3 px-4">
                     <Badge variant="neutral" size="sm">
                       {r.roleType}
                     </Badge>
                   </td>
-                  <td className="py-3 px-4 text-right tabular-nums">{r.assignedUsers}</td>
+                  <td className="py-3 px-4 text-right tabular-nums font-mono text-slate-900 dark:text-[#F8FAFC]">{r.assignedUsers}</td>
                   <td className="py-3 px-4 text-right">
                     <TableActionMenu
                       actions={[

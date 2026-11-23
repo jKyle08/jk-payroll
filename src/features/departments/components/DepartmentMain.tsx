@@ -124,19 +124,19 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-white/10">
         <div>
-          <div className="flex items-center space-x-2 mb-1.5 text-xs text-[#6B7280]">
-            <span className="font-semibold text-[#6B7280]">Administration</span>
-            <span>/</span>
-            <span className="font-semibold text-[#111827] dark:text-slate-200">Department Directory</span>
+          <div className="flex items-center space-x-2 mb-1.5 text-xs text-[#6B7280] dark:text-[#64748B]">
+            <span className="font-semibold text-[#6B7280] dark:text-[#64748B]">Administration</span>
+            <span className="dark:text-white/10">/</span>
+            <span className="font-semibold text-[#111827] dark:text-[#CBD5E1]">Department Directory</span>
           </div>
-          <h1 className="text-2xl font-bold text-[#111827] dark:text-white flex items-center gap-2.5 tracking-tight">
+          <h1 className="text-2xl font-bold text-[#111827] dark:text-[#F8FAFC] flex items-center gap-2.5 tracking-tight">
             <span>Department Hierarchy</span>
           </h1>
-          <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">
             Manage organizational divisions, parent-child relationships, materialized tree paths, and department leadership.
           </p>
         </div>
@@ -218,14 +218,14 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
 
       {/* View Display: Tree vs Table */}
       {viewMode === 'tree' ? (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 p-6 space-y-4 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB] dark:border-slate-800">
+        <div className="bg-white dark:bg-[#181D2A] rounded-2xl border border-[#E5E7EB] dark:border-white/10 p-6 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB] dark:border-white/10">
             <div>
-              <h3 className="text-sm font-bold text-[#111827] dark:text-white flex items-center gap-2">
-                <GitBranch className="w-4 h-4 text-indigo-600" />
+              <h3 className="text-sm font-bold text-[#111827] dark:text-[#F8FAFC] flex items-center gap-2">
+                <GitBranch className="w-4 h-4 text-slate-400 dark:text-[#CBD5E1]" />
                 <span>Interactive Organization Tree</span>
               </h3>
-              <p className="text-xs text-[#6B7280] mt-0.5">
+              <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">
                 Hierarchical branch diagram with depth, path markers, and fast subtree navigation.
               </p>
             </div>

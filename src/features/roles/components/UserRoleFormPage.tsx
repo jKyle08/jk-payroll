@@ -2,7 +2,7 @@
 // JK-PAYROLL: ASSIGN USERS TO ROLE (UNIFIED MULTI-USER ASSIGNMENT WORKSPACE)
 // Enables assigning a security role to one or multiple users simultaneously
 // Architecture: Strict Multi-Tenancy & Cascading RBAC (Roles have FK to Organization)
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/features/roles/components/UserRoleFormPage.tsx
 // ==============================================================================
 
@@ -29,7 +29,7 @@ import {
   SearchableSelect,
   type SearchableOption,
 } from '../../../client/components/ui/SearchableSelect.js';
-import { Button, Badge, toast } from '../../../client/components/ui/index.js';
+import { Button, Badge, toast, Input, Select } from '../../../client/components/ui/index.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
 import { authFetch } from '../../../client/lib/auth-session.js';
 import { isProtectedOrganizationRoleCode } from '../../../shared/constants/role-security.js';
@@ -940,40 +940,40 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
   ).length;
 
   return (
-    <div className="space-y-6 pb-20 text-[#111827] dark:text-white max-w-7xl mx-auto">
+    <div className="space-y-6 pb-20 text-[#111827] dark:text-[#F8FAFC] max-w-7xl mx-auto">
       {/* ================================================================== */}
       {/* 1. PAGE HEADER & NAVIGATION BAR                                    */}
       {/* ================================================================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E5E7EB] dark:border-white/10">
         <div>
           {/* Breadcrumb Navigation */}
           <div className="flex items-center space-x-2 mb-1.5">
             <button
               type="button"
               onClick={handleBack}
-              className="text-xs font-semibold text-[#6B7280] hover:text-[#111827] dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1"
+              className="text-xs font-semibold text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5 mr-0.5" />
               <span>Roles</span>
             </button>
-            <span className="text-xs text-[#CBD5E1] dark:text-slate-700">/</span>
+            <span className="text-xs text-[#CBD5E1] dark:text-white/20">/</span>
             <button
               type="button"
               onClick={handleBack}
-              className="text-xs font-semibold text-[#6B7280] hover:text-[#111827] dark:hover:text-white transition-colors cursor-pointer"
+              className="text-xs font-semibold text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
             >
               Role Directory
             </button>
-            <span className="text-xs text-[#CBD5E1] dark:text-slate-700">/</span>
-            <span className="text-xs font-semibold text-[#111827] dark:text-slate-200">
+            <span className="text-xs text-[#CBD5E1] dark:text-white/20">/</span>
+            <span className="text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">
               {isEditMode ? 'Edit Assignment' : 'Assign Users to Role'}
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold text-[#111827] dark:text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-[#111827] dark:text-[#F8FAFC] tracking-tight flex items-center gap-2">
             <span>{isEditMode ? 'Edit Assignment' : 'Assign Users to Role'}</span>
           </h1>
-          <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-1">
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-1">
             Assign a target security role to one or multiple users simultaneously within a facility.
           </p>
         </div>
@@ -1009,14 +1009,14 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
 
       {/* Notifications / Alerts */}
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex items-center gap-2.5 shadow-2xs">
+        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex items-center gap-2.5 shadow-2xs">
           <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
           <span>{successMessage}</span>
         </div>
       )}
 
       {(mutationError || loadError) && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-medium flex items-center gap-2.5 shadow-2xs">
+        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-300 text-xs font-medium flex items-center gap-2.5 shadow-2xs">
           <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
           <span>{mutationError || loadError}</span>
         </div>
@@ -1029,17 +1029,17 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
         {/* ================================================================ */}
         {/* STEP 1: ROLE CONFIGURATION & SCOPE                               */}
         {/* ================================================================ */}
-        <section className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3.5 border-b border-[#E5E7EB] dark:border-slate-800">
+        <section className="bg-white dark:bg-[#181D2A] rounded-2xl border border-[#E5E7EB] dark:border-white/10 p-5 shadow-xs dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)] space-y-4 relative overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent">
+          <div className="flex items-center justify-between pb-3.5 border-b border-[#E5E7EB] dark:border-white/10">
             <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-md bg-[#0F172A] text-white text-[11px] font-bold flex items-center justify-center font-mono">
+              <span className="w-6 h-6 rounded-md bg-[#0F172A] dark:bg-[#121620] text-white dark:text-[#CBD5E1] border border-transparent dark:border-white/10 text-[11px] font-bold flex items-center justify-center font-mono">
                 01
               </span>
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#111827] dark:text-slate-200">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
                   Role Configuration &amp; Facility Scope
                 </h2>
-                <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
+                <p className="text-[11px] text-[#6B7280] dark:text-[#94A3B8]">
                   Step 1 • Select security role template and facility organization boundary
                 </p>
               </div>
@@ -1057,7 +1057,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
           >
             {/* 1. Security Role (Required - Foreign Key Filtered by Facility) */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-[#111827] dark:text-slate-200">
+              <label className="block text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">
                 Security Role <span className="text-rose-500">*</span>
               </label>
               <SearchableSelect
@@ -1066,14 +1066,14 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                 searchPlaceholder="Search roles..."
                 options={roleOptions}
               />
-              <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
+              <p className="text-[11px] text-[#6B7280] dark:text-[#64748B]">
                 Roles available for {activeOrg.name} (system roles &amp; tenant custom roles).
               </p>
             </div>
 
             {/* 2. Facility Organization Scope (Required) */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-[#111827] dark:text-slate-200">
+              <label className="block text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">
                 Facility / Organization Scope <span className="text-rose-500">*</span>
               </label>
               <SearchableSelect
@@ -1082,7 +1082,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                 searchPlaceholder="Search facilities..."
                 options={orgOptions}
               />
-              <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
+              <p className="text-[11px] text-[#6B7280] dark:text-[#64748B]">
                 Selected facility defines the tenant boundary for roles and employees.
               </p>
             </div>
@@ -1090,7 +1090,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
             {/* Operational Status (Edit Mode Only) */}
             {isEditMode && (
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#111827] dark:text-slate-200">
+                <label className="block text-xs font-semibold text-[#111827] dark:text-[#CBD5E1]">
                   Assignment Status
                 </label>
                 <div className="grid grid-cols-2 gap-2 pt-0.5">
@@ -1099,8 +1099,8 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                     onClick={() => setIsActive(true)}
                     className={`h-9 px-3 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       isActive
-                        ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-xs'
-                        : 'border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#475569] hover:bg-[#F8FAFC]'
+                        ? 'border-[#0F172A] dark:border-white/30 bg-[#0F172A] dark:bg-[#202637] text-white dark:text-[#F8FAFC] shadow-xs'
+                        : 'border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] text-[#475569] dark:text-[#94A3B8] hover:bg-[#F8FAFC] dark:hover:bg-[#141924]'
                     }`}
                   >
                     <span className="w-2 h-2 rounded-full bg-[#22A06B]" />
@@ -1112,15 +1112,15 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                     onClick={() => setIsActive(false)}
                     className={`h-9 px-3 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       !isActive
-                        ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-xs'
-                        : 'border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#475569] hover:bg-[#F8FAFC]'
+                        ? 'border-[#0F172A] dark:border-white/30 bg-[#0F172A] dark:bg-[#202637] text-white dark:text-[#F8FAFC] shadow-xs'
+                        : 'border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#121620] text-[#475569] dark:text-[#94A3B8] hover:bg-[#F8FAFC] dark:hover:bg-[#141924]'
                     }`}
                   >
                     <span className="w-2 h-2 rounded-full bg-[#DC6262]" />
                     <span>Inactive</span>
                   </button>
                 </div>
-                <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
+                <p className="text-[11px] text-[#6B7280] dark:text-[#64748B]">
                   Inactive roles remain bound but cannot exercise permissions.
                 </p>
               </div>
@@ -1128,45 +1128,45 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
           </div>
 
           {/* Selected Role Preview Panel */}
-          <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-slate-800/60 border border-[#E5E7EB] dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#141924] border border-[#E5E7EB] dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 text-[#0F172A] dark:text-white flex items-center justify-center font-mono font-bold text-sm shadow-2xs flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#181D2A] border border-[#E5E7EB] dark:border-white/10 text-[#0F172A] dark:text-[#CBD5E1] flex items-center justify-center font-mono font-bold text-sm shadow-2xs flex-shrink-0">
                 {activeRole.code?.slice(0, 2) || 'RO'}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-sm text-[#111827] dark:text-white">
+                  <span className="font-bold text-sm text-[#111827] dark:text-[#F8FAFC]">
                     {activeRole.name}
                   </span>
-                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 text-[#475569] dark:text-slate-300 font-semibold">
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white dark:bg-[#181D2A] border border-[#E5E7EB] dark:border-white/10 text-[#475569] dark:text-[#CBD5E1] font-semibold">
                     {activeRole.code}
                   </span>
                   <Badge variant="neutral" size="sm">
                     {activeRole.isSystem ? 'SYSTEM' : 'CUSTOM'}
                   </Badge>
-                  <span className="text-[11px] text-[#6B7280] dark:text-slate-400 font-medium">
+                  <span className="text-[11px] text-[#6B7280] dark:text-[#64748B] font-medium">
                     Security Role
                   </span>
                 </div>
-                <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-1 line-clamp-2">
+                <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-1 line-clamp-2">
                   {activeRole.description}
                 </p>
                 <div className="flex items-center gap-1.5 mt-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Applies to all selected members</span>
                 </div>
               </div>
             </div>
 
-            <div className="text-right flex-shrink-0 text-[11px] text-[#475569] dark:text-slate-400 font-medium sm:border-l sm:border-[#E5E7EB] sm:dark:border-slate-700 sm:pl-4">
-              <div className="flex items-center gap-1.5 sm:justify-end text-[#6B7280] dark:text-slate-400">
+            <div className="text-right flex-shrink-0 text-[11px] text-[#475569] dark:text-[#94A3B8] font-medium sm:border-l sm:border-[#E5E7EB] sm:dark:border-white/10 sm:pl-4">
+              <div className="flex items-center gap-1.5 sm:justify-end text-[#6B7280] dark:text-[#64748B]">
                 <Building2 className="w-3.5 h-3.5" />
                 <span>Selected Facility</span>
               </div>
-              <div className="font-semibold text-xs text-[#111827] dark:text-white mt-0.5">
+              <div className="font-semibold text-xs text-[#111827] dark:text-[#F8FAFC] mt-0.5">
                 {activeOrg.name}
               </div>
-              <div className="text-[10px] text-[#6B7280] dark:text-slate-400 mt-0.5">
+              <div className="text-[10px] text-[#6B7280] dark:text-[#64748B] mt-0.5">
                 {unassignedInFacilityCount} unassigned member{unassignedInFacilityCount === 1 ? '' : 's'}
               </div>
             </div>
@@ -1176,19 +1176,19 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
         {/* ================================================================ */}
         {/* STEP 2: SELECT TEAM MEMBERS WORKSPACE                            */}
         {/* ================================================================ */}
-        <section className="bg-white dark:bg-slate-900 rounded-2xl border border-[#E5E7EB] dark:border-slate-800 shadow-xs overflow-hidden">
+        <section className="bg-white dark:bg-[#181D2A] rounded-2xl border border-[#E5E7EB] dark:border-white/10 shadow-xs dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)] overflow-hidden">
           {/* Header & Filter Toolbar */}
-          <div className="p-5 border-b border-[#E5E7EB] dark:border-slate-800 space-y-4">
+          <div className="p-5 border-b border-[#E5E7EB] dark:border-white/10 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <span className="w-6 h-6 rounded-md bg-[#0F172A] text-white text-[11px] font-bold flex items-center justify-center font-mono">
+                <span className="w-6 h-6 rounded-md bg-[#0F172A] dark:bg-[#121620] text-white dark:text-[#CBD5E1] border border-transparent dark:border-white/10 text-[11px] font-bold flex items-center justify-center font-mono">
                   02
                 </span>
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#111827] dark:text-slate-200">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
                     Select Team Members
                   </h2>
-                  <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
+                  <p className="text-[11px] text-[#6B7280] dark:text-[#94A3B8]">
                     Step 2 • Choose one or multiple organization members who will receive this role
                   </p>
                 </div>
@@ -1196,7 +1196,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
 
               {/* Selection Information and Actions */}
               <div className="flex items-center gap-2.5 self-start sm:self-auto">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#F1F5F9] dark:bg-slate-800 text-[#0F172A] dark:text-white border border-[#E2E8F0] dark:border-slate-700 font-mono">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#F1F5F9] dark:bg-[#141924] text-[#0F172A] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-white/10 font-mono">
                   {selectedUserIds.length} selected
                 </span>
 
@@ -1219,7 +1219,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                     size="sm"
                     onClick={handleClearSelection}
                     leftIcon={<X className="w-3.5 h-3.5" />}
-                    className="text-[#6B7280] hover:text-rose-600"
+                    className="text-[#6B7280] dark:text-[#94A3B8] hover:text-rose-600 dark:hover:text-rose-400"
                   >
                     Clear Selection
                   </Button>
@@ -1230,24 +1230,25 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
             {/* Filter Toolbar: 3 Functional Filters */}
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
               {/* 1. Search Input - Strictly Person Name per Instruction */}
-              <div className="sm:col-span-12 md:col-span-5 relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
-                <input
+              <div className="sm:col-span-12 md:col-span-5">
+                <Input
                   type="text"
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                   placeholder="Search by person name..."
-                  className="w-full min-h-[42px] pl-9 pr-8 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#111827] dark:text-white placeholder-[#6B7280] focus:outline-none focus:ring-1 focus:ring-[#0F172A] dark:focus:ring-white transition-all font-sans shadow-2xs"
+                  leftIcon={<Search className="w-3.5 h-3.5" />}
+                  rightElement={
+                    userSearch ? (
+                      <button
+                        type="button"
+                        onClick={() => setUserSearch('')}
+                        className="p-1 text-[#6B7280] dark:text-[#64748B] hover:text-[#111827] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    ) : undefined
+                  }
                 />
-                {userSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setUserSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#6B7280] hover:text-[#111827] dark:hover:text-white transition-colors cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
               </div>
 
               {/* 2. Facility Department Dropdown (SearchableSelect - exact same dropdown as Organization filter) */}
@@ -1264,26 +1265,25 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
 
               {/* 3. Role Status Filter */}
               <div className="sm:col-span-6 md:col-span-3">
-                <select
+                <Select
                   value={roleStatusFilter}
                   onChange={(e) =>
                     setRoleStatusFilter(e.target.value as 'ALL' | 'UNASSIGNED' | 'ASSIGNED')
                   }
-                  className="w-full min-h-[42px] px-3 text-xs rounded-xl border border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#111827] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#0F172A] transition-all cursor-pointer font-sans shadow-2xs"
                 >
                   <option value="ALL">All Role Statuses</option>
                   <option value="UNASSIGNED">No Role (Unassigned)</option>
                   <option value="ASSIGNED">Already Has a Role</option>
-                </select>
+                </Select>
               </div>
             </div>
 
             {/* Quick Context Banner when "No Role (Unassigned)" filter is active */}
             {roleStatusFilter === 'UNASSIGNED' && (
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 text-xs text-[#475569] dark:text-slate-300">
+              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#F8FAFC] dark:bg-[#141924] border border-[#E2E8F0] dark:border-white/10 text-xs text-[#475569] dark:text-[#94A3B8]">
                 <div className="flex items-center gap-2">
-                  <UserX className="w-3.5 h-3.5 text-[#0F172A] dark:text-slate-200" />
-                  <span className="font-semibold text-[#111827] dark:text-white">
+                  <UserX className="w-3.5 h-3.5 text-[#0F172A] dark:text-[#CBD5E1]" />
+                  <span className="font-semibold text-[#111827] dark:text-[#F8FAFC]">
                     Showing unassigned members only:
                   </span>
                   <span>
@@ -1293,7 +1293,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setRoleStatusFilter('ALL')}
-                  className="text-[11px] text-[#6B7280] hover:text-[#111827] dark:hover:text-white underline cursor-pointer"
+                  className="text-[11px] text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F8FAFC] underline cursor-pointer"
                 >
                   Show all
                 </button>
@@ -1304,7 +1304,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
           {/* Team Member Selection Data Table */}
           <div className="overflow-x-auto max-h-[380px] overflow-y-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-[#F8FAFC] dark:bg-slate-800/80 border-b border-[#E5E7EB] dark:border-slate-700 text-[11px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400 sticky top-0 z-10 select-none">
+              <thead className="bg-[#F8FAFC] dark:bg-[#141924] border-b border-[#E5E7EB] dark:border-white/10 text-[11px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#64748B] sticky top-0 z-10 select-none">
                 <tr>
                   <th className="py-3 px-3 text-center w-12">
                     <label className="inline-flex items-center justify-center cursor-pointer">
@@ -1314,7 +1314,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                         disabled={selectableFiltered.length === 0}
                         checked={allSelectableFilteredSelected}
                         onChange={handleMasterCheckboxToggle}
-                        className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A] border-[#D1D5DB] dark:border-slate-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A] border-[#D1D5DB] dark:border-white/20 dark:bg-[#121620] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       />
                     </label>
                   </th>
@@ -1324,18 +1324,18 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                   <th className="py-3 px-4 text-right">Selection</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E5E7EB] dark:divide-slate-800 text-xs">
+              <tbody className="divide-y divide-[#E5E7EB] dark:divide-white/10 text-xs">
                 {filteredUsers.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
-                      className="py-12 text-center text-[#6B7280] dark:text-slate-400"
+                      className="py-12 text-center text-[#6B7280] dark:text-[#94A3B8]"
                     >
                       <Users className="w-8 h-8 mx-auto mb-2 opacity-40 stroke-[1.5]" />
-                      <p className="font-semibold text-xs text-[#111827] dark:text-slate-200">
+                      <p className="font-semibold text-xs text-[#111827] dark:text-[#F8FAFC]">
                         No team members found
                       </p>
-                      <p className="text-[11px] text-[#9CA3AF] mt-0.5">
+                      <p className="text-[11px] text-[#9CA3AF] dark:text-[#64748B] mt-0.5">
                         {userSearch.trim()
                           ? `No person named "${userSearch}" found in this selection.`
                           : roleStatusFilter === 'UNASSIGNED'
@@ -1367,10 +1367,10 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                         }}
                         className={`transition-colors select-none ${
                           alreadyAssigned
-                            ? 'opacity-60 bg-slate-50/50 dark:bg-slate-900/40 cursor-not-allowed'
+                            ? 'opacity-60 bg-slate-50/50 dark:bg-[#121620]/40 cursor-not-allowed'
                             : isSelected
-                            ? 'bg-[#0F172A]/5 dark:bg-slate-800/70 border-l-3 border-[#0F172A] dark:border-white font-medium cursor-pointer'
-                            : 'hover:bg-[#F8FAFC] dark:hover:bg-slate-800/40 border-l-3 border-transparent cursor-pointer'
+                            ? 'bg-[#0F172A]/5 dark:bg-[#202637] border-l-3 border-[#0F172A] dark:border-[#CBD5E1] font-medium cursor-pointer'
+                            : 'hover:bg-[#F8FAFC] dark:hover:bg-white/[0.03] border-l-3 border-transparent cursor-pointer'
                         }`}
                       >
                         {/* Checkbox */}
@@ -1390,7 +1390,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                                 ? 'User already has this role'
                                 : undefined
                             }
-                            className={`w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A] border-[#D1D5DB] dark:border-slate-600 ${
+                            className={`w-4 h-4 rounded text-[#0F172A] focus:ring-[#0F172A] border-[#D1D5DB] dark:border-white/20 dark:bg-[#121620] ${
                               alreadyAssigned
                                 ? 'cursor-not-allowed opacity-40'
                                 : 'cursor-pointer'
@@ -1401,11 +1401,11 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                         {/* Team Member Identity */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-[#0F172A] dark:bg-[#202637] text-white dark:text-[#CBD5E1] border border-transparent dark:border-white/10 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
                               {initials}
                             </div>
                             <div className="min-w-0">
-                              <div className="font-semibold text-[#111827] dark:text-white truncate text-xs flex items-center gap-1.5">
+                              <div className="font-semibold text-[#111827] dark:text-[#F8FAFC] truncate text-xs flex items-center gap-1.5">
                                 <span>{u.name}</span>
                                 {isUnassigned && (
                                   <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
@@ -1413,7 +1413,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-[#6B7280] dark:text-slate-400 font-mono truncate">
+                              <div className="text-[11px] text-[#6B7280] dark:text-[#64748B] font-mono truncate">
                                 {u.email}
                               </div>
                             </div>
@@ -1422,7 +1422,7 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
 
                         {/* Department Badge */}
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F1F5F9] dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 text-[#475569] dark:text-slate-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F1F5F9] dark:bg-[#141924] border border-[#E5E7EB] dark:border-white/10 text-[#475569] dark:text-[#CBD5E1]">
                             {u.dept}
                           </span>
                         </td>
@@ -1443,17 +1443,17 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                         {/* Selection Status Indicator */}
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           {alreadyAssigned ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-[#F1F5F9] dark:bg-slate-800 text-[#64748B] dark:text-slate-400 border border-[#E2E8F0] dark:border-slate-700">
-                              <Check className="w-3 h-3 text-[#64748B]" />
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-[#F1F5F9] dark:bg-[#141924] text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-white/10">
+                              <Check className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
                               <span>Already Assigned</span>
                             </span>
                           ) : isSelected ? (
-                            <div className="inline-flex items-center gap-2 text-[12px] font-medium text-[#111827] dark:text-slate-200">
+                            <div className="inline-flex items-center gap-2 text-[12px] font-medium text-[#111827] dark:text-[#F8FAFC]">
                               <span className="w-2 h-2 rounded-full bg-[#22A06B]" />
                               <span>Selected</span>
                             </div>
                           ) : (
-                            <div className="inline-flex items-center gap-2 text-[12px] font-medium text-[#6B7280] dark:text-slate-400">
+                            <div className="inline-flex items-center gap-2 text-[12px] font-medium text-[#6B7280] dark:text-[#64748B]">
                               <span className="w-2 h-2 rounded-full bg-[#94A3B8]" />
                               <span>Unselected</span>
                             </div>
@@ -1469,20 +1469,20 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
 
           {/* Selected Users Chip Tray (Visible only when >= 1 user selected) */}
           {selectedUserObjects.length > 0 && (
-            <div className="p-4 bg-[#FBFBFC] dark:bg-slate-800/40 border-t border-[#E5E7EB] dark:border-slate-800 space-y-2">
+            <div className="p-4 bg-[#FBFBFC] dark:bg-[#141924] border-t border-[#E5E7EB] dark:border-white/10 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-bold text-[#111827] dark:text-white">
+                  <h3 className="text-xs font-bold text-[#111827] dark:text-[#F8FAFC]">
                     Selected Team Members
                   </h3>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#0F172A] text-white font-mono">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#0F172A] dark:bg-[#202637] text-white dark:text-[#CBD5E1] border border-transparent dark:border-white/10 font-mono">
                     {selectedUserObjects.length} Member{selectedUserObjects.length === 1 ? '' : 's'}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleClearSelection}
-                  className="text-[11px] text-[#6B7280] hover:text-rose-600 transition-colors font-medium cursor-pointer"
+                  className="text-[11px] text-[#6B7280] dark:text-[#94A3B8] hover:text-rose-600 dark:hover:text-rose-400 transition-colors font-medium cursor-pointer"
                 >
                   Clear all
                 </button>
@@ -1492,13 +1492,13 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                 {selectedUserObjects.map((u) => (
                   <span
                     key={u.id}
-                    className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-lg text-xs bg-white dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 text-[#111827] dark:text-white shadow-2xs"
+                    className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-lg text-xs bg-white dark:bg-[#181D2A] border border-[#E5E7EB] dark:border-white/10 text-[#111827] dark:text-[#F8FAFC] shadow-2xs"
                   >
                     <span className="font-medium">{u.name}</span>
                     <button
                       type="button"
                       onClick={() => handleToggleUser(u.id)}
-                      className="p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                      className="p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 dark:text-[#64748B] hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                       title={`Remove ${u.name}`}
                     >
                       <X className="w-3.5 h-3.5" />
@@ -1513,10 +1513,10 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
         {/* ================================================================ */}
         {/* 4. BOTTOM STICKY ACTION BAR                                      */}
         {/* ================================================================ */}
-        <div className="sticky bottom-0 z-20 -mx-4 -mb-16 mt-8 px-6 py-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-[#E5E7EB] dark:border-slate-800 shadow-lg rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="sticky bottom-0 z-20 -mx-4 -mb-16 mt-8 px-6 py-4 bg-white/95 dark:bg-[#181D2A]/95 backdrop-blur-md border-t border-[#E5E7EB] dark:border-white/12 shadow-lg dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Assignment Summary (Left) */}
           <div>
-            <div className="text-sm font-bold text-[#111827] dark:text-white flex items-center gap-2">
+            <div className="text-sm font-bold text-[#111827] dark:text-[#F8FAFC] flex items-center gap-2">
               <span>
                 {selectedUserIds.length} Team Member
                 {selectedUserIds.length === 1 ? '' : 's'} Selected
@@ -1527,10 +1527,10 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
                 </span>
               )}
             </div>
-            <div className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
-              For role: <span className="font-semibold text-[#111827] dark:text-slate-200">{activeRole.name}</span>
+            <div className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">
+              For role: <span className="font-semibold text-[#111827] dark:text-[#F8FAFC]">{activeRole.name}</span>
               <span className="mx-1.5">•</span>
-              Facility: <span className="font-semibold text-[#111827] dark:text-slate-200">{activeOrg.name}</span>
+              Facility: <span className="font-semibold text-[#111827] dark:text-[#F8FAFC]">{activeOrg.name}</span>
             </div>
           </div>
 

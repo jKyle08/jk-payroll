@@ -1,7 +1,7 @@
 // ==============================================================================
 // JK-PAYROLL: USER ROLE TABLE COMPONENT
 // Table view for User Role assignments
-// Design System: "Midnight & Champagne Steel"
+// Design System: Balanced Glossy Graphite
 // File: src/features/roles/components/UserRoleTable.tsx
 // ==============================================================================
 
@@ -32,21 +32,21 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-12 text-center shadow-xs flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-6 h-6 animate-spin text-[#0F172A]" />
-        <span className="text-xs text-[#6B7280]">Loading user roles...</span>
+      <div className="bg-white dark:bg-[#181D2A] rounded-2xl border border-[#E5E7EB] dark:border-white/10 p-12 text-center shadow-xs flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-6 h-6 animate-spin text-[#0F172A] dark:text-[#CBD5E1]" />
+        <span className="text-xs text-[#6B7280] dark:text-[#94A3B8]">Loading user roles...</span>
       </div>
     );
   }
 
   if (userRoles.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-12 text-center shadow-xs flex flex-col items-center justify-center">
-        <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center text-[#6B7280] mb-3">
+      <div className="bg-white dark:bg-[#181D2A] rounded-2xl border border-[#E5E7EB] dark:border-white/10 p-12 text-center shadow-xs flex flex-col items-center justify-center">
+        <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] dark:bg-[#121620] border border-[#E5E7EB] dark:border-white/10 flex items-center justify-center text-[#6B7280] dark:text-[#64748B] mb-3">
           <ShieldAlert className="w-6 h-6" />
         </div>
-        <h3 className="text-sm font-semibold text-[#111827]">No User Roles Found</h3>
-        <p className="text-xs text-[#6B7280] mt-1 max-w-sm">
+        <h3 className="text-sm font-semibold text-[#111827] dark:text-[#F8FAFC]">No User Roles Found</h3>
+        <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-1 max-w-sm">
           No user roles match your current filter criteria.
         </p>
         <div className="mt-4">
@@ -64,11 +64,11 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-xs">
+    <div className="bg-white dark:bg-[#121620] rounded-2xl border border-[#E5E7EB] dark:border-white/10 shadow-xs">
       <div className="overflow-x-auto rounded-t-2xl">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full min-w-[800px] text-left border-collapse">
           <thead>
-            <tr className="border-b border-[#E5E7EB] bg-[#FAFAFB] text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">
+            <tr className="border-b border-[#E5E7EB] dark:border-white/10 bg-[#FAFAFB] dark:bg-[#141924] text-[11px] font-semibold text-[#6B7280] dark:text-[#64748B] uppercase tracking-wider">
               <th className="py-3 px-3 text-center w-12">#</th>
               <th className="py-3 px-4">User</th>
               <th className="py-3 px-4">Organization</th>
@@ -78,7 +78,7 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E5E7EB]">
+          <tbody className="divide-y divide-[#E5E7EB] dark:divide-white/10">
             {userRoles.map((item, idx) => (
               <UserRoleTableRow
                 key={item.id}
@@ -94,9 +94,9 @@ export const UserRoleTable: React.FC<UserRoleTableProps> = ({
 
       {/* Table Footer: Pagination */}
       {pagination ?? (
-        <div className="px-4 py-3 border-t border-[#E5E7EB] bg-[#FAFAFB] flex items-center justify-between text-xs text-[#6B7280]">
+        <div className="px-4 py-3 border-t border-[#E5E7EB] dark:border-white/10 bg-[#FAFAFB] dark:bg-[#141924] flex items-center justify-between text-xs text-[#6B7280] dark:text-[#64748B]">
           <span>
-            Showing <span className="font-semibold text-[#111827]">{userRoles.length}</span> user roles
+            Showing <span className="font-semibold text-[#111827] dark:text-[#F8FAFC]">{userRoles.length}</span> user roles
           </span>
           <span className="font-mono text-[11px]">PayPulse RBAC v2</span>
         </div>

@@ -191,7 +191,7 @@ export const ToastCard: React.FC<ToastCardProps> = ({ toast }) => {
       className={`
         group relative pointer-events-auto w-full max-w-sm sm:max-w-md
         rounded-2xl overflow-hidden select-none
-        bg-slate-950/85 dark:bg-[#070b14]/90 backdrop-blur-xl
+        bg-slate-950/85 dark:bg-[#0B0E14]/90 backdrop-blur-xl
         border border-white/10 dark:border-white/[0.08]
         shadow-[0_20px_48px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)_inset]
         p-3.5 sm:p-4

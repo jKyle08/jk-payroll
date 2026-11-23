@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { AuditAction, AuditLogEntry } from '../types.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
-import { Button, Badge, TableActionMenu } from '../../../client/components/ui/index.js';
+import { Button, Badge, TableActionMenu, Input } from '../../../client/components/ui/index.js';
 import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
 import {
   SearchableSelect,
@@ -166,7 +166,7 @@ const getActionBadgeStyles = (action: AuditAction) => {
   if (action === 'DELETE') {
     return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60';
   }
-  return 'bg-[#F1F5F9] text-[#334155] border-[#E2E8F0] dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+  return 'bg-[#F1F5F9] text-[#334155] border-[#E2E8F0] dark:bg-[#141924] dark:text-[#CBD5E1] dark:border-white/10';
 };
 
 const getActorInitials = (name: string | null): string => {
@@ -697,11 +697,10 @@ export const AuditLogMain: React.FC = () => {
       {/* ================================================================== */}
       <div className="space-y-3">
         {/* PANEL 1: Search Box + SearchButton + Filter Toggle */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl border border-[#E5E7EB] dark:border-slate-800 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white dark:bg-[#181D2A] rounded-xl border border-[#E5E7EB] dark:border-white/10 shadow-2xs">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
-              <input
+            <div className="flex-1">
+              <Input
                 type="text"
                 value={searchInput}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
@@ -712,18 +711,20 @@ export const AuditLogMain: React.FC = () => {
                   }
                 }}
                 placeholder="Search actor name, email, role, department, entity type, or IP address..."
-                className="h-10 w-full pl-10 pr-9 text-xs rounded-lg bg-[#FBFBFC] dark:bg-slate-800 border border-[#E5E7EB] dark:border-slate-700 text-[#111827] dark:text-white placeholder-[#6B7280] focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all"
+                leftIcon={<Search className="w-4 h-4" />}
+                rightElement={
+                  searchInput ? (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="p-1 text-[#6B7280] hover:text-[#111827] dark:text-[#64748B] dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+                      title="Clear search query"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  ) : undefined
+                }
               />
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#111827] dark:hover:text-slate-200 transition-colors cursor-pointer"
-                  title="Clear search query"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
             </div>
 
             <SearchButton onClick={handleExecuteSearch} />
@@ -740,7 +741,7 @@ export const AuditLogMain: React.FC = () => {
             >
               <span>Filter</span>
               {hasActiveDropdownFilters && (
-                <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-slate-900 ml-1" />
+                <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-[#121620] ml-1" />
               )}
             </Button>
           </div>
@@ -749,8 +750,8 @@ export const AuditLogMain: React.FC = () => {
         {/* ACTIVE FILTER DISMISSAL CHIPS */}
         {activeChips.length > 0 && (
           <div className="flex items-center flex-wrap gap-1.5 py-1 text-xs">
-            <span className="text-[11px] font-semibold text-[#6B7280] dark:text-slate-400 mr-1 flex items-center gap-1">
-              <Filter className="w-3 h-3 text-[#6B7280]" />
+            <span className="text-[11px] font-semibold text-[#6B7280] dark:text-[#94A3B8] mr-1 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-[#6B7280] dark:text-[#64748B]" />
               <span>Active Filters:</span>
             </span>
             {activeChips.map((chip) => (
@@ -763,7 +764,7 @@ export const AuditLogMain: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleRemoveChip(chip.key)}
-                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer ml-1"
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#6B7280] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors cursor-pointer ml-1"
                   title="Remove filter"
                 >
                   ✕
@@ -773,7 +774,7 @@ export const AuditLogMain: React.FC = () => {
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-xs font-semibold text-[#0F172A] dark:text-blue-400 hover:underline ml-1.5 cursor-pointer"
+              className="text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] hover:underline ml-1.5 cursor-pointer"
             >
               Clear All
             </button>
@@ -782,11 +783,11 @@ export const AuditLogMain: React.FC = () => {
 
         {/* PANEL 2: COLLAPSIBLE FILTER DIRECTORY PANEL */}
         {isFilterPanelOpen && (
-          <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-[#E5E7EB] dark:border-slate-800 space-y-3 shadow-xs">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB] dark:border-slate-800">
+          <div className="p-4 bg-white dark:bg-[#181D2A] rounded-xl border border-[#E5E7EB] dark:border-white/10 space-y-3 shadow-xs dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB] dark:border-white/10">
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-[#475569] dark:text-slate-300" />
-                <span className="text-xs font-bold text-[#111827] dark:text-white">
+                <Filter className="w-4 h-4 text-[#475569] dark:text-[#CBD5E1]" />
+                <span className="text-xs font-bold text-[#111827] dark:text-[#F8FAFC]">
                   Filter Audit Governance Stream
                 </span>
               </div>
@@ -867,11 +868,11 @@ export const AuditLogMain: React.FC = () => {
       {/* ================================================================== */}
       {/* 4. AUDIT TRAIL DATA TABLE + PAGINATION                             */}
       {/* ================================================================== */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-[#E5E7EB] dark:border-slate-800 shadow-2xs">
+      <div className="bg-white dark:bg-[#121620] rounded-xl border border-[#E5E7EB] dark:border-white/10 shadow-2xs">
         <div className="overflow-x-auto rounded-t-xl">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#F8FAFC] dark:bg-slate-800/60 border-b border-[#E5E7EB] dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-slate-400">
+              <tr className="bg-[#F8FAFC] dark:bg-[#141924] border-b border-[#E5E7EB] dark:border-white/10 text-[11px] font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#64748B]">
                 <th className="py-3.5 pl-5 pr-2 w-12 text-center">#</th>
                 <th className="py-3.5 px-4">Timestamp &amp; Network</th>
                 <th className="py-3.5 px-4">Actor Snapshot</th>
@@ -881,12 +882,12 @@ export const AuditLogMain: React.FC = () => {
                 <th className="py-3.5 pl-4 pr-5 text-right">Details</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E5E7EB] dark:divide-slate-800 text-xs">
+            <tbody className="divide-y divide-[#E5E7EB] dark:divide-white/10 text-xs">
               {loading || pagination.isPaging ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center">
-                    <div className="inline-block animate-spin rounded-full h-7 w-7 border-b-2 border-[#0F172A] dark:border-blue-400 mb-2.5"></div>
-                    <p className="text-xs text-[#6B7280] dark:text-slate-400">
+                    <div className="inline-block animate-spin rounded-full h-7 w-7 border-b-2 border-[#0F172A] dark:border-white mb-2.5"></div>
+                    <p className="text-xs text-[#6B7280] dark:text-[#94A3B8]">
                       Loading governance audit events...
                     </p>
                   </td>
@@ -895,13 +896,13 @@ export const AuditLogMain: React.FC = () => {
                 <tr>
                   <td colSpan={7} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[#6B7280]">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#141924] flex items-center justify-center text-[#6B7280] dark:text-[#64748B]">
                         <FileCheck2 className="w-5 h-5" />
                       </div>
-                      <p className="text-sm font-bold text-[#111827] dark:text-white">
+                      <p className="text-sm font-bold text-[#111827] dark:text-[#F8FAFC]">
                         No Matching Governance Audit Events
                       </p>
-                      <p className="text-xs text-[#6B7280] dark:text-slate-400 max-w-md">
+                      <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] max-w-md">
                         No point-in-time audit snapshots match your active
                         search or filter criteria.
                       </p>
@@ -929,10 +930,10 @@ export const AuditLogMain: React.FC = () => {
                   return (
                     <tr
                       key={log.id}
-                      className="hover:bg-[#F8FAFC] dark:hover:bg-slate-800/40 transition-colors group"
+                      className="hover:bg-[#F8FAFC] dark:hover:bg-white/[0.03] transition-colors group"
                     >
                       {/* 1. Sequential Row Number (#) */}
-                      <td className="py-3.5 pl-5 pr-2 text-center font-mono text-xs font-semibold text-[#6B7280] dark:text-slate-400 tabular-nums">
+                      <td className="py-3.5 pl-5 pr-2 text-center font-mono text-xs font-semibold text-[#6B7280] dark:text-[#64748B] tabular-nums">
                         {rowNumber}
                       </td>
 
@@ -940,17 +941,17 @@ export const AuditLogMain: React.FC = () => {
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-[#111827] dark:text-white tabular-nums">
+                            <span className="font-bold text-[#111827] dark:text-[#F8FAFC] tabular-nums">
                               {formatRelativeTime(log.created_at)}
                             </span>
-                            <span className="text-[11px] font-mono text-[#6B7280] dark:text-slate-400 tabular-nums">
+                            <span className="text-[11px] font-mono text-[#6B7280] dark:text-[#64748B] tabular-nums">
                               ({formattedTime})
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-[11px] text-[#6B7280] dark:text-slate-400">
+                          <div className="flex items-center gap-2 text-[11px] text-[#6B7280] dark:text-[#64748B]">
                             <span>{formattedDate}</span>
                             <span>•</span>
-                            <span className="inline-flex items-center gap-1 font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-[#475569] dark:text-slate-300">
+                            <span className="inline-flex items-center gap-1 font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-[#141924] border border-transparent dark:border-white/10 text-[#475569] dark:text-[#CBD5E1]">
                               <Globe className="w-2.5 h-2.5" />
                               {log.ip_address || '127.0.0.1'}
                             </span>
@@ -961,23 +962,23 @@ export const AuditLogMain: React.FC = () => {
                       {/* 3. Actor Snapshot */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-start gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-[#0F172A] text-white font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
+                          <div className="w-8 h-8 rounded-lg bg-[#0F172A] dark:bg-[#202637] text-white dark:text-[#CBD5E1] border border-transparent dark:border-white/10 font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
                             {getActorInitials(log.actor_name)}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-bold text-[#111827] dark:text-white truncate">
+                            <p className="font-bold text-[#111827] dark:text-[#F8FAFC] truncate">
                               {log.actor_name || 'System Automated Process'}
                             </p>
-                            <p className="text-[11px] font-mono text-[#6B7280] dark:text-slate-400 truncate">
+                            <p className="text-[11px] font-mono text-[#6B7280] dark:text-[#64748B] truncate">
                               {log.actor_email || 'system@paypulse.internal'}
                             </p>
                             <div className="flex items-center flex-wrap gap-1.5 mt-1">
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-[#0F172A] dark:text-slate-200">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-[#141924] border border-transparent dark:border-white/10 text-[#0F172A] dark:text-[#CBD5E1]">
                                 <Shield className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
                                 {log.actor_role_name || 'Super Admin'}
                               </span>
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-[#475569] dark:text-slate-300">
-                                <Building2 className="w-2.5 h-2.5 text-slate-500" />
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-[#141924] border border-transparent dark:border-white/10 text-[#475569] dark:text-[#CBD5E1]">
+                                <Building2 className="w-2.5 h-2.5 text-slate-500 dark:text-[#64748B]" />
                                 {log.actor_department_name || 'Global'}
                               </span>
                             </div>
@@ -1000,22 +1001,22 @@ export const AuditLogMain: React.FC = () => {
                       <td className="py-3.5 px-4">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#0F172A]/5 dark:bg-slate-800 text-[#0F172A] dark:text-slate-200 border border-[#E5E7EB] dark:border-slate-700">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#0F172A]/5 dark:bg-[#141924] text-[#0F172A] dark:text-[#CBD5E1] border border-[#E5E7EB] dark:border-white/10">
                               {log.module_id}
                             </span>
-                            <span className="font-semibold text-[#111827] dark:text-white">
+                            <span className="font-semibold text-[#111827] dark:text-[#F8FAFC]">
                               {log.entity_type}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#6B7280] dark:text-slate-400">
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#6B7280] dark:text-[#64748B]">
                             <span
-                              className="font-medium text-[#111827] dark:text-slate-200 truncate max-w-[160px]"
+                              className="font-medium text-[#111827] dark:text-[#F8FAFC] truncate max-w-[160px]"
                               title={getEntityDisplayName(log)}
                             >
                               {getEntityDisplayName(log)}
                             </span>
                             <span>•</span>
-                            <span className="text-[#475569] dark:text-slate-300 font-sans font-medium truncate max-w-[140px]">
+                            <span className="text-[#475569] dark:text-[#CBD5E1] font-sans font-medium truncate max-w-[140px]">
                               {orgMap[log.organization_id] || 'Apex Health Systems'}
                             </span>
                           </div>
@@ -1024,7 +1025,7 @@ export const AuditLogMain: React.FC = () => {
 
                       {/* 6. Field Diff / Snapshot Summary */}
                       <td className="py-3.5 px-4 max-w-xs">
-                        <div className="p-2 rounded-lg bg-[#FBFBFC] dark:bg-slate-800/50 border border-[#E5E7EB] dark:border-slate-800 font-mono text-[11px] text-[#475569] dark:text-slate-300 truncate">
+                        <div className="p-2 rounded-lg bg-[#FBFBFC] dark:bg-[#141924] border border-[#E5E7EB] dark:border-white/10 font-mono text-[11px] text-[#475569] dark:text-[#CBD5E1] truncate">
                           {buildDiffSummary(log)}
                         </div>
                       </td>

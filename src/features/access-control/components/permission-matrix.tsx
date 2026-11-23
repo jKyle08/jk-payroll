@@ -21,7 +21,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { ModuleData, ModuleActionItem, ActionType } from '../types.js';
-import { Button, Badge, TableActionMenu } from '../../../client/components/ui/index.js';
+import { Button, Badge, TableActionMenu, Input, Alert } from '../../../client/components/ui/index.js';
 
 export interface PermissionMatrixProps {
   title: string;
@@ -222,18 +222,18 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. Header Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="bg-white dark:bg-[#181D2A] rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)] relative before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+              <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-[#121620] border border-transparent dark:border-white/10 text-slate-800 dark:text-[#CBD5E1]">
                 <Shield className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
                   {title}
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-0.5">
                   {subtitle}
                 </p>
               </div>
@@ -280,45 +280,46 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
 
         {/* Status Alerts */}
         {saveSuccess && (
-          <div className="mt-4 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs flex items-center space-x-2">
-            <CheckCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <Alert variant="success" className="mt-4" icon={<CheckCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}>
             <span>Permissions saved successfully! Changes apply immediately.</span>
-          </div>
+          </Alert>
         )}
 
         {isDirty && !saveSuccess && (
-          <div className="mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <Alert
+            variant="warning"
+            className="mt-4 flex items-center justify-between"
+            icon={<AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />}
+          >
+            <div className="flex items-center justify-between w-full">
               <span>You have unsaved changes in the permission matrix.</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedIds(new Set(initialIds))}
+                className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
+              >
+                Discard Changes
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedIds(new Set(initialIds))}
-              className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-200"
-            >
-              Discard Changes
-            </Button>
-          </div>
+          </Alert>
         )}
 
         {/* 2. Search & Filter Bar */}
-        <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
+        <div className="mt-6 pt-5 border-t border-slate-100 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="w-full md:w-80">
+            <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search module code or name..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 transition-all"
+              leftIcon={<Search className="w-4 h-4" />}
             />
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1">
-            <Filter className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <Filter className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B] flex-shrink-0" />
             {categories.map((cat) => (
               <Button
                 key={cat}
@@ -335,18 +336,18 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
       </div>
 
       {/* 3. The Permission Matrix Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-[#121620] rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <tr className="bg-slate-50/80 dark:bg-[#141924] border-b border-slate-200 dark:border-white/10 text-[11px] font-semibold text-slate-500 dark:text-[#64748B] uppercase tracking-wider">
                 <th className="py-3.5 px-4 min-w-[220px]">Module Information</th>
                 <th className="py-3.5 px-3 min-w-[100px]">Category</th>
                 {ACTION_COLUMNS.map((col) => (
                   <th key={col.type} className="py-3.5 px-3 text-center min-w-[110px]">
                     <div className="inline-flex flex-col items-center">
-                      <span>{col.label}</span>
-                      <span className="text-[9px] font-normal lowercase tracking-normal text-slate-400">
+                      <span className="dark:text-[#CBD5E1]">{col.label}</span>
+                      <span className="text-[9px] font-normal lowercase tracking-normal text-slate-400 dark:text-[#64748B]">
                         {col.description}
                       </span>
                     </div>
@@ -355,13 +356,13 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                 <th className="py-3.5 px-4 text-right min-w-[130px]">Quick Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/10 text-sm">
               {filteredModules.length === 0 ? (
                 <tr>
-                  <td colSpan={ACTION_COLUMNS.length + 3} className="py-12 text-center text-slate-400">
+                  <td colSpan={ACTION_COLUMNS.length + 3} className="py-12 text-center text-slate-400 dark:text-[#64748B]">
                     <Layers className="w-10 h-10 mx-auto mb-2 opacity-50 stroke-[1.5]" />
-                    <p className="font-medium text-slate-600 dark:text-slate-300">No modules match your filter</p>
-                    <p className="text-xs text-slate-400 mt-1">Try resetting the search bar or category pills</p>
+                    <p className="font-medium text-slate-600 dark:text-[#CBD5E1]">No modules match your filter</p>
+                    <p className="text-xs text-slate-400 dark:text-[#64748B] mt-1">Try resetting the search bar or category pills</p>
                   </td>
                 </tr>
               ) : (
@@ -371,15 +372,15 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                   return (
                     <tr
                       key={mod.id}
-                      className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                      className="hover:bg-slate-50/60 dark:hover:bg-white/[0.03] transition-colors"
                     >
                       {/* Module Info */}
                       <td className="py-4 px-4">
                         <div className="flex flex-col">
-                          <span className="font-semibold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">
                             {mod.name}
                           </span>
-                          <span className="font-mono text-[11px] text-blue-600 dark:text-blue-400">
+                          <span className="font-mono text-[11px] text-slate-600 dark:text-[#CBD5E1]">
                             {mod.code}
                           </span>
                         </div>
@@ -399,7 +400,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                         if (!actionItem) {
                           return (
                             <td key={col.type} className="py-4 px-3 text-center">
-                              <span className="text-slate-300 dark:text-slate-700 text-xs">—</span>
+                              <span className="text-slate-300 dark:text-white/10 text-xs">—</span>
                             </td>
                           );
                         }
@@ -420,17 +421,17 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                 className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
                                   isChecked
                                     ? isLocked
-                                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-700/60 cursor-not-allowed'
-                                      : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 cursor-pointer'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer'
+                                      ? 'bg-slate-200 text-slate-700 dark:bg-[#202637] dark:text-[#94A3B8] border border-slate-300 dark:border-white/10 cursor-not-allowed'
+                                      : 'bg-[#0F172A] text-white dark:bg-[#CBD5E1] dark:text-[#0F172A] shadow-sm hover:opacity-90 cursor-pointer'
+                                    : 'bg-slate-100 dark:bg-[#141924] dark:border dark:border-white/5 text-slate-400 hover:bg-slate-200 dark:hover:bg-[#202637] cursor-pointer'
                                 }`}
                               >
                                 {isLocked ? (
-                                  <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                  <Lock className="w-4 h-4 text-slate-600 dark:text-[#94A3B8]" />
                                 ) : isChecked ? (
                                   <Check className="w-4 h-4 stroke-[2.5]" />
                                 ) : (
-                                  <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                  <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-[#202637]" />
                                 )}
                               </button>
 
@@ -480,14 +481,14 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
         </div>
 
         {/* Footer Stats */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2">
+        <div className="p-4 border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-[#141924] flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 dark:text-[#94A3B8] gap-2">
           <div className="flex items-center gap-2">
             <Info className="w-4 h-4 text-blue-500" />
             <span>
               Showing {filteredModules.length} of {modules.length} modules • {selectedIds.size} granted action keys
             </span>
           </div>
-          <div className="font-medium text-slate-700 dark:text-slate-300">
+          <div className="font-medium text-slate-700 dark:text-[#CBD5E1]">
             Cascade Rule: Any Mutating Action Automatically Implies Read/View Access
           </div>
         </div>
@@ -495,18 +496,18 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
 
       {/* 4. Reset Confirmation Modal */}
       {showResetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#181D2A] rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-white/12 shadow-2xl dark:shadow-[0_24px_50px_-12px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.15)] space-y-4">
             <div className="flex items-center space-x-3 text-rose-600 dark:text-rose-400">
               <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-950/60">
                 <ShieldAlert className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+              <h3 className="font-bold text-lg text-slate-900 dark:text-[#F8FAFC]">
                 Reset to Role Defaults?
               </h3>
             </div>
 
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-[#94A3B8]">
               This action will completely delete this user's custom permission overrides in the database.
               The user will immediately inherit permissions from their assigned role.
             </p>

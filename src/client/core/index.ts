@@ -10,3 +10,4 @@ export * from './persistence/DraftManager.js';
 export * from './auth/CrossTabAuthSync.js';
 export * from './auth/RouteRestoration.js';
 export * from './auth/AuthSessionManager.js';
+export * from './theme/ThemeContext.js';

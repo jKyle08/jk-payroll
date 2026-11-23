@@ -19,6 +19,10 @@ import {
   RolePermission,
   UserRole,
   OrganizationMember,
+  Country,
+  StatutoryIdentifierDefinition,
+  OrganizationLegalEntity,
+  OrganizationStatutoryRegistration,
 } from '../../shared/types/index.js';
 import { AuditLogEntry, AuditLogsFilterQuery } from '../../features/audit-logs/types.js';
 import { isProtectedOrganizationRoleCode } from '../../shared/constants/role-security.js';
@@ -40,6 +44,10 @@ export class DatabaseRepository {
   public rolePermissions = new Map<string, RolePermission>();
   public userRoles = new Map<string, UserRole>();
   public auditLogs = new Map<string, AuditLogEntry>();
+  public countries = new Map<string, Country>();
+  public statutoryDefinitions = new Map<string, StatutoryIdentifierDefinition>();
+  public legalEntities = new Map<string, OrganizationLegalEntity>();
+  public statutoryRegistrations = new Map<string, OrganizationStatutoryRegistration>();
 
   constructor() {
     this.seedCatalog();
@@ -60,6 +68,9 @@ export class DatabaseRepository {
     this.rolePermissions.clear();
     this.userRoles.clear();
     this.auditLogs.clear();
+    this.legalEntities.clear();
+    this.statutoryRegistrations.clear();
+    this.seedStatutoryCatalog();
     this.seedDefaultRolesAndUsers();
   }
 
@@ -351,8 +362,196 @@ export class DatabaseRepository {
       { parentActionId: '20000000-0000-0000-0000-000000000034', impliedActionId: '20000000-0000-0000-0000-000000000031', createdAt: new Date() },
     ];
 
-    // 4. Default Organizations, Roles, and UserRoles
+    // 4. International Jurisdictions & Statutory Identifier Catalog
+    this.seedStatutoryCatalog();
+
+    // 5. Default Organizations, Roles, and UserRoles
     this.seedDefaultRolesAndUsers();
+  }
+
+  public seedStatutoryCatalog(): void {
+    // 1. Countries
+    const initialCountries: Country[] = [
+      { code: 'PH', name: 'Philippines', isActive: true, currency: 'PHP', defaultTimezone: 'Asia/Manila', createdAt: new Date(), updatedAt: new Date() },
+      { code: 'US', name: 'United States', isActive: true, currency: 'USD', defaultTimezone: 'America/New_York', createdAt: new Date(), updatedAt: new Date() },
+      { code: 'SG', name: 'Singapore', isActive: true, currency: 'SGD', defaultTimezone: 'Asia/Singapore', createdAt: new Date(), updatedAt: new Date() },
+    ];
+    initialCountries.forEach((c) => this.countries.set(c.code, c));
+
+    // 2. Statutory Identifier Definitions
+    const initialDefs: StatutoryIdentifierDefinition[] = [
+      // Philippines (PH)
+      {
+        id: 'c1000000-0000-0000-0000-000000000001',
+        countryCode: 'PH',
+        identifierKey: 'TIN',
+        label: 'Tax Identification Number',
+        description: 'Mandatory corporate tax registration number',
+        authorityName: 'Bureau of Internal Revenue (BIR)',
+        validationConfig: { regex: '^[0-9]{3}-[0-9]{3}-[0-9]{3}-[0-9]{3,5}$', placeholder: '000-000-000-000' },
+        inputConfig: { mask: '999-999-999-999' },
+        isRequired: true,
+        isActive: true,
+        displayOrder: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'c1000000-0000-0000-0000-000000000002',
+        countryCode: 'PH',
+        identifierKey: 'SSS',
+        label: 'SSS Employer Number',
+        description: 'Social Security System employer registration code for private employers',
+        authorityName: 'Social Security System (SSS)',
+        validationConfig: { regex: '^[0-9]{2}-[0-9]{7}-[0-9]$', placeholder: '00-0000000-0' },
+        inputConfig: { mask: '99-9999999-9' },
+        isRequired: false,
+        isActive: true,
+        displayOrder: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'c1000000-0000-0000-0000-000000000003',
+        countryCode: 'PH',
+        identifierKey: 'GSIS',
+        label: 'GSIS Agency Code',
+        description: 'Government Service Insurance System identification for public-sector institutions',
+        authorityName: 'Government Service Insurance System (GSIS)',
+        validationConfig: { placeholder: 'GSIS-0000-0000' },
+        inputConfig: {},
+        isRequired: false,
+        isActive: true,
+        displayOrder: 3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'c1000000-0000-0000-0000-000000000004',
+        countryCode: 'PH',
+        identifierKey: 'PHILHEALTH',
+        label: 'PhilHealth Employer Number (PEN)',
+        description: 'National health insurance agency identification for employee coverage',
+        authorityName: 'Philippine Health Insurance Corporation (PhilHealth)',
+        validationConfig: { regex: '^[0-9]{2}-[0-9]{9}-[0-9]$', placeholder: '00-000000000-0' },
+        inputConfig: { mask: '99-999999999-9' },
+        isRequired: false,
+        isActive: true,
+        displayOrder: 4,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'c1000000-0000-0000-0000-000000000005',
+        countryCode: 'PH',
+        identifierKey: 'PAGIBIG',
+        label: 'Pag-IBIG Employer ID (HDMF)',
+        description: 'Housing Development Mutual Fund registration for mandatory savings contributions',
+        authorityName: 'Home Development Mutual Fund (Pag-IBIG)',
+        validationConfig: { regex: '^[0-9]{4}-[0-9]{4}-[0-9]{4}$', placeholder: '0000-0000-0000' },
+        inputConfig: { mask: '9999-9999-9999' },
+        isRequired: false,
+        isActive: true,
+        displayOrder: 5,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+
+      // United States (US)
+      {
+        id: 'c2000000-0000-0000-0000-000000000001',
+        countryCode: 'US',
+        identifierKey: 'EIN',
+        label: 'Employer Identification Number (FEIN)',
+        description: 'Federal Tax Identification Number for businesses',
+        authorityName: 'Internal Revenue Service (IRS)',
+        validationConfig: { regex: '^[0-9]{2}-[0-9]{7}$', placeholder: '00-0000000' },
+        inputConfig: { mask: '99-9999999' },
+        isRequired: true,
+        isActive: true,
+        displayOrder: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'c2000000-0000-0000-0000-000000000002',
+        countryCode: 'US',
+        identifierKey: 'STATE_TAX_ID',
+        label: 'State Tax Registration ID',
+        description: 'State-level employer withholding identification number',
+        authorityName: 'State Department of Revenue',
+        validationConfig: { placeholder: 'State Withholding ID' },
+        inputConfig: {},
+        isRequired: false,
+        isActive: true,
+        displayOrder: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'c2000000-0000-0000-0000-000000000003',
+        countryCode: 'US',
+        identifierKey: 'STATE_UNEMPLOYMENT_ID',
+        label: 'State Unemployment Insurance Account',
+        description: 'State SUTA employer account number for unemployment insurance',
+        authorityName: 'State Department of Labor / UI',
+        validationConfig: { placeholder: 'SUTA Account Number' },
+        inputConfig: {},
+        isRequired: false,
+        isActive: true,
+        displayOrder: 3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+
+      // Singapore (SG)
+      {
+        id: 'c3000000-0000-0000-0000-000000000001',
+        countryCode: 'SG',
+        identifierKey: 'UEN',
+        label: 'Unique Entity Number (UEN)',
+        description: 'Standard identification number for entities registered in Singapore',
+        authorityName: 'Accounting and Corporate Regulatory Authority (ACRA)',
+        validationConfig: { regex: '^[0-9]{8,9}[A-Z]|[A-Z0-9]{10}$', placeholder: '200812345M' },
+        inputConfig: {},
+        isRequired: true,
+        isActive: true,
+        displayOrder: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'c3000000-0000-0000-0000-000000000002',
+        countryCode: 'SG',
+        identifierKey: 'GST',
+        label: 'GST Registration Number',
+        description: 'Goods and Services Tax registration identifier',
+        authorityName: 'Inland Revenue Authority of Singapore (IRAS)',
+        validationConfig: { placeholder: 'GST Reg Number' },
+        inputConfig: {},
+        isRequired: false,
+        isActive: true,
+        displayOrder: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'c3000000-0000-0000-0000-000000000003',
+        countryCode: 'SG',
+        identifierKey: 'CPF',
+        label: 'CPF Employer Reference',
+        description: 'Central Provident Fund submission reference number',
+        authorityName: 'Central Provident Fund Board (CPF)',
+        validationConfig: { placeholder: 'CPF Submission Number' },
+        inputConfig: {},
+        isRequired: false,
+        isActive: true,
+        displayOrder: 3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+    initialDefs.forEach((d) => this.statutoryDefinitions.set(d.id, d));
   }
 
   public seedDefaultRolesAndUsers(): void {
@@ -384,6 +583,39 @@ export class DatabaseRepository {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+    }
+
+    // Default primary legal entity for Apex
+    if (!Array.from(this.legalEntities.values()).some((le) => le.organizationId === apexTenantId)) {
+      const apexLegalEntity: OrganizationLegalEntity = {
+        id: 'e0000000-0000-0000-0000-000000000001',
+        organizationId: apexTenantId,
+        legalName: 'Apex Health Systems Inc.',
+        tradingName: 'Apex Health Systems',
+        countryCode: 'US',
+        registrationNumber: '12-3456789',
+        isPrimary: true,
+        status: 'Active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.legalEntities.set(apexLegalEntity.id, apexLegalEntity);
+
+      const einDef = Array.from(this.statutoryDefinitions.values()).find((d) => d.identifierKey === 'EIN');
+      if (einDef) {
+        this.statutoryRegistrations.set('r0000000-0000-0000-0000-000000000001', {
+          id: 'r0000000-0000-0000-0000-000000000001',
+          legalEntityId: apexLegalEntity.id,
+          identifierDefinitionId: einDef.id,
+          countryCode: 'US',
+          maskedValue: '••-•••6789',
+          encryptedValue: '12-3456789',
+          encryptionKeyVersion: 'v1',
+          registrationStatus: 'Active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
     }
 
     // 2. Default Roles
@@ -772,6 +1004,49 @@ export class DatabaseRepository {
       updatedAt: new Date(),
     };
     this.tenants.set(tenant.id, tenant);
+
+    // Auto-provision primary legal entity
+    const legalEntityId = randomUUID();
+    const primaryLegalEntity: OrganizationLegalEntity = {
+      id: legalEntityId,
+      organizationId: tenant.id,
+      legalName: tenant.legalName || tenant.name,
+      tradingName: tenant.name,
+      countryCode: tenant.countryCode || 'PH',
+      registrationNumber: tenant.taxId ?? null,
+      isPrimary: true,
+      status: 'Active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.legalEntities.set(primaryLegalEntity.id, primaryLegalEntity);
+
+    // If statutoryIds provided, create registration records
+    if (tenant.statutoryIds) {
+      for (const [key, val] of Object.entries(tenant.statutoryIds)) {
+        if (!val) continue;
+        const def = Array.from(this.statutoryDefinitions.values()).find(
+          (d) => d.countryCode === primaryLegalEntity.countryCode && d.identifierKey.toLowerCase() === key.toLowerCase()
+        );
+        if (def) {
+          const masked = val.length <= 4 ? '•'.repeat(val.length) : '•'.repeat(val.length - 4) + val.slice(-4);
+          const reg: OrganizationStatutoryRegistration = {
+            id: randomUUID(),
+            legalEntityId: primaryLegalEntity.id,
+            identifierDefinitionId: def.id,
+            countryCode: def.countryCode,
+            maskedValue: masked,
+            encryptedValue: val,
+            encryptionKeyVersion: 'v1',
+            registrationStatus: 'Active',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          this.statutoryRegistrations.set(reg.id, reg);
+        }
+      }
+    }
+
     return tenant;
   }
 
@@ -785,6 +1060,54 @@ export class DatabaseRepository {
       updatedAt: new Date(),
     };
     this.tenants.set(id, updated);
+
+    // Sync primary legal entity
+    const primaryEntity = Array.from(this.legalEntities.values()).find(
+      (le) => le.organizationId === id && le.isPrimary
+    );
+    if (primaryEntity) {
+      if (data.legalName !== undefined) primaryEntity.legalName = data.legalName || updated.name;
+      if (data.name !== undefined) primaryEntity.tradingName = data.name;
+      if (data.taxId !== undefined) primaryEntity.registrationNumber = data.taxId;
+      if (data.countryCode !== undefined) primaryEntity.countryCode = data.countryCode;
+      primaryEntity.updatedAt = new Date();
+    }
+
+    // Sync statutoryIds if provided
+    if (data.statutoryIds && primaryEntity) {
+      for (const [key, val] of Object.entries(data.statutoryIds)) {
+        if (!val) continue;
+        const def = Array.from(this.statutoryDefinitions.values()).find(
+          (d) => d.countryCode === primaryEntity.countryCode && d.identifierKey.toLowerCase() === key.toLowerCase()
+        );
+        if (def) {
+          const masked = val.length <= 4 ? '•'.repeat(val.length) : '•'.repeat(val.length - 4) + val.slice(-4);
+          const existingReg = Array.from(this.statutoryRegistrations.values()).find(
+            (r) => r.legalEntityId === primaryEntity.id && r.identifierDefinitionId === def.id
+          );
+          if (existingReg) {
+            existingReg.encryptedValue = val;
+            existingReg.maskedValue = masked;
+            existingReg.updatedAt = new Date();
+          } else {
+            const reg: OrganizationStatutoryRegistration = {
+              id: randomUUID(),
+              legalEntityId: primaryEntity.id,
+              identifierDefinitionId: def.id,
+              countryCode: def.countryCode,
+              maskedValue: masked,
+              encryptedValue: val,
+              encryptionKeyVersion: 'v1',
+              registrationStatus: 'Active',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            this.statutoryRegistrations.set(reg.id, reg);
+          }
+        }
+      }
+    }
+
     return updated;
   }
 
@@ -802,6 +1125,153 @@ export class DatabaseRepository {
 
   public deleteTenant(id: string): boolean {
     return this.tenants.delete(id);
+  }
+
+  // ----------------------------------------------------------------------------
+  // INTERNATIONAL JURISDICTIONS & LEGAL ENTITY REPOSITORIES
+  // ----------------------------------------------------------------------------
+  public getCountries(): Country[] {
+    return Array.from(this.countries.values()).filter((c) => c.isActive);
+  }
+
+  public getStatutoryDefinitions(countryCode?: string): StatutoryIdentifierDefinition[] {
+    let defs = Array.from(this.statutoryDefinitions.values()).filter((d) => d.isActive);
+    if (countryCode) {
+      defs = defs.filter((d) => d.countryCode.toUpperCase() === countryCode.toUpperCase());
+    }
+    return defs.sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
+  public getLegalEntitiesByOrg(orgId: string): OrganizationLegalEntity[] {
+    return Array.from(this.legalEntities.values()).filter((le) => le.organizationId === orgId);
+  }
+
+  public getPrimaryLegalEntity(orgId: string): OrganizationLegalEntity | undefined {
+    return Array.from(this.legalEntities.values()).find((le) => le.organizationId === orgId && le.isPrimary);
+  }
+
+  public getLegalEntityById(id: string): OrganizationLegalEntity | undefined {
+    return this.legalEntities.get(id);
+  }
+
+  public createLegalEntity(data: {
+    id?: string;
+    organizationId: string;
+    legalName: string;
+    tradingName?: string | null;
+    countryCode: string;
+    registrationNumber?: string | null;
+    isPrimary?: boolean;
+    status?: 'Active' | 'Inactive';
+  }): OrganizationLegalEntity {
+    if (data.isPrimary) {
+      for (const le of this.legalEntities.values()) {
+        if (le.organizationId === data.organizationId && le.isPrimary) {
+          le.isPrimary = false;
+        }
+      }
+    }
+    const entity: OrganizationLegalEntity = {
+      id: data.id || randomUUID(),
+      organizationId: data.organizationId,
+      legalName: data.legalName,
+      tradingName: data.tradingName ?? null,
+      countryCode: data.countryCode,
+      registrationNumber: data.registrationNumber ?? null,
+      isPrimary: data.isPrimary ?? false,
+      status: data.status || 'Active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.legalEntities.set(entity.id, entity);
+    return entity;
+  }
+
+  public updateLegalEntity(id: string, data: Partial<OrganizationLegalEntity>): OrganizationLegalEntity | undefined {
+    const existing = this.legalEntities.get(id);
+    if (!existing) return undefined;
+    if (data.isPrimary) {
+      for (const le of this.legalEntities.values()) {
+        if (le.organizationId === existing.organizationId && le.isPrimary && le.id !== id) {
+          le.isPrimary = false;
+        }
+      }
+    }
+    const updated: OrganizationLegalEntity = {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    };
+    this.legalEntities.set(id, updated);
+    return updated;
+  }
+
+  public deleteLegalEntity(id: string): boolean {
+    return this.legalEntities.delete(id);
+  }
+
+  public getStatutoryRegistrations(legalEntityId: string): (OrganizationStatutoryRegistration & { definition?: StatutoryIdentifierDefinition })[] {
+    const regs = Array.from(this.statutoryRegistrations.values()).filter((r) => r.legalEntityId === legalEntityId);
+    return regs.map((r) => ({
+      ...r,
+      definition: this.statutoryDefinitions.get(r.identifierDefinitionId),
+    }));
+  }
+
+  public getStatutoryRegistrationById(id: string): OrganizationStatutoryRegistration | undefined {
+    return this.statutoryRegistrations.get(id);
+  }
+
+  public upsertStatutoryRegistration(data: {
+    id?: string;
+    legalEntityId: string;
+    identifierDefinitionId: string;
+    countryCode: string;
+    jurisdictionCode?: string | null;
+    encryptedValue: string;
+    encryptionKeyVersion?: string;
+    maskedValue: string;
+    registrationStatus?: 'Active' | 'Pending' | 'Expired';
+    effectiveDate?: string | null;
+    expirationDate?: string | null;
+    createdBy?: string | null;
+    updatedBy?: string | null;
+  }): OrganizationStatutoryRegistration {
+    const existing = Array.from(this.statutoryRegistrations.values()).find(
+      (r) => r.legalEntityId === data.legalEntityId && r.identifierDefinitionId === data.identifierDefinitionId
+    );
+    if (existing) {
+      const updated: OrganizationStatutoryRegistration = {
+        ...existing,
+        ...data,
+        updatedAt: new Date(),
+      };
+      this.statutoryRegistrations.set(existing.id, updated);
+      return updated;
+    }
+    const reg: OrganizationStatutoryRegistration = {
+      id: data.id || randomUUID(),
+      legalEntityId: data.legalEntityId,
+      identifierDefinitionId: data.identifierDefinitionId,
+      countryCode: data.countryCode,
+      jurisdictionCode: data.jurisdictionCode ?? null,
+      encryptedValue: data.encryptedValue,
+      encryptionKeyVersion: data.encryptionKeyVersion || 'v1',
+      maskedValue: data.maskedValue,
+      registrationStatus: data.registrationStatus || 'Active',
+      effectiveDate: data.effectiveDate ?? null,
+      expirationDate: data.expirationDate ?? null,
+      createdBy: data.createdBy ?? null,
+      updatedBy: data.updatedBy ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.statutoryRegistrations.set(reg.id, reg);
+    return reg;
+  }
+
+  public deleteStatutoryRegistration(id: string): boolean {
+    return this.statutoryRegistrations.delete(id);
   }
 
   // ----------------------------------------------------------------------------

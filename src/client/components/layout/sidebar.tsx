@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: REFACTORED B2B ENTERPRISE SIDEBAR
-// Design System: "Midnight & Champagne Steel" (Ramp / Linear / Stripe Aesthetic)
+// Design System: Balanced Glossy Graphite (Ramp / Linear / Stripe Aesthetic)
 // File: src/client/components/layout/sidebar.tsx
 // ==============================================================================
 

@@ -239,7 +239,8 @@ export class OrganizationController {
         organization: updated,
       });
     } catch (error: any) {
-      res.status(400).json({
+      const isIsolation = error.message?.includes('Tenant isolation');
+      res.status(isIsolation ? 403 : 400).json({
         success: false,
         error: error.message || 'Failed to update organization settings',
       });
@@ -429,6 +430,379 @@ export class OrganizationController {
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to delete organization',
+      });
+    }
+  }
+
+  // ============================================================================
+  // INTERNATIONAL JURISDICTIONS, LEGAL ENTITIES & STATUTORY REGISTRATIONS
+  // ============================================================================
+
+  /**
+   * GET /api/countries
+   * Returns supported jurisdictions
+   */
+  public async getCountries(_req: Request, res: Response): Promise<void> {
+    try {
+      const countries = await organizationService.getCountries();
+      res.status(200).json({
+        success: true,
+        data: countries,
+        items: countries,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to retrieve countries',
+      });
+    }
+  }
+
+  /**
+   * GET /api/statutory-identifiers/definitions
+   * Returns statutory identifier definitions filtered by countryCode
+   */
+  public async getStatutoryDefinitions(req: Request, res: Response): Promise<void> {
+    try {
+      const countryCode = req.query.countryCode ? String(req.query.countryCode) : undefined;
+      const definitions = await organizationService.getStatutoryDefinitions(countryCode);
+      res.status(200).json({
+        success: true,
+        data: definitions,
+        items: definitions,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to retrieve statutory identifier definitions',
+      });
+    }
+  }
+
+  /**
+   * GET /api/organizations/:id/legal-entities
+   */
+  public async listLegalEntities(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+
+      const entities = await organizationService.getLegalEntities(id, scopeTenantId);
+      res.status(200).json({
+        success: true,
+        data: entities,
+        items: entities,
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 500).json({
+        success: false,
+        error: error.message || 'Failed to retrieve legal entities',
+      });
+    }
+  }
+
+  /**
+   * GET /api/organizations/:id/legal-entities/:entityId
+   */
+  public async getLegalEntity(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const entityId = String(req.params.entityId);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+
+      const entity = await organizationService.getLegalEntityById(id, entityId, scopeTenantId);
+      if (!entity) {
+        res.status(404).json({ success: false, error: `Legal entity '${entityId}' not found` });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: entity,
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 500).json({
+        success: false,
+        error: error.message || 'Failed to retrieve legal entity',
+      });
+    }
+  }
+
+  /**
+   * POST /api/organizations/:id/legal-entities
+   */
+  public async createLegalEntity(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+
+      const created = await organizationService.createLegalEntity(id, req.body, scopeTenantId);
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organization_legal_entities',
+          entityId: created.id,
+          action: 'CREATE',
+          oldValues: null,
+          newValues: {
+            id: created.id,
+            legalName: created.legalName,
+            countryCode: created.countryCode,
+            isPrimary: created.isPrimary,
+          },
+        })
+        .catch(() => {});
+
+      res.status(201).json({
+        success: true,
+        message: 'Legal entity registered successfully',
+        data: created,
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 400).json({
+        success: false,
+        error: error.message || 'Failed to create legal entity',
+      });
+    }
+  }
+
+  /**
+   * PUT /api/organizations/:id/legal-entities/:entityId
+   */
+  public async updateLegalEntity(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const entityId = String(req.params.entityId);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+
+      const updated = await organizationService.updateLegalEntity(id, entityId, req.body, scopeTenantId);
+      if (!updated) {
+        res.status(404).json({ success: false, error: `Legal entity '${entityId}' not found` });
+        return;
+      }
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organization_legal_entities',
+          entityId: updated.id,
+          action: 'UPDATE',
+          oldValues: null,
+          newValues: {
+            id: updated.id,
+            legalName: updated.legalName,
+            countryCode: updated.countryCode,
+            isPrimary: updated.isPrimary,
+          },
+        })
+        .catch(() => {});
+
+      res.status(200).json({
+        success: true,
+        message: 'Legal entity updated successfully',
+        data: updated,
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 400).json({
+        success: false,
+        error: error.message || 'Failed to update legal entity',
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/organizations/:id/legal-entities/:entityId
+   */
+  public async deleteLegalEntity(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const entityId = String(req.params.entityId);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+
+      const success = await organizationService.deleteLegalEntity(id, entityId, scopeTenantId);
+      if (!success) {
+        res.status(404).json({ success: false, error: `Legal entity '${entityId}' not found` });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Legal entity deleted successfully',
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 400).json({
+        success: false,
+        error: error.message || 'Failed to delete legal entity',
+      });
+    }
+  }
+
+  /**
+   * GET /api/organizations/:id/legal-entities/:entityId/statutory-registrations
+   */
+  public async listStatutoryRegistrations(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const entityId = String(req.params.entityId);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+
+      const registrations = await organizationService.getStatutoryRegistrations(id, entityId, scopeTenantId);
+      res.status(200).json({
+        success: true,
+        data: registrations,
+        items: registrations,
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 500).json({
+        success: false,
+        error: error.message || 'Failed to retrieve statutory registrations',
+      });
+    }
+  }
+
+  /**
+   * POST /api/organizations/:id/legal-entities/:entityId/statutory-registrations
+   */
+  public async saveStatutoryRegistration(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const entityId = String(req.params.entityId);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+      const actorId = req.user?.userId;
+
+      const saved = await organizationService.saveStatutoryRegistration(id, entityId, req.body, actorId, scopeTenantId);
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organization_statutory_registrations',
+          entityId: saved.id,
+          action: 'UPDATE',
+          oldValues: null,
+          // Explicitly omit sensitive unencrypted identifier from audit log
+          newValues: {
+            id: saved.id,
+            legalEntityId: saved.legalEntityId,
+            identifierDefinitionId: saved.identifierDefinitionId,
+            countryCode: saved.countryCode,
+            maskedValue: saved.maskedValue,
+            registrationStatus: saved.registrationStatus,
+          },
+        })
+        .catch(() => {});
+
+      res.status(200).json({
+        success: true,
+        message: 'Statutory registration saved successfully',
+        data: saved,
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 400).json({
+        success: false,
+        error: error.message || 'Failed to save statutory registration',
+      });
+    }
+  }
+
+  /**
+   * PUT /api/organizations/:id/legal-entities/:entityId/statutory-registrations/:registrationId
+   */
+  public async updateStatutoryRegistration(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const entityId = String(req.params.entityId);
+      const registrationId = String(req.params.registrationId);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+      const actorId = req.user?.userId;
+
+      const updated = await organizationService.updateStatutoryRegistration(
+        id,
+        entityId,
+        registrationId,
+        req.body,
+        actorId,
+        scopeTenantId
+      );
+      if (!updated) {
+        res.status(404).json({ success: false, error: `Statutory registration '${registrationId}' not found` });
+        return;
+      }
+
+      const trustedActor = extractTrustedActor(req);
+      auditLogsService
+        .recordAuditLog({
+          organizationId: id,
+          actor: trustedActor,
+          module: 'ORGANIZATION',
+          entityType: 'organization_statutory_registrations',
+          entityId: updated.id,
+          action: 'UPDATE',
+          oldValues: null,
+          newValues: {
+            id: updated.id,
+            legalEntityId: updated.legalEntityId,
+            maskedValue: updated.maskedValue,
+            registrationStatus: updated.registrationStatus,
+          },
+        })
+        .catch(() => {});
+
+      res.status(200).json({
+        success: true,
+        message: 'Statutory registration updated successfully',
+        data: updated,
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 400).json({
+        success: false,
+        error: error.message || 'Failed to update statutory registration',
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/organizations/:id/legal-entities/:entityId/statutory-registrations/:registrationId
+   */
+  public async deleteStatutoryRegistration(req: Request, res: Response): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const entityId = String(req.params.entityId);
+      const registrationId = String(req.params.registrationId);
+      const isSuperAdminUser = isSuperAdmin(req.user);
+      const scopeTenantId = isSuperAdminUser ? undefined : req.user?.tenantId;
+
+      const success = await organizationService.deleteStatutoryRegistration(id, entityId, registrationId, scopeTenantId);
+      if (!success) {
+        res.status(404).json({ success: false, error: `Statutory registration '${registrationId}' not found` });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Statutory registration deleted successfully',
+      });
+    } catch (error: any) {
+      res.status(error.message?.includes('Tenant isolation') ? 403 : 400).json({
+        success: false,
+        error: error.message || 'Failed to delete statutory registration',
       });
     }
   }

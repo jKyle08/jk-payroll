@@ -1,6 +1,6 @@
 // ==============================================================================
 // JK-PAYROLL: ROLE BADGE COMPONENT
-// Design System: Monochromatic Enterprise SaaS ("Midnight & Champagne Steel")
+// Design System: Monochromatic Enterprise SaaS (Balanced Glossy Graphite)
 // File: src/features/roles/components/role-badge.tsx
 // ==============================================================================
 

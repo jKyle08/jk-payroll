@@ -53,7 +53,7 @@ export interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({
   children,
   position = 'top-right',
-  defaultSpacing = 20,
+  defaultSpacing = 16,
 }) => {
   const [queueState, setQueueState] = useState<ToastQueueState>(() =>
     toastStore.getState()

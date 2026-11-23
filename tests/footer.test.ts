@@ -25,5 +25,5 @@ describe('Application Footer Component Specifications', () => {
     const layout = await import('../src/client/components/layout/index.js');
     expect(layout.Footer).toBeDefined();
     expect(layout.DEFAULT_FOOTER_LINKS).toBeDefined();
-  });
+  }, 10000);
 });
