@@ -20,7 +20,7 @@ import { DepartmentTable } from './DepartmentTable.js';
 import { DepartmentTree } from './department-tree.js';
 import { DepartmentFormPage } from './DepartmentFormPage.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
-import { Button } from '../../../client/components/ui/index.js';
+import { Button, toast } from '../../../client/components/ui/index.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 
 export interface DepartmentMainProps {
@@ -67,7 +67,7 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
 
   const handleDelete = async (dept: DepartmentItem) => {
     if (dept.childrenCount > 0) {
-      alert(`Cannot delete '${dept.name}' because it has active sub-departments. Please reassign or delete sub-departments first.`);
+      toast.warning('employees.department_has_children', { name: dept.name });
       return;
     }
 
@@ -77,21 +77,32 @@ export const DepartmentMain: React.FC<DepartmentMainProps> = ({ isSuperAdmin = t
 
     try {
       await remove(dept.id);
-      setSuccessBanner(`Department '${dept.name}' deleted successfully`);
+      const msg = `Department '${dept.name}' deleted successfully`;
+      setSuccessBanner(msg);
+      toast.success('employees.department_deleted', { name: dept.name });
       setTimeout(() => setSuccessBanner(null), 4000);
       refresh();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete department');
+      toast.fromError(err, 'Failed to delete department');
     }
   };
 
   const handleSaveForm = async (data: CreateDepartmentInput | UpdateDepartmentInput) => {
     if (pageState === 'create') {
       await create(data);
-      setSuccessBanner('Department created successfully');
+      const msg = 'Department created successfully';
+      setSuccessBanner(msg);
+      toast.success('employees.department_created', {
+        name: (data as any).name || 'Department',
+        code: (data as any).code || '',
+      });
     } else if (activeEditingDept) {
       await update(activeEditingDept.id, data);
-      setSuccessBanner('Department updated successfully');
+      const msg = 'Department updated successfully';
+      setSuccessBanner(msg);
+      toast.success('employees.department_updated', {
+        name: (data as any).name || activeEditingDept.name,
+      });
     }
     setTimeout(() => setSuccessBanner(null), 4000);
     setPageState('list');

@@ -23,6 +23,7 @@ import { useAuth } from '../hooks/use-auth.js';
 import { consumeSessionTimeoutMessage } from '../../../client/lib/auth-session.js';
 import { resolvePostLoginRedirect } from '../../../client/core/auth/RouteRestoration.js';
 import { getTabId } from '../../../client/core/persistence/TabIdentity.js';
+import { toast } from '../../../client/components/ui/index.js';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       const data = await login(email, password);
+      toast.success('auth.login_success', { name: data.user?.fullName || 'User' });
       const targetRoute = resolvePostLoginRedirect(
         data.user?.userId || data.user?.id,
         data.user?.tenantId,
@@ -62,7 +64,9 @@ export const LoginPage: React.FC = () => {
       );
       navigate(targetRoute, { replace: true });
     } catch (err: any) {
-      setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
+      const msg = err.message || 'Authentication failed. Please check your credentials.';
+      setErrorMessage(msg);
+      toast.fromError(err, 'Authentication failed');
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +80,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       const data = await login(quickEmail, quickPass);
+      toast.success('auth.login_success', { name: data.user?.fullName || 'User' });
       const targetRoute = resolvePostLoginRedirect(
         data.user?.userId || data.user?.id,
         data.user?.tenantId,
@@ -83,7 +88,9 @@ export const LoginPage: React.FC = () => {
       );
       navigate(targetRoute, { replace: true });
     } catch (err: any) {
-      setErrorMessage(err.message || 'Quick login failed');
+      const msg = err.message || 'Quick login failed';
+      setErrorMessage(msg);
+      toast.fromError(err, 'Quick login failed');
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +147,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 disabled={isLoading}
-                onClick={() => handleQuickLogin('admin@apexcorp.com', 'Password123!')}
+                onClick={() => handleQuickLogin('admin@apexcorp.com', 'ApexAdmin2026!')}
                 className="p-2.5 rounded-xl border border-emerald-100 dark:border-emerald-950/60 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-950/60 text-left transition-all group cursor-pointer disabled:opacity-50"
               >
                 <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-300 font-bold text-xs">
@@ -197,8 +204,11 @@ export const LoginPage: React.FC = () => {
                 </label>
                 <a
                   href="#forgot"
-                  onClick={(e) => { e.preventDefault(); alert('Please use one of the 1-click test personas above.'); }}
-                  className="text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toast.info('auth.demo_persona_hint');
+                  }}
+                  className="text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   Forgot password?
                 </a>

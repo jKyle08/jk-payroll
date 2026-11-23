@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { AuditAction, AuditLogEntry } from '../types.js';
-import { Button, Badge } from '../../../client/components/ui/index.js';
+import { Button, Badge, toast } from '../../../client/components/ui/index.js';
 
 export interface AuditLogDetailModalProps {
   log: AuditLogEntry | null;
@@ -140,9 +140,10 @@ export const AuditLogDetailModal: React.FC<AuditLogDetailModalProps> = ({
         JSON.stringify(sanitizedLogForCopy, null, 2)
       );
       setCopied(true);
+      toast.success('common.copied', { label: 'Audit log JSON' });
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback ignore
+    } catch (err: any) {
+      toast.fromError(err, 'Failed to copy audit log to clipboard');
     }
   };
 

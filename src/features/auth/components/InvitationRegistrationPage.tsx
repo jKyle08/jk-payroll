@@ -1,6 +1,7 @@
 import React, { FormEvent, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth.js';
+import { toast } from '../../../client/components/ui/index.js';
 
 export function InvitationRegistrationPage() {
   const [params] = useSearchParams();
@@ -25,10 +26,13 @@ export function InvitationRegistrationPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Invitation registration failed');
+      toast.success('auth.invitation_accepted');
       loginWithData(data.token, data.user);
       navigate('/organizations', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Invitation registration failed');
+      const msg = err.message || 'Invitation registration failed';
+      setError(msg);
+      toast.fromError(err, 'Invitation registration failed');
     } finally {
       setBusy(false);
     }

@@ -10,6 +10,7 @@
     "start": "node dist/server/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "seed:live": "tsx scripts/seed-live-supabase.ts",
     "client": "vite",
     "build:client": "vite build"
   },

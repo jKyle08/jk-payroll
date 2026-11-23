@@ -11,6 +11,18 @@
     background-color: #020617;
     color: #f8fafc;
   }
+
+  /* Suppress default browser password reveal and clear icons in Edge/IE/Chromium */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none !important;
+  }
+}
+
+/* Fallback global rule to eliminate native password eye icon on Windows / Chromium */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
 }
 
 .font-mono {

@@ -29,7 +29,7 @@ import {
   SearchableSelect,
   type SearchableOption,
 } from '../../../client/components/ui/SearchableSelect.js';
-import { Button, Badge } from '../../../client/components/ui/index.js';
+import { Button, Badge, toast } from '../../../client/components/ui/index.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
 import { authFetch } from '../../../client/lib/auth-session.js';
 import { isProtectedOrganizationRoleCode } from '../../../shared/constants/role-security.js';
@@ -892,13 +892,21 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
         result = results[0];
       }
 
-      setSuccessMessage(
-        isEditMode
-          ? 'User role assignment updated successfully.'
-          : `Security role "${activeRole.name}" successfully assigned to ${targetIds.length} team member${
-              targetIds.length > 1 ? 's' : ''
-            }.`
-      );
+      const successMsg = isEditMode
+        ? 'User role assignment updated successfully.'
+        : `Security role "${activeRole.name}" successfully assigned to ${targetIds.length} team member${
+            targetIds.length > 1 ? 's' : ''
+          }.`;
+
+      setSuccessMessage(successMsg);
+      if (isEditMode) {
+        toast.success('users.role_updated');
+      } else {
+        toast.success('users.role_assigned', {
+          roleName: activeRole.name,
+          count: targetIds.length,
+        });
+      }
 
       if (onSuccess) {
         onSuccess(result);
@@ -907,8 +915,8 @@ export const UserRoleFormPage: React.FC<UserRoleFormPageProps> = ({
           handleBack();
         }, 1200);
       }
-    } catch {
-      // Handled by mutation hook error state
+    } catch (err: any) {
+      toast.fromError(err, 'Failed to complete role assignment');
     }
   };
 

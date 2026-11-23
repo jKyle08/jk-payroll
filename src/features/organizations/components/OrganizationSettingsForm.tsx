@@ -28,7 +28,7 @@ import {
   Globe,
   Sliders,
 } from 'lucide-react';
-import { Badge, Button, StatusIndicator } from '../../../client/components/ui/index.js';
+import { Badge, Button, StatusIndicator, toast } from '../../../client/components/ui/index.js';
 import { CustomSelect } from '../../../client/components/ui/index.js';
 import {
   updateOrganizationSettingsSchema,
@@ -176,6 +176,7 @@ export const OrganizationSettingsForm: React.FC<OrganizationSettingsFormProps> =
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(label);
+    toast.success('common.copied', { label });
     setTimeout(() => setCopiedField(null), 2000);
   };
 
@@ -184,13 +185,15 @@ export const OrganizationSettingsForm: React.FC<OrganizationSettingsFormProps> =
     setSaveSuccess(null);
     try {
       const updated = await updateOrgSettings(organization.id, data);
-      setSaveSuccess('Company profile and operational settings updated successfully.');
+      const msg = 'Company profile and operational settings updated successfully.';
+      setSaveSuccess(msg);
+      toast.success('organization.updated');
       if (onSuccess) {
         onSuccess(updated);
       }
       setTimeout(() => setSaveSuccess(null), 4000);
-    } catch {
-      // Handled by hook
+    } catch (err: any) {
+      toast.fromError(err, 'Failed to update company settings');
     }
   };
 

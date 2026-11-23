@@ -23,7 +23,7 @@ import { RoleItem } from '../types.js';
 import { fetchRoleById } from '../services/role.client.js';
 import { useRoleMutations } from '../hooks/useRoleMutations.js';
 import { SearchableSelect, type SearchableOption } from '../../../client/components/ui/SearchableSelect.js';
-import { Button, Badge } from '../../../client/components/ui/index.js';
+import { Button, Badge, toast } from '../../../client/components/ui/index.js';
 import { useAuth } from '../../auth/hooks/use-auth.js';
 import { authFetch } from '../../../client/lib/auth-session.js';
 
@@ -232,15 +232,19 @@ export const RoleFormPage: React.FC<RoleFormPageProps> = ({
           isMutable,
         });
       }
-      setSuccessMessage(
-        isEditMode
-          ? 'Role updated successfully.'
-          : 'Role created successfully.'
-      );
+      const successMsg = isEditMode
+        ? 'Role updated successfully.'
+        : 'Role created successfully.';
+      setSuccessMessage(successMsg);
+      if (isEditMode) {
+        toast.success('common.updated', { description: `Security role "${name}" updated successfully.` });
+      } else {
+        toast.success('users.role_created', { name, code });
+      }
       if (onSuccess) onSuccess(result);
       else setTimeout(handleBack, 700);
-    } catch {
-      // surfaced through mutationError
+    } catch (err: any) {
+      toast.fromError(err, isEditMode ? 'Failed to update role' : 'Failed to create role');
     }
   };
 

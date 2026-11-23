@@ -92,19 +92,89 @@ const updateDateField = z.preprocess(
  * Target Audience: Public signup / Super Admin onboarding a brand new tenant
  */
 const organizationOnboardingBaseSchema = z.object({
-  name: z.string().min(2, 'Organization name must be at least 2 characters').max(150, 'Organization name cannot exceed 150 characters'),
+  name: z
+    .string({ required_error: 'Organization name is required' })
+    .trim()
+    .superRefine((val, ctx) => {
+      if (val.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Organization name is required',
+        });
+        return;
+      }
+      if (val.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_small,
+          minimum: 2,
+          type: 'string',
+          inclusive: true,
+          message: 'Organization name must be at least 2 characters',
+        });
+        return;
+      }
+      if (val.length > 150) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_big,
+          maximum: 150,
+          type: 'string',
+          inclusive: true,
+          message: 'Organization name cannot exceed 150 characters',
+        });
+      }
+    }),
   code: z
-    .string()
-    .min(2, 'Organization code must be at least 2 characters')
-    .max(32, 'Organization code cannot exceed 32 characters')
-    .regex(/^[A-Za-z0-9-_]+$/, 'Code can only contain alphanumeric characters, hyphens, and underscores')
+    .string({ required_error: 'Organization code is required' })
+    .trim()
+    .superRefine((val, ctx) => {
+      if (val.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Organization code is required',
+        });
+        return;
+      }
+      if (val.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_small,
+          minimum: 2,
+          type: 'string',
+          inclusive: true,
+          message: 'Organization code must be at least 2 characters',
+        });
+        return;
+      }
+      if (val.length > 32) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_big,
+          maximum: 32,
+          type: 'string',
+          inclusive: true,
+          message: 'Organization code cannot exceed 32 characters',
+        });
+        return;
+      }
+      if (!/^[A-Za-z0-9-_]+$/.test(val)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Code can only contain alphanumeric characters, hyphens, and underscores',
+        });
+      }
+    })
     .transform((val) => val.toUpperCase()),
   slug: z
     .string()
-    .min(2)
-    .max(64)
-    .regex(/^[a-z0-9-_]+$/, 'Slug must be URL-safe (lowercase alphanumeric, hyphens, and underscores)')
-    .optional(),
+    .trim()
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined))
+    .pipe(
+      z
+        .string()
+        .min(2)
+        .max(64)
+        .regex(/^[a-z0-9-_]+$/, 'Slug must be URL-safe (lowercase alphanumeric, hyphens, and underscores)')
+        .optional()
+    ),
   sector: organizationSectorEnum.default('Private'),
   tier: organizationTierEnum.default('Enterprise'),
   planTier: organizationTierEnum.optional(), // Backwards compatibility for UI
@@ -118,11 +188,88 @@ const organizationOnboardingBaseSchema = z.object({
 
   // Initial Root Administrator Bootstrap Account (Always provisions a fresh user account)
   admin: z.object({
-    fullName: z.string().min(2, 'Administrator name is required').max(100),
-    email: z.string().email('Valid administrator email address is required'),
-    username: z.string().min(3).max(50).optional(),
-    title: z.string().max(80).optional().default('Administrator'),
-    password: z.string().min(8, 'Password must be at least 8 characters').optional(),
+    fullName: z
+      .string({ required_error: 'Full name is required for the root administrator' })
+      .trim()
+      .superRefine((val, ctx) => {
+        if (val.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Full name is required for the root administrator',
+          });
+          return;
+        }
+        if (val.length < 2) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 2,
+            type: 'string',
+            inclusive: true,
+            message: 'Name must be at least 2 characters',
+          });
+          return;
+        }
+        if (val.length > 100) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_big,
+            maximum: 100,
+            type: 'string',
+            inclusive: true,
+            message: 'Name cannot exceed 100 characters',
+          });
+        }
+      }),
+    email: z
+      .string({ required_error: 'Official email is required' })
+      .trim()
+      .superRefine((val, ctx) => {
+        if (val.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Official email is required',
+          });
+          return;
+        }
+        if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(val)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Valid administrator email address is required',
+          });
+        }
+      }),
+    username: z
+      .string()
+      .trim()
+      .optional()
+      .transform((val) => (val && val.length > 0 ? val : undefined))
+      .pipe(z.string().min(3).max(50).optional()),
+    title: z
+      .string()
+      .trim()
+      .optional()
+      .transform((val) => (val && val.length > 0 ? val : undefined))
+      .pipe(z.string().max(80).optional().default('Administrator')),
+    password: z
+      .string({ required_error: 'Password is required for the new root administrator account' })
+      .superRefine((val, ctx) => {
+        if (val.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Password is required for the new root administrator account',
+          });
+          return;
+        }
+        if (val.length < 8) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 8,
+            type: 'string',
+            inclusive: true,
+            message: 'Password must be at least 8 characters',
+          });
+        }
+      })
+      .optional(),
     confirmPassword: z.string().optional(),
   }),
 
@@ -170,16 +317,25 @@ const organizationOnboardingBaseSchema = z.object({
   endDate: createDateField,
 });
 
-export const organizationOnboardingSchema = organizationOnboardingBaseSchema.refine(
-  (data) => {
-    if (data.admin.confirmPassword) {
-      return data.admin.password === data.admin.confirmPassword;
+export const organizationOnboardingSchema = organizationOnboardingBaseSchema.superRefine(
+  (data, ctx) => {
+    if (data.admin.password && data.admin.password.trim().length > 0) {
+      if (!data.admin.confirmPassword || data.admin.confirmPassword.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Please confirm your root administrator password',
+          path: ['admin', 'confirmPassword'],
+        });
+        return;
+      }
+      if (data.admin.password !== data.admin.confirmPassword) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Passwords do not match',
+          path: ['admin', 'confirmPassword'],
+        });
+      }
     }
-    return true;
-  },
-  {
-    message: 'Passwords do not match',
-    path: ['admin', 'confirmPassword'],
   }
 );
 
@@ -188,11 +344,43 @@ export const organizationOnboardingSchema = organizationOnboardingBaseSchema.ref
 export const organizationOnboardingSubmissionSchema = organizationOnboardingBaseSchema.extend({
   onboardingToken: z.string().min(40).max(200),
   admin: organizationOnboardingBaseSchema.shape.admin.extend({
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string().min(8, 'Password confirmation is required'),
-  }).refine((admin) => admin.password === admin.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+    password: z
+      .string({ required_error: 'Password is required for the new root administrator account' })
+      .superRefine((val, ctx) => {
+        if (val.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Password is required for the new root administrator account',
+          });
+          return;
+        }
+        if (val.length < 8) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 8,
+            type: 'string',
+            inclusive: true,
+            message: 'Password must be at least 8 characters',
+          });
+        }
+      }),
+    confirmPassword: z.string({ required_error: 'Please confirm your root administrator password' }),
+  }).superRefine((admin, ctx) => {
+    if (!admin.confirmPassword || admin.confirmPassword.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Please confirm your root administrator password',
+        path: ['confirmPassword'],
+      });
+      return;
+    }
+    if (admin.password !== admin.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Passwords do not match',
+        path: ['confirmPassword'],
+      });
+    }
   }),
 });
 
@@ -200,11 +388,43 @@ export const organizationOnboardingSubmissionSchema = organizationOnboardingBase
 // instead of sending a registration link.
 export const organizationProvisioningSchema = organizationOnboardingBaseSchema.extend({
   admin: organizationOnboardingBaseSchema.shape.admin.extend({
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string().min(8, 'Password confirmation is required'),
-  }).refine((admin) => admin.password === admin.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+    password: z
+      .string({ required_error: 'Password is required for the new root administrator account' })
+      .superRefine((val, ctx) => {
+        if (val.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Password is required for the new root administrator account',
+          });
+          return;
+        }
+        if (val.length < 8) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 8,
+            type: 'string',
+            inclusive: true,
+            message: 'Password must be at least 8 characters',
+          });
+        }
+      }),
+    confirmPassword: z.string({ required_error: 'Please confirm your root administrator password' }),
+  }).superRefine((admin, ctx) => {
+    if (!admin.confirmPassword || admin.confirmPassword.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Please confirm your root administrator password',
+        path: ['confirmPassword'],
+      });
+      return;
+    }
+    if (admin.password !== admin.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Passwords do not match',
+        path: ['confirmPassword'],
+      });
+    }
   }),
 });
 

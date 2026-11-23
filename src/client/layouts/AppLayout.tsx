@@ -16,6 +16,7 @@ import { OrganizationSwitcherModal } from '../components/layout/OrganizationSwit
 import { Organization } from '../../features/organizations/types.js';
 import { OrganizationContext } from '../components/layout/sidebar.js';
 import { PERMISSIONS } from '../../shared/constants/permissions.js';
+import { toast } from '../components/ui/index.js';
 
 export interface AppLayoutProps {
   children?: React.ReactNode;
@@ -158,9 +159,11 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({
       tenantCode: org.code,
     }));
     setIsSwitcherOpen(false);
+    toast.info('organization.switched', { name: org.name, code: org.code });
   }, []);
 
   const handleLogout = useCallback(() => {
+    toast.info('auth.logout_success');
     navigate('/login');
   }, [navigate]);
 

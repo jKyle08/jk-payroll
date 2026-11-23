@@ -8,7 +8,7 @@ import { CustomSelect } from '../../../client/components/ui/CustomSelect.js';
 import { SearchableSelect } from '../../../client/components/ui/SearchableSelect.js';
 import { SearchButton } from '../../../client/components/ui/SearchButton.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
-import { Button, Badge, TableActionMenu } from '../../../client/components/ui/index.js';
+import { Button, Badge, TableActionMenu, toast } from '../../../client/components/ui/index.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
 import React, { useState, useEffect } from 'react';
 import { Plus, UserPlus, Shield, Globe2, Building2, Search, X, Filter, Lock, Pencil, Trash2, Eye, AlertCircle } from 'lucide-react';
@@ -136,9 +136,11 @@ export const RoleMain: React.FC<RoleMainProps> = ({ organizations = [], onCreate
     if (!pendingDelete) return;
     try {
       await removeRole(pendingDelete.id);
+      toast.success('users.role_deleted', { name: pendingDelete.name });
       setPendingDelete(null);
       await refresh();
-    } catch {
+    } catch (err: any) {
+      toast.fromError(err, `Failed to delete role '${pendingDelete.name}'`);
       setPendingDelete(null);
     }
   };

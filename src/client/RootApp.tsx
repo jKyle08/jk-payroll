@@ -25,6 +25,7 @@ import {
   UserRoleFormPage,
 } from '../features/roles/index.js';
 import { AuditLogMain } from '../features/audit-logs/index.js';
+import { ToastContainer } from './components/ui/index.js';
 
 const DepartmentCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -113,7 +114,8 @@ export const RootApp: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <Routes>
+    <>
+      <Routes>
       {/* 1. Public Authentication Route */}
       <Route path="/login" element={<LoginPage />} />
 
@@ -319,7 +321,9 @@ export const RootApp: React.FC = () => {
           </ProtectedDashboardLayout>
         }
       />
-    </Routes>
+      </Routes>
+      <ToastContainer />
+    </>
   );
 };
 

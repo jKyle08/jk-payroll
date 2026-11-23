@@ -21,6 +21,7 @@ import { UserRoleTable } from './UserRoleTable.js';
 import { ConfirmDialog } from '../../../client/components/ui/ConfirmDialog.js';
 import { KpiCard } from '../../../client/components/ui/KpiCard.js';
 import { Pagination, usePagination } from '../../../client/components/ui/Pagination.js';
+import { toast } from '../../../client/components/ui/index.js';
 
 export interface UserRoleMainProps {
   onNavigateToCreate?: () => void;
@@ -97,10 +98,11 @@ export const UserRoleMain: React.FC<UserRoleMainProps> = ({
     setIsDeleting(true);
     try {
       await removeRole(deleteId);
+      toast.success('users.role_removed');
       setDeleteId(null);
       refetch();
-    } catch {
-      // Error handled by mutation hook
+    } catch (err: any) {
+      toast.fromError(err, 'Failed to remove role assignment');
     } finally {
       setIsDeleting(false);
     }

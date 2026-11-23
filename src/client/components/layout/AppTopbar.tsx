@@ -19,6 +19,7 @@ import { NotificationPopover, NotificationItem } from './notification-popover.js
 import { UserProfilePopover, UserProfileData } from './user-profile-popover.js';
 import { SystemStatusPopover } from './SystemStatusPopover.js';
 import { CommandPaletteModal } from './CommandPaletteModal.js';
+import { toast } from '../ui/index.js';
 
 export interface TopbarProps {
   user?: UserProfileData;
@@ -168,12 +169,13 @@ export const AppTopbar: React.FC<AppTopbarProps> = ({
 
   const handleMarkAllRead = () => {
     setNotifItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    toast.info('system.notifications_read');
     onMarkAllAsRead?.();
   };
 
   return (
     <>
-      <header className="sticky top-0 left-0 right-0 h-14 w-full bg-white dark:bg-slate-900 border-b border-[#E5E7EB] dark:border-slate-800 z-30 select-none transition-colors">
+      <header id="app-topbar" data-app-topbar="true" className="sticky top-0 left-0 right-0 h-14 w-full bg-white dark:bg-slate-900 border-b border-[#E5E7EB] dark:border-slate-800 z-30 select-none transition-colors">
         <div className="h-full px-3 sm:px-4 flex items-center justify-between gap-3 max-w-full">
           
           {/* ==================================================================== */}
